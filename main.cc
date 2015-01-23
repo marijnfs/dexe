@@ -40,13 +40,13 @@ int main() {
 	//create filters
 
 
-	ConvolutionLayer conv_layer1(c, c2, 4, 4, t1);
+	ConvolutionLayer conv_layer1(c, c2, 4, 4);
 	conv_layer1.init_normal(0, STD);
 
-	ConvolutionLayer conv_layer2(c2, c2, 4, 4, t2);
+	ConvolutionLayer conv_layer2(c2, c2, 4, 4);
 	conv_layer2.init_normal(0, STD);
 
-	ConvolutionLayer conv_layer3(c2, c2, 2, 2, t3);
+	ConvolutionLayer conv_layer3(c2, c2, 2, 2);
 	conv_layer3.init_normal(0, STD);
 
 

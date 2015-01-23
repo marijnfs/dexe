@@ -12,13 +12,14 @@
 
 struct ConvolutionLayer {
 	ConvolutionLayer(int in_map, int out_map, int kw, int kh);
-	ConvolutionLayer(int in_map, int out_map, int kw, int kh, Tensor &input);
 	~ConvolutionLayer();
 
-	void init(Tensor &input);
 	void init_normal(float mean, float std);
 
 	void forward(Tensor &input, Tensor &output);
+	void forward(Tensor &input, Tensor &output, Tensor &bias);
+
+	// void backward(Tensor &diff_output, Tensor &diff_input);
 
 	int in_map, out_map;
 	int kw, kh;
@@ -34,12 +35,5 @@ struct TanhLayer {
 struct SoftmaxLayer {
 	void forward(Tensor &in, Tensor &out);
 };
-
-struct BiasLayer {
-	void forward(Tensor &bias, Tensor &out);
-};
-
-
-
 
 #endif
