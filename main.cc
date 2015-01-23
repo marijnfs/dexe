@@ -10,12 +10,7 @@ int main() {
 
 
 	int n(1), c(2), h(480), w(640);
-	Tensor2D<int32_t> pixel_map(w, h), pixel_map_alt(w, h);
-	vector<int> pixels(w * h);
-	for (size_t i(0); i < w * h; i++)
-		pixels[i] = i;
-	pixel_map.from_vector(pixels);
-
+	
 	Tensor t1(n, w, h, c);
 	t1.init_normal(0, .5);
 
@@ -51,7 +46,6 @@ int main() {
 
 
 	TanhLayer tanh_layer;
-	BiasLayer bias_layer;
 	SoftmaxLayer softmax;
 
 	Timer t;
@@ -59,7 +53,6 @@ int main() {
 	conv_layer1.forward(t1, t2);
 	
 
-  bias_layer.forward(t2_bias, t2);
   tanh_layer.forward(t2, t2_act);
   
   vector<float> vec2 = t2_map.to_vector();
@@ -68,11 +61,9 @@ int main() {
   
   
   conv_layer2.forward(t2_out, t3);
-  bias_layer.forward(t3_bias, t3);
   tanh_layer.forward(t3, t3_act);
   
   conv_layer3.forward(t3_out, t4);
-  bias_layer.forward(t4_bias, t4);
   tanh_layer.forward(t4, t4_act);
   
   Tensor out(n, w2, h2, 2);

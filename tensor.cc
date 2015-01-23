@@ -42,5 +42,15 @@ void Tensor::zero() {
 }
 
 
+FilterBank::FilterBank(int in_map_, int out_map_, int kw_, int kh_): 
+  in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_)
+{
+	handle_error( cudnnCreateFilterDescriptor(&fd));
+	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_FLOAT, out_map, in_map, kh, kw));
+	handle_error(cudaMalloc( (void**)&weights, sizeof(float) * out_map * in_map * kw * kh));
+}
 
-
+FilterBank::~FilterBank() {
+	cudnnDestroyFilterDescriptor(fd);
+	cudaFree(weights);
+}

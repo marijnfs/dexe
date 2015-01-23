@@ -22,21 +22,16 @@ struct Tensor {
 
 };
 
-template <typename T=float>
-struct Tensor2D {
-	Tensor2D(int w, int h);
-	Tensor2D(int w, int h, T *data);
-	~Tensor2D();
-	void zero();
-	std::vector<T> to_vector();
-	void from_vector(std::vector<T> &in);
-	
-	int w, h;
-	bool allocated;
-	T *data;	
-};
+struct FilterBank {
+	FilterBank(int in_map_, int out_map_, int kw_, int kh_);
+	~FilterBank();
+	int in_map, out_map;
+	int kw, kh;
+	cudnnFilterDescriptor_t fd;
 
-#include "util.h"
-#include "tensor2d.cc"
+	float *weights;
+
+	int n_weights() { return in_map * out_map * kw * kh; }
+};
 
 #endif
