@@ -1,7 +1,9 @@
 #include "tensor.h"
 #include "layers.h"
+#include "handler.h"
 
 using namespace std;
+
 vector<float> Tensor::to_vector() {
 	vector<float> vec(n * c * h * w);
 	handle_error( cudaMemcpy(&vec[0], data, vec.size() * sizeof(float), cudaMemcpyDeviceToHost));
@@ -36,9 +38,13 @@ Tensor::~Tensor() {
 	  cudaFree(data);
 }
 
-
 void Tensor::zero() {
   handle_error( cudaMemset(data, 0, sizeof(float) * n * w * h * c));
+}
+
+
+void Tensor::init_normal(float mean, float std) {
+  handle_error( curandGenerateNormal ( Handler::curand(), data, n * w * h * c, mean, std ));
 }
 
 
@@ -53,4 +59,8 @@ FilterBank::FilterBank(int in_map_, int out_map_, int kw_, int kh_):
 FilterBank::~FilterBank() {
 	cudnnDestroyFilterDescriptor(fd);
 	cudaFree(weights);
+}
+
+void FilterBank::init_normal(float mean, float std) {
+	handle_error( curandGenerateNormal ( Handler::curand(), weights, n_weights(), mean, std ));
 }

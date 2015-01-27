@@ -32,6 +32,8 @@ struct FilterBank {
 	float *weights;
 
 	int n_weights() { return in_map * out_map * kw * kh; }
+	void init_normal(float mean, float std);
+
 };
 
 #endif

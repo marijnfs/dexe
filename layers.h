@@ -11,7 +11,7 @@
 
 
 struct ConvolutionLayer {
-	ConvolutionLayer(int in_map, int out_map, int kw, int kh);
+	ConvolutionLayer(int in_map, int out_map, int kw, int kh, bool keep = true);
 	~ConvolutionLayer();
 
 	void init_normal(float mean, float std);
@@ -21,10 +21,13 @@ struct ConvolutionLayer {
 	void backward_weights(Tensor &input, Tensor &output_err);
 	void backward_input(Tensor &output_err, Tensor &input_grad);
 
-
 	cudnnConvolutionDescriptor_t conv;
 	FilterBank filter_bank, filter_bank_grad;
 	Tensor bias, bias_grad;
+};
+
+struct SquashLayer : ConvolutionLayer {
+	SquashLayer(Tensor &t, int n);
 };
 
 struct TanhLayer {

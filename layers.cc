@@ -3,23 +3,25 @@
 #include <cublas_v2.h>
 
 
-void Tensor::init_normal(float mean, float std) {
-  handle_error( curandGenerateNormal ( Handler::curand(), data, n * w * h * c, mean, std ));
-}
-
-ConvolutionLayer::ConvolutionLayer(int in_map, int out_map, int kw, int kh):
+ConvolutionLayer::ConvolutionLayer(int in_map, int out_map, int kw, int kh, bool keep):
 	filter_bank(in_map, out_map, kw, kh),
 	filter_bank_grad(in_map, out_map, kw, kh),
 	bias(1, 1, 1, in_map * out_map),
 	bias_grad(1, 1, 1, in_map * out_map)
 {
 	int pad_h(0), pad_w(0), stride_w(1), stride_h(1), upscalex(1), upscaley(1);
+	if (keep) {
+		pad_w = kw / 2;
+		pad_h = kh / 2;
+	}
+	//todo: calculate padding
 	handle_error( cudnnCreateConvolutionDescriptor(&conv));
 	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
 }
 
 void ConvolutionLayer::init_normal(float mean, float std) {
-  handle_error( curandGenerateNormal ( Handler::curand(), filter_bank.weights, filter_bank.n_weights(), mean, std ));
+	filter_bank.init_normal(mean, std);
+	bias.init_normal(mean, std);
 }
 
 void ConvolutionLayer::forward(Tensor &input, Tensor &output) {
@@ -52,6 +54,10 @@ void ConvolutionLayer::backward_input(Tensor &output_err, Tensor &input_err) {
 
 ConvolutionLayer::~ConvolutionLayer() {
 	cudnnDestroyConvolutionDescriptor(conv);
+}
+
+SquashLayer::SquashLayer(Tensor &t, int n) : ConvolutionLayer(t.n, n, t.w, t.h, false) {
+
 }
 
 void TanhLayer::forward(Tensor &in, Tensor &out) {
