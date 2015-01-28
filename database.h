@@ -8,9 +8,10 @@ struct DataBase {
 	leveldb::Options options;
 
 	DataBase(std::string path);
-
+	~DataBase();
+	
 	caffe::Datum get_image(int index);
-	void loop();
+	void floatify();
 };
 
 

@@ -1,20 +1,14 @@
+#include <cassert>
+
 #include "tensor.h"
 #include "layers.h"
 #include "handler.h"
 
 using namespace std;
 
-vector<float> Tensor::to_vector() {
-	vector<float> vec(n * c * h * w);
-	handle_error( cudaMemcpy(&vec[0], data, vec.size() * sizeof(float), cudaMemcpyDeviceToHost));
-	return vec;
-}
 
-void Tensor::from_vector(vector<float> &in) {
-  handle_error( cudaMemcpy(data, &in[0], in.size() * sizeof(float), cudaMemcpyHostToDevice));
-}
 
-Tensor::Tensor(int n_, int w_, int h_, int c_): 
+Tensor::Tensor(int n_, int c_, int w_, int h_): 
   n(n_), w(w_), h(h_), c(c_), allocated(true)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
@@ -24,7 +18,7 @@ Tensor::Tensor(int n_, int w_, int h_, int c_):
 	  zero();
 }
 
-Tensor::Tensor(int n_, int w_, int h_, int c_, float *data_): 
+Tensor::Tensor(int n_, int c_, int w_, int h_, float *data_): 
   n(n_), w(w_), h(h_), c(c_), allocated(false), data(data_)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
@@ -43,10 +37,28 @@ void Tensor::zero() {
 }
 
 
-void Tensor::init_normal(float mean, float std) {
-  handle_error( curandGenerateNormal ( Handler::curand(), data, n * w * h * c, mean, std ));
+vector<float> Tensor::to_vector() {
+	vector<float> vec(n * c * h * w);
+	handle_error( cudaMemcpy(&vec[0], data, vec.size() * sizeof(float), cudaMemcpyDeviceToHost));
+	return vec;
 }
 
+void Tensor::from_vector(vector<float> &in) {
+	assert(size() == in.size());
+ 	handle_error( cudaMemcpy(data, &in[0], in.size() * sizeof(float), cudaMemcpyHostToDevice));
+}
+
+void Tensor::from_ptr(float const *in) {
+	handle_error( cudaMemcpy(data, in, size() * sizeof(float), cudaMemcpyHostToDevice));	
+}
+
+void Tensor::init_normal(float mean, float std) {
+  handle_error( curandGenerateNormal ( Handler::curand(), data, n * w * h * c, mean, std) );
+}
+
+int Tensor::size() {
+	return n * c * w * h;
+}
 
 FilterBank::FilterBank(int in_map_, int out_map_, int kw_, int kh_): 
   in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_)
@@ -62,5 +74,16 @@ FilterBank::~FilterBank() {
 }
 
 void FilterBank::init_normal(float mean, float std) {
-	handle_error( curandGenerateNormal ( Handler::curand(), weights, n_weights(), mean, std ));
+	handle_error( curandGenerateNormal ( Handler::curand(), weights, n_weights(), mean, std) );
+}
+
+vector<float> FilterBank::to_vector() {
+	vector<float> vec(n_weights());
+	handle_error( cudaMemcpy(&vec[0], weights, n_weights() * sizeof(float), cudaMemcpyDeviceToHost) );
+	return vec;
+}
+
+void FilterBank::from_vector(vector<float> &in) {
+	assert(n_weights() == in.size());
+ 	handle_error( cudaMemcpy(weights, &in[0], in.size() * sizeof(float), cudaMemcpyHostToDevice));
 }

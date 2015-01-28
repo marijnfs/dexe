@@ -8,6 +8,9 @@
 #include <curand.h>
 #include <time.h>
 #include <stdint.h>
+
+#include "handler.h"
+
 using namespace std;
 
 struct StringException : public std::exception {
@@ -124,13 +127,35 @@ inline void handle_error(cudnnStatus_t status) {
 	}
 }
 
+inline void add_cuda(float const *from, float *to, int n, float const alpha) {
+  handle_error(cublasSaxpy(Handler::cublas(), n, &alpha, from, 1, to, 1));
+}
+
 template <typename T>
 inline std::ostream &operator<<(std::ostream &out, std::vector<T> &in) {
 	out << "[";
 	typename std::vector<T>::iterator it = in.begin(), end = in.end();
 	for (; it != end; ++it)
 		out << " " << *it;
-	return out << endl;
+	return out << "]" << endl;
+}
+
+template <typename T>
+inline std::ostream &operator<<(std::ostream &out, std::vector<T> in) {
+  out << "[";
+  typename std::vector<T>::iterator it = in.begin(), end = in.end();
+  for (; it != end; ++it)
+    out << " " << *it;
+  return out << "]" << endl;
+}
+
+template <typename T>
+inline bool operator==(std::vector<T> &v1, std::vector<T> &v2) {
+  if (v1.size() != v2.size())
+    return false;
+  for (size_t i(0); i < v1.size(); ++i)
+    if (v1[i] != v2[i]) return false;
+  return true;
 }
 
 #endif

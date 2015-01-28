@@ -20,14 +20,15 @@ struct ConvolutionLayer {
 
 	void backward_weights(Tensor &input, Tensor &output_err);
 	void backward_input(Tensor &output_err, Tensor &input_grad);
-
+	void update(float lr);
+	
 	cudnnConvolutionDescriptor_t conv;
 	FilterBank filter_bank, filter_bank_grad;
 	Tensor bias, bias_grad;
 };
 
 struct SquashLayer : ConvolutionLayer {
-	SquashLayer(Tensor &t, int n);
+	SquashLayer(Tensor &t, int c);
 };
 
 struct TanhLayer {

@@ -19,27 +19,45 @@ DataBase::DataBase(string path) {
 
 }
 
-void DataBase::loop() {
+DataBase::~DataBase() {
+	delete db;
+}
+
+void DataBase::floatify() {
 	Iterator* it = db->NewIterator(leveldb::ReadOptions());
 
 	for (it->SeekToFirst(); it->Valid(); it->Next())
 	{
-		cout << it->key().ToString() << endl; //" : " << it->value().ToString() << endl;
+		cout << "|" << it->key().ToString() << "|" <<endl; //" : " << it->value().ToString() << endl;
 		Datum datum;
 		
 		if (!datum.ParseFromString(it->value().ToString())) {
 			cerr << "failed reading datum" << endl;
 			return;
 		}
+
+
+		datum.clear_float_data();
+		vector<float> data(datum.data().size());
+		for (size_t i(0); i < data.size(); ++i) {
+			// cout << int(datum.data()[i]) << endl;
+			float val = float(datum.data()[i]) / (255 / 2);
+			datum.add_float_data(val);
+			// cout << data[i] << " ";
+		}
+		string output;
+		datum.SerializeToString(&output);
+		db->Put(leveldb::WriteOptions(), it->key(), output);
 	}
 }
 
 caffe::Datum DataBase::get_image(int index) {
 	ostringstream oss;
-	oss << setw(5) << setfill('0') << index << endl;
+	oss << setw(5) << setfill('0') << index;
 
 	string data;
-	if (db->Get(ReadOptions(), oss.str(), &data).ok()) {
+	leveldb::Slice key = oss.str();
+	if (!db->Get(ReadOptions(), key, &data).ok()) {
 		cerr << "couldn't load key " << oss.str() << endl;
 		exit(1);
 	}

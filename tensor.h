@@ -7,14 +7,20 @@
 const bool ZERO_ON_INIT(true);
 
 struct Tensor {
-	Tensor(int n, int w, int h, int c);
-	Tensor(int n, int w, int h, int c, float *data);
+	Tensor(int n, int c, int w, int h);
+	Tensor(int n, int c, int w, int h, float *data);
 	~Tensor();
+
 	void init_normal(float mean, float std);
 	void zero();
+	
 	std::vector<float> to_vector();
 	void from_vector(std::vector<float> &in);
-  
+	void from_ptr(float const *in);
+  	int size();
+
+	float *ptr() { return data; }
+
 	int n, w, h, c;
 	bool allocated;
 	cudnnTensorDescriptor_t td;
@@ -33,6 +39,10 @@ struct FilterBank {
 
 	int n_weights() { return in_map * out_map * kw * kh; }
 	void init_normal(float mean, float std);
+	std::vector<float> to_vector();
+	void from_vector(std::vector<float> &in);
+
+	float *ptr() { return weights; }
 
 };
 

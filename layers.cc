@@ -19,6 +19,11 @@ ConvolutionLayer::ConvolutionLayer(int in_map, int out_map, int kw, int kh, bool
 	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
 }
 
+void ConvolutionLayer::update(float lr) {
+	add_cuda(filter_bank_grad.ptr(), filter_bank.ptr(), filter_bank.n_weights(), lr);
+	add_cuda(bias_grad.ptr(), bias.ptr(), bias.size(), lr);
+}
+
 void ConvolutionLayer::init_normal(float mean, float std) {
 	filter_bank.init_normal(mean, std);
 	bias.init_normal(mean, std);
@@ -26,10 +31,21 @@ void ConvolutionLayer::init_normal(float mean, float std) {
 
 void ConvolutionLayer::forward(Tensor &input, Tensor &output) {
 	float alpha(1.0), beta(0.0);
-	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM, 0, 0, (void*)&beta, output.td, (void*)output.data));
 
-	float alpha_bias(1), beta_bias(1);
-	handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_SAME_C, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
+	output.init_normal(0, .1);
+
+	vector<float> v1 = output.to_vector();
+	cout << output.to_vector()[0] << endl;
+	// CUDNN_CONVOLUTION_FWD_ALGO_DIRECT
+	// CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM
+	cout << "sizes: " << input.size() << " " << output.size() << " " << filter_bank.n_weights() << endl;
+	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM, 0, 0, &beta, output.td, output.data));
+	vector<float> v2 = output.to_vector();
+	cout << output.to_vector()[0] << endl;
+	cout << (v1 == v2) << endl;
+	throw "sdf";
+	// float alpha_bias(1), beta_bias(1);
+	// handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_SAME_C, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 }
 
 void ConvolutionLayer::backward_weights(Tensor &input, Tensor &output_err) {
@@ -56,7 +72,7 @@ ConvolutionLayer::~ConvolutionLayer() {
 	cudnnDestroyConvolutionDescriptor(conv);
 }
 
-SquashLayer::SquashLayer(Tensor &t, int n) : ConvolutionLayer(t.n, n, t.w, t.h, false) {
+SquashLayer::SquashLayer(Tensor &t, int c) : ConvolutionLayer(t.n, c, t.w, t.h, false) {
 
 }
 
@@ -72,11 +88,11 @@ void TanhLayer::backward(Tensor &in, Tensor &out, Tensor &out_err, Tensor &in_er
 
 void SoftmaxLayer::forward(Tensor &in, Tensor &out) {
 	float alpha(1), beta(0);
-	handle_error( cudnnSoftmaxForward(Handler::cudnn(), CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_CHANNEL, &alpha, in.td, in.data, &beta, out.td, out.data));
+	handle_error( cudnnSoftmaxForward(Handler::cudnn(), CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE, &alpha, in.td, in.data, &beta, out.td, out.data));
 }
 
 void SoftmaxLayer::backward(Tensor &in, Tensor &out_err, Tensor &in_err) {
 	float alpha(1), beta(0);
-	handle_error( cudnnSoftmaxBackward(Handler::cudnn(), CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_CHANNEL, &alpha, in.td, in.data, out_err.td, out_err.data, &beta, in_err.td, in_err.data));
+	handle_error( cudnnSoftmaxBackward(Handler::cudnn(), CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE, &alpha, in.td, in.data, out_err.td, out_err.data, &beta, in_err.td, in_err.data));
 
 }
