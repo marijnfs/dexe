@@ -17,7 +17,7 @@ struct Tensor {
 	std::vector<float> to_vector();
 	void from_vector(std::vector<float> &in);
 	void from_ptr(float const *in);
-  	int size();
+  	int size() const;
 
 	float *ptr() { return data; }
 
@@ -27,6 +27,8 @@ struct Tensor {
 	float *data;
 
 };
+
+Tensor &operator-=(Tensor &in, Tensor const &other);
 
 struct FilterBank {
 	FilterBank(int in_map_, int out_map_, int kw_, int kh_);

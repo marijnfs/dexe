@@ -20,6 +20,7 @@ int main() {
 	int n(1), c1(3), c2(50), h(32), w(32);
 
 	Tensor h1(n, c1, h, w);
+
 	Tensor h2(n, c2, h, w);
 	Tensor h3(n, c2, h, w);
 
@@ -45,6 +46,8 @@ int main() {
 	squash_layer.forward(h3, o1);
 	softmax.forward(o1, o);
 
+	Tensor answer(n, outc, 1, 1);
+	
 	cout << h2.to_vector() << endl;
 	// vector<float> vec2 = t2_map.to_vector();
 	// vec2.resize(10);

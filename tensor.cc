@@ -13,7 +13,8 @@ Tensor::Tensor(int n_, int c_, int w_, int h_):
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
-	handle_error( cudaMalloc( (void**)&data, sizeof(float) * n * c * h * w));
+	size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
+	handle_error( cudaMalloc( (void**)&data, sizeof(float) * even_size));
 	if (ZERO_ON_INIT)
 	  zero();
 }
@@ -53,10 +54,11 @@ void Tensor::from_ptr(float const *in) {
 }
 
 void Tensor::init_normal(float mean, float std) {
-  handle_error( curandGenerateNormal ( Handler::curand(), data, n * w * h * c, mean, std) );
+	size_t even_size(((size() + 1) / 2) * 2);
+  handle_error( curandGenerateNormal ( Handler::curand(), data, even_size, mean, std) );
 }
 
-int Tensor::size() {
+int Tensor::size() const {
 	return n * c * w * h;
 }
 
@@ -86,4 +88,10 @@ vector<float> FilterBank::to_vector() {
 void FilterBank::from_vector(vector<float> &in) {
 	assert(n_weights() == in.size());
  	handle_error( cudaMemcpy(weights, &in[0], in.size() * sizeof(float), cudaMemcpyHostToDevice));
+}
+
+Tensor &operator-=(Tensor &in, Tensor const &other) {
+	assert(in.size() == other.size());
+	add_cuda(other.data, in.data, in.size(), -1);
+	return in;
 }
