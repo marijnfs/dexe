@@ -6,8 +6,8 @@
 ConvolutionLayer::ConvolutionLayer(int in_map, int out_map, int kw, int kh, bool keep):
 	filter_bank(in_map, out_map, kw, kh),
 	filter_bank_grad(in_map, out_map, kw, kh),
-	bias(1, in_map, 1, 1),
-	bias_grad(1, in_map, 1, 1)
+	bias(1, out_map, 1, 1),
+	bias_grad(1, out_map, 1, 1)
 {
 	int pad_h(0), pad_w(0), stride_w(1), stride_h(1), upscalex(1), upscaley(1);
 	if (keep) {
@@ -35,8 +35,8 @@ void ConvolutionLayer::forward(Tensor &input, Tensor &output) {
 	float alpha(1.0), beta(0.0);
 
 	float alpha_bias(1), beta_bias(1);
-	//handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_SAME_C, &alpha_bias, bias.td, bias.data, &beta_bias, input.td, input.data));
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM, 0, 0, &beta, output.td, output.data));
+	handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_SAME_C, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 
 
 }
@@ -44,7 +44,7 @@ void ConvolutionLayer::forward(Tensor &input, Tensor &output) {
 void ConvolutionLayer::backward_weights(Tensor &input, Tensor &output_err) {
 	float alpha_bias(1.0), beta_bias(0.0);
 
-	//handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, output_err.td, output_err.data, &beta_bias, bias_grad.td, bias_grad.data) );
+	handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, output_err.td, output_err.data, &beta_bias, bias_grad.td, bias_grad.data) );
 
 	float alpha(1.0), beta(0.0);
 	handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, output_err.td, output_err.data, conv, &beta, filter_bank_grad.fd, filter_bank_grad.weights) );

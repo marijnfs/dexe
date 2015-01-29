@@ -12,6 +12,7 @@ int main() {
 	// db.floatify();
 
 	double STD(.005);
+	double lr(.005);
 
 	int n(1), c1(3), c2(50), h(32), w(32);
 	int outc(10);
@@ -89,8 +90,8 @@ int main() {
 			tanh_layer.backward(h2, h3, g_h3, g_h2);
 			conv_layer1.backward_weights(h1, g_h2);
 
-			conv_layer1.update(.0003);
-			squash_layer.update(.0003);
+			conv_layer1.update(lr);
+			squash_layer.update(lr);
 
 			err += softmax_loss.loss();
 			n_correct += softmax_loss.n_correct();
