@@ -12,6 +12,9 @@ struct DataBase {
 	
 	caffe::Datum get_image(int index);
 	void floatify();
+	size_t count();
+
+	size_t N;
 };
 
 

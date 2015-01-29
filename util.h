@@ -137,7 +137,7 @@ inline std::ostream &operator<<(std::ostream &out, std::vector<T> &in) {
 	typename std::vector<T>::iterator it = in.begin(), end = in.end();
 	for (; it != end; ++it)
 		out << " " << *it;
-	return out << "]" << endl;
+	return out << "]";
 }
 
 template <typename T>
@@ -146,7 +146,7 @@ inline std::ostream &operator<<(std::ostream &out, std::vector<T> in) {
   typename std::vector<T>::iterator it = in.begin(), end = in.end();
   for (; it != end; ++it)
     out << " " << *it;
-  return out << "]" << endl;
+  return out << "]";
 }
 
 template <typename T>

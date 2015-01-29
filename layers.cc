@@ -20,6 +20,8 @@ ConvolutionLayer::ConvolutionLayer(int in_map, int out_map, int kw, int kh, bool
 }
 
 void ConvolutionLayer::update(float lr) {
+	// cout << filter_bank_grad.to_vector() << endl;
+
 	add_cuda(filter_bank_grad.ptr(), filter_bank.ptr(), filter_bank.n_weights(), lr);
 	add_cuda(bias_grad.ptr(), bias.ptr(), bias.size(), lr);
 }
@@ -31,8 +33,6 @@ void ConvolutionLayer::init_normal(float mean, float std) {
 
 void ConvolutionLayer::forward(Tensor &input, Tensor &output) {
 	float alpha(1.0), beta(0.0);
-
-	output.init_normal(0, .1);
 
 	float alpha_bias(1), beta_bias(1);
 	handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_SAME_C, &alpha_bias, bias.td, bias.data, &beta_bias, input.td, input.data));
@@ -46,7 +46,7 @@ void ConvolutionLayer::backward_weights(Tensor &input, Tensor &output_err) {
 
 	handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, output_err.td, output_err.data, &beta_bias, bias_grad.td, bias_grad.data) );
 
-	float alpha(1.0), beta(1.0);
+	float alpha(1.0), beta(0.0);
 	handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, output_err.td, output_err.data, conv, &beta, filter_bank_grad.fd, filter_bank_grad.weights) );
 }
 
@@ -65,7 +65,7 @@ ConvolutionLayer::~ConvolutionLayer() {
 	cudnnDestroyConvolutionDescriptor(conv);
 }
 
-SquashLayer::SquashLayer(Tensor &t, int c) : ConvolutionLayer(t.n, c, t.w, t.h, false) {
+SquashLayer::SquashLayer(Tensor &t, int c) : ConvolutionLayer(t.c, c, t.w, t.h, false) {
 
 }
 
@@ -90,21 +90,31 @@ void SoftmaxLayer::backward(Tensor &in, Tensor &out_err, Tensor &in_err) {
 
 }
 
-SoftmaxLossLayer::SoftmaxLossLayer(int n_, int c_) : n(n_), c(c_), err(n_, c_, 1, 1) {
+SoftmaxLossLayer::SoftmaxLossLayer(int n_, int c_) : n(n_), c(c_), err(n_, c_, 1, 1), last_loss(0) {
 
 }
 
 void SoftmaxLossLayer::forward(Tensor &in, vector<int> answers) {
+	last_loss = 0;
+	const float e(.000000001);
 	vector<float> err_v(err.size());
-	for (size_t i(0); i < answers.size(); i++)
+	vector<float> prob = in.to_vector();
+	for (size_t i(0); i < answers.size(); i++) {
 		err_v[answers[i] + i * c] = 1.0;
+		last_loss += -log(prob[answers[i]] + e);
+	}
 	err.from_vector(err_v);
-
 	err -= in;
 }
 
 void SoftmaxLossLayer::forward(Tensor &in, int answer) {
+	vector<int> answers(1);
+	answers[0] = answer;
+	forward(in, answers);
+}
 
+float SoftmaxLossLayer::loss() {
+	return last_loss;
 }
 
 void SoftmaxLossLayer::backward(Tensor &in, Tensor &err) {

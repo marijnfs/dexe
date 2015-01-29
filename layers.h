@@ -49,8 +49,12 @@ struct SoftmaxLossLayer {
 
 	void backward(Tensor &in, Tensor &err);
 
+	float loss();
+
 	int n, c;
 	Tensor err;
+
+	float last_loss;
 };
 
 #endif

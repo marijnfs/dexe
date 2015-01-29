@@ -7,7 +7,7 @@ using namespace std;
 using namespace leveldb;
 using namespace caffe;
 
-DataBase::DataBase(string path) {
+DataBase::DataBase(string path) : N(0) {
 	options.create_if_missing = true;
 	Status status = DB::Open(options, path, &db);
 
@@ -17,6 +17,7 @@ DataBase::DataBase(string path) {
 		return;
 	}
 
+	N = count();
 }
 
 DataBase::~DataBase() {
@@ -49,6 +50,15 @@ void DataBase::floatify() {
 		datum.SerializeToString(&output);
 		db->Put(leveldb::WriteOptions(), it->key(), output);
 	}
+}
+
+size_t DataBase::count() {
+	Iterator* it = db->NewIterator(leveldb::ReadOptions());
+
+	size_t N(0);
+	for (it->SeekToFirst(); it->Valid(); it->Next())
+		++N;
+	return N;
 }
 
 caffe::Datum DataBase::get_image(int index) {
