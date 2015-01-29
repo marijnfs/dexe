@@ -131,19 +131,19 @@ inline void add_cuda(float const *from, float *to, int n, float const alpha) {
   handle_error(cublasSaxpy(Handler::cublas(), n, &alpha, from, 1, to, 1));
 }
 
-template <typename T>
-inline std::ostream &operator<<(std::ostream &out, std::vector<T> &in) {
-	out << "[";
-	typename std::vector<T>::iterator it = in.begin(), end = in.end();
-	for (; it != end; ++it)
-		out << " " << *it;
-	return out << "]";
-}
+/* template <typename T> */
+/* inline std::ostream &operator<<(std::ostream &out, std::vector<T> &in) { */
+/* 	out << "["; */
+/* 	typename std::vector<T>::const_iterator it = in.begin(), end = in.end(); */
+/* 	for (; it != end; ++it) */
+/* 		out << " " << *it; */
+/* 	return out << "]"; */
+/* } */
 
 template <typename T>
 inline std::ostream &operator<<(std::ostream &out, std::vector<T> in) {
   out << "[";
-  typename std::vector<T>::iterator it = in.begin(), end = in.end();
+  typename std::vector<T>::const_iterator it = in.begin(), end = in.end();
   for (; it != end; ++it)
     out << " " << *it;
   return out << "]";

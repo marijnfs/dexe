@@ -31,6 +31,15 @@ struct SquashLayer : ConvolutionLayer {
 	SquashLayer(Tensor &t, int c);
 };
 
+struct PoolingLayer {
+	PoolingLayer(int w, int h);
+	void forward(Tensor &in, Tensor &out);
+	void backward(Tensor &in, Tensor &out, Tensor &out_err, Tensor &in_err);
+
+	int w, h;
+	cudnnPoolingDescriptor_t pool;
+};
+
 struct TanhLayer {
 	void forward(Tensor &in, Tensor &out);
 	void backward(Tensor &in, Tensor &out, Tensor &out_err, Tensor &in_err);
@@ -38,7 +47,7 @@ struct TanhLayer {
 
 struct SoftmaxLayer {
 	void forward(Tensor &in, Tensor &out);
-	void backward(Tensor &in, Tensor &out_err, Tensor &in_err);
+	void backward(Tensor &out, Tensor &out_err, Tensor &in_err);
 };
 
 struct SoftmaxLossLayer {
@@ -50,11 +59,13 @@ struct SoftmaxLossLayer {
 	void backward(Tensor &in, Tensor &err);
 
 	float loss();
+	int n_correct();
 
 	int n, c;
 	Tensor err;
 
 	float last_loss;
+	int last_correct;
 };
 
 #endif

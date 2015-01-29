@@ -19,6 +19,7 @@ int main() {
 	Tensor h1(n, c1, h, w);
 	Tensor h2(n, c2, h, w);
 	Tensor h3(n, c2, h, w);
+	Tensor h4(n, c2, h/4, w/4);
 
 	Tensor o1(n, outc, 1, 1); 
 	Tensor o(n, outc, 1, 1);
@@ -27,24 +28,28 @@ int main() {
 	Tensor g_h1(n, c1, h, w);
 	Tensor g_h2(n, c2, h, w);
 	Tensor g_h3(n, c2, h, w);
+	Tensor g_h4(n, c2, h/4, w/4);
 
 	Tensor g_o1(n, outc, 1, 1); 
 
 
 	ConvolutionLayer conv_layer1(c1, c2, 5, 5);
 	TanhLayer tanh_layer;
-	SquashLayer squash_layer(h3, 10);
+	PoolingLayer pool_layer(4, 4);
+	SquashLayer squash_layer(h4, 10);
 	SoftmaxLayer softmax;
 	SoftmaxLossLayer softmax_loss(n, outc);
 
 	conv_layer1.init_normal(0, STD);
 	squash_layer.init_normal(0, STD);
 
-	for (size_t e(0); e < 10; ++e) {
+	for (size_t e(0); e < 50; ++e) {
 		Timer t;
 		float err(0);
+		int n_correct(0);
 
 		for (size_t i(0); i < db.N; ++i) {
+			//cout << i << endl;
 			caffe::Datum datum = db.get_image(i);
 
 
@@ -54,26 +59,49 @@ int main() {
 			
 			conv_layer1.forward(h1, h2);
 			tanh_layer.forward(h2, h3);
-			squash_layer.forward(h3, o1);
-			softmax.forward(o1, o);
+			pool_layer.forward(h3, h4);
 
+			squash_layer.forward(h4, o1);
+
+			softmax.forward(o1, o);
+			
 			// cout << o.to_vector() << endl;
 			softmax_loss.forward(o, datum.label());
-			softmax.backward(o1, softmax_loss.err, g_o1);
+			if (isnan(o.to_vector()[0])) {
+				//cout << "h1:" <<  h1.to_vector() << endl;
+				//cout << "h2:" <<  h2.to_vector() << endl;
+				//cout << "h3:" <<  h3.to_vector() << endl;
+				
+				cout << o1.to_vector() << endl;
+				cout << o.to_vector() << endl;
+			}
 			
-			squash_layer.backward_weights(h3, g_o1);
-			squash_layer.backward_input(g_o1, g_h3);
+			softmax.backward(o, softmax_loss.err, g_o1);
+			
+			squash_layer.backward_weights(h4, g_o1);
+			squash_layer.backward_input(g_o1, g_h4);
+
+			pool_layer.backward(h3, h4, g_h4, g_h3);
+
 			// cout << squash_layer.filter_bank_grad.to_vector() << endl;
 			// return -1;
 			
 			tanh_layer.backward(h2, h3, g_h3, g_h2);
 			conv_layer1.backward_weights(h1, g_h2);
 
-			conv_layer1.update(.0002);
-			squash_layer.update(.0002);
+			conv_layer1.update(.0003);
+			squash_layer.update(.0003);
 
 			err += softmax_loss.loss();
-			if (i % 5000 == 0) cout << i << " " << datum.label() << " " << o.to_vector() << endl;
+			n_correct += softmax_loss.n_correct();
+			
+			if (i % 5000 == 0) {
+				vector<float> ov = o.to_vector();
+				cout << i << " " << datum.label() << " " << ov << " " << ov[datum.label()] << endl;
+				cout << conv_layer1.filter_bank.to_vector()[0] << endl;
+				cout << squash_layer.filter_bank.to_vector()[0] << endl;
+
+			}
 			// conv_layer1.backward_input(g_h2, g_h1);
 
 			// cout << h2.to_vector() << endl;
@@ -83,7 +111,7 @@ int main() {
 
 			// Tensor out(n, w2, h2, 2);
 		}
-		cout << "elapsed: " << t.since() << " err: " << (err / db.N) << endl;
+		cout << "elapsed: " << t.since() << " err: " << (err / db.N) << " correct: " << n_correct << "/" << db.N << endl;
 
 	}
 }
