@@ -158,4 +158,20 @@ inline bool operator==(std::vector<T> &v1, std::vector<T> &v2) {
   return true;
 }
 
+template <typename T>
+inline T &last(std::vector<T> &v) {
+	return v[v.size() - 1];
+}
+
+template <typename T>
+inline T &first(std::vector<T> &v) {
+	return v[0];
+}
+
+template <typename T>
+inline void del_vec(std::vector<T*> &v) {
+	for (size_t i(0); i < v.size(); ++i)
+		delete v[i];
+}
+
 #endif

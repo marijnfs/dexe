@@ -8,7 +8,7 @@
 const bool ZERO_ON_INIT(true);
 
 struct TensorShape {
-	int n, w, h, c;
+	int n, c, w, h;
 };
 
 struct Tensor {
@@ -43,7 +43,8 @@ struct TensorSet {
 	Tensor x, grad;
 
 	TensorSet(int n, int c, int w, int h);
-	int n, w, h, c;
+	TensorSet(Tensor shape);
+	int n, c, w, h;
 };
 
 struct FilterBank {

@@ -85,17 +85,20 @@ TensorShape Tensor::shape() const {
 }
 
 TensorSet::TensorSet(int n_, int c_, int w_, int h_) : 
-	n(n_), c(c_), w(w_), h(h_), x(n, c, w, h), grad(n, c, w, h)
+	n(n_), c(c_), w(w_), h(h_), x(n_, c_, w_, h_), grad(n_, c_, w_, h_)
 {
 }
 
+TensorSet::TensorSet(Tensor s) : n(s.n), c(s.c), w(s.w), h(s.h), x(s.n, s.c, s.w, s.h), grad(s.n, s.c, s.w, s.h) {
+	cout << "created set with shape: " << x.shape() << endl;
+}
 
 FilterBank::FilterBank(int in_map_, int out_map_, int kw_, int kh_): 
   in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_)
 {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
 	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_FLOAT, out_map, in_map, kh, kw));
-	handle_error(cudaMalloc( (void**)&weights, sizeof(float) * out_map * in_map * kw * kh));
+	handle_error( cudaMalloc( (void**)&weights, sizeof(float) * out_map * in_map * kw * kh));
 }
 
 FilterBank::~FilterBank() {
