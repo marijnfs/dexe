@@ -1,7 +1,7 @@
 #include <cudnn.h>
 #include <iostream>
 #include <stdint.h>
-#include "layers.h"
+#include "operations.h"
 #include "util.h"
 #include "database.h"
 
@@ -34,15 +34,15 @@ int main() {
 	Tensor g_o1(n, outc, 1, 1); 
 
 
-	ConvolutionLayer conv_layer1(c1, c2, 5, 5);
-	TanhLayer tanh_layer;
-	PoolingLayer pool_layer(4, 4);
-	SquashLayer squash_layer(h4, 10);
-	SoftmaxLayer softmax;
-	SoftmaxLossLayer softmax_loss(n, outc);
+	ConvolutionOperation conv_operation1(c1, c2, 5, 5);
+	TanhOperation tanh_operation;
+	PoolingOperation pool_operation(4, 4);
+	SquashOperation squash_operation(h4, 10);
+	SoftmaxOperation softmax;
+	SoftmaxLossOperation softmax_loss(n, outc);
 
-	conv_layer1.init_normal(0, STD);
-	squash_layer.init_normal(0, STD);
+	conv_operation1.init_normal(0, STD);
+	squash_operation.init_normal(0, STD);
 
 	for (size_t e(0); e < 50; ++e) {
 		Timer t;
@@ -53,16 +53,15 @@ int main() {
 			//cout << i << endl;
 			caffe::Datum datum = db.get_image(i);
 
-
 			const float *img_data = datum.float_data().data();
 
 			h1.from_ptr(img_data);
 			
-			conv_layer1.forward(h1, h2);
-			tanh_layer.forward(h2, h3);
-			pool_layer.forward(h3, h4);
+			conv_operation1.forward(h1, h2);
+			tanh_operation.forward(h2, h3);
+			pool_operation.forward(h3, h4);
 
-			squash_layer.forward(h4, o1);
+			squash_operation.forward(h4, o1);
 
 			softmax.forward(o1, o);
 			
@@ -77,21 +76,21 @@ int main() {
 				cout << o.to_vector() << endl;
 			}
 			
-			softmax.backward(o, softmax_loss.err, g_o1);
+			softmax.backward(o1, o, softmax_loss.err, g_o1);
 			
-			squash_layer.backward_weights(h4, g_o1);
-			squash_layer.backward_input(g_o1, g_h4);
+			squash_operation.backward_weights(h4, g_o1);
+			squash_operation.backward(h4, o1, g_o1, g_h4);
 
-			pool_layer.backward(h3, h4, g_h4, g_h3);
+			pool_operation.backward(h3, h4, g_h4, g_h3);
 
-			// cout << squash_layer.filter_bank_grad.to_vector() << endl;
+			// cout << squash_operation.filter_bank_grad.to_vector() << endl;
 			// return -1;
 			
-			tanh_layer.backward(h2, h3, g_h3, g_h2);
-			conv_layer1.backward_weights(h1, g_h2);
+			tanh_operation.backward(h2, h3, g_h3, g_h2);
+			conv_operation1.backward_weights(h1, g_h2);
 
-			conv_layer1.update(lr);
-			squash_layer.update(lr);
+			conv_operation1.update(lr);
+			squash_operation.update(lr);
 
 			err += softmax_loss.loss();
 			n_correct += softmax_loss.n_correct();
@@ -99,11 +98,11 @@ int main() {
 			if (i % 5000 == 0) {
 				vector<float> ov = o.to_vector();
 				cout << i << " " << datum.label() << " " << ov << " " << ov[datum.label()] << endl;
-				cout << conv_layer1.filter_bank.to_vector()[0] << endl;
-				cout << squash_layer.filter_bank.to_vector()[0] << endl;
+				cout << conv_operation1.filter_bank.to_vector()[0] << endl;
+				cout << squash_operation.filter_bank.to_vector()[0] << endl;
 
 			}
-			// conv_layer1.backward_input(g_h2, g_h1);
+			// conv_operation1.backward_input(g_h2, g_h1);
 
 			// cout << h2.to_vector() << endl;
 			// vector<float> vec2 = t2_map.to_vector();

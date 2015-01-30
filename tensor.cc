@@ -1,7 +1,7 @@
 #include <cassert>
 
 #include "tensor.h"
-#include "layers.h"
+#include "util.h"
 #include "handler.h"
 
 using namespace std;
@@ -21,6 +21,24 @@ Tensor::Tensor(int n_, int c_, int w_, int h_):
 
 Tensor::Tensor(int n_, int c_, int w_, int h_, float *data_): 
   n(n_), w(w_), h(h_), c(c_), allocated(false), data(data_)
+{
+	handle_error( cudnnCreateTensorDescriptor(&td));
+	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
+}
+
+Tensor::Tensor(TensorShape s): 
+  n(s.n), w(s.w), h(s.h), c(s.c), allocated(true)
+{
+	handle_error( cudnnCreateTensorDescriptor(&td));
+	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
+	size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
+	handle_error( cudaMalloc( (void**)&data, sizeof(float) * even_size));
+	if (ZERO_ON_INIT)
+	  zero();
+}
+
+Tensor::Tensor(TensorShape s, float *data_): 
+  n(s.n), w(s.w), h(s.h), c(s.c), allocated(false), data(data_)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
@@ -61,6 +79,16 @@ void Tensor::init_normal(float mean, float std) {
 int Tensor::size() const {
 	return n * c * w * h;
 }
+
+TensorShape Tensor::shape() const {
+	return TensorShape{n, c, w, h};
+}
+
+TensorSet::TensorSet(int n_, int c_, int w_, int h_) : 
+	n(n_), c(c_), w(w_), h(h_), x(n, c, w, h), grad(n, c, w, h)
+{
+}
+
 
 FilterBank::FilterBank(int in_map_, int out_map_, int kw_, int kh_): 
   in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_)
