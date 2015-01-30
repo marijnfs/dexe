@@ -8,6 +8,7 @@
 #include <curand.h>
 #include <time.h>
 #include <stdint.h>
+#include <algorithm>
 
 #include "handler.h"
 
@@ -172,6 +173,11 @@ template <typename T>
 inline void del_vec(std::vector<T*> &v) {
 	for (size_t i(0); i < v.size(); ++i)
 		delete v[i];
+}
+
+template <typename T>
+inline void random_shuffle(std::vector<T> &v) {
+	random_shuffle(v.begin(), v.end());
 }
 
 #endif
