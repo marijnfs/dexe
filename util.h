@@ -146,7 +146,10 @@ inline std::ostream &operator<<(std::ostream &out, std::vector<T> in) {
   out << "[";
   typename std::vector<T>::const_iterator it = in.begin(), end = in.end();
   for (; it != end; ++it)
-    out << " " << *it;
+	  if (it == in.begin())
+		  out << *it;
+	  else
+		  out << " " << *it;
   return out << "]";
 }
 
@@ -176,8 +179,31 @@ inline void del_vec(std::vector<T*> &v) {
 }
 
 template <typename T>
+inline void fill(std::vector<T> &v, T val) {
+	fill(v.begin(), v.end(), val);
+}
+
+template <typename T>
 inline void random_shuffle(std::vector<T> &v) {
 	random_shuffle(v.begin(), v.end());
 }
+
+template <typename T>
+inline T abs(T a) {
+	return a > 0.0 ? a : -a;
+}
+
+struct Indices {
+    Indices(int n) : indices(n) {
+	    for (size_t i(0); i < n; ++i) indices[i] = i;
+    }
+
+	void shuffle() { random_shuffle(indices); }
+	int operator[](int n) {
+		return indices[n];
+	}
+	
+	std::vector<int> indices;
+};
 
 #endif

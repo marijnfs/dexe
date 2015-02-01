@@ -67,13 +67,23 @@ void Tensor::from_vector(vector<float> &in) {
  	handle_error( cudaMemcpy(data, &in[0], in.size() * sizeof(float), cudaMemcpyHostToDevice));
 }
 
+void Tensor::from_tensor(Tensor &in) {
+ 	handle_error( cudaMemcpy(data, in.data, in.size() * sizeof(float), cudaMemcpyDeviceToDevice));
+}
+
 void Tensor::from_ptr(float const *in) {
 	handle_error( cudaMemcpy(data, in, size() * sizeof(float), cudaMemcpyHostToDevice));	
 }
 
 void Tensor::init_normal(float mean, float std) {
 	size_t even_size(((size() + 1) / 2) * 2);
-  handle_error( curandGenerateNormal ( Handler::curand(), data, even_size, mean, std) );
+	handle_error( curandGenerateNormal ( Handler::curand(), data, even_size, mean, std) );
+}
+
+void Tensor::fill(float val) {
+	vector<float> vals(size());
+	::fill<float>(vals, val);
+	from_vector(vals);
 }
 
 int Tensor::size() const {
@@ -87,6 +97,10 @@ TensorShape Tensor::shape() const {
 TensorSet::TensorSet(int n_, int c_, int w_, int h_) : 
 	n(n_), c(c_), w(w_), h(h_), x(n_, c_, w_, h_), grad(n_, c_, w_, h_)
 {
+}
+
+TensorShape TensorSet::shape() const {
+	return x.shape();
 }
 
 TensorSet::TensorSet(Tensor s) : n(s.n), c(s.c), w(s.w), h(s.h), x(s.n, s.c, s.w, s.h), grad(s.n, s.c, s.w, s.h) {
@@ -107,7 +121,8 @@ FilterBank::~FilterBank() {
 }
 
 void FilterBank::init_normal(float mean, float std) {
-	handle_error( curandGenerateNormal ( Handler::curand(), weights, n_weights(), mean, std) );
+	size_t even_size(((n_weights() + 1) / 2) * 2);
+	handle_error( curandGenerateNormal ( Handler::curand(), weights, even_size, mean, std) );
 }
 
 vector<float> FilterBank::to_vector() {
@@ -119,6 +134,12 @@ vector<float> FilterBank::to_vector() {
 void FilterBank::from_vector(vector<float> &in) {
 	assert(n_weights() == in.size());
  	handle_error( cudaMemcpy(weights, &in[0], in.size() * sizeof(float), cudaMemcpyHostToDevice));
+}
+
+void FilterBank::fill(float val) {
+	vector<float> vals(n_weights());
+	::fill<float>(vals, val);
+	from_vector(vals);
 }
 
 Tensor &operator-=(Tensor &in, Tensor const &other) {

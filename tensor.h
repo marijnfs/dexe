@@ -24,12 +24,15 @@ struct Tensor {
 	std::vector<float> to_vector();
 	void from_vector(std::vector<float> &in);
 	void from_ptr(float const *in);
+	void from_tensor(Tensor &in);
+	void fill(float val);
+
   	int size() const;
 	TensorShape shape() const;
 
 	float *ptr() { return data; }
 
-	int n, w, h, c;
+	int n, c, w, h;
 	bool allocated;
 	cudnnTensorDescriptor_t td;
 	float *data;
@@ -44,6 +47,8 @@ struct TensorSet {
 
 	TensorSet(int n, int c, int w, int h);
 	TensorSet(Tensor shape);
+	TensorShape shape() const;
+
 	int n, c, w, h;
 };
 
@@ -60,6 +65,7 @@ struct FilterBank {
 	void init_normal(float mean, float std);
 	std::vector<float> to_vector();
 	void from_vector(std::vector<float> &in);
+	void fill(float val);
 
 	float *ptr() { return weights; }
 
