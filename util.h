@@ -130,6 +130,10 @@ inline void add_cuda(float const *from, float *to, int n, float const alpha) {
   handle_error(cublasSaxpy(Handler::cublas(), n, &alpha, from, 1, to, 1));
 }
 
+inline void scale_cuda(float *data, int n, float const alpha) {
+	handle_error( cublasSscal(Handler::cublas(), n, &alpha, data, 1) );
+}
+
 /* template <typename T> */
 /* inline std::ostream &operator<<(std::ostream &out, std::vector<T> &in) { */
 /* 	out << "["; */
