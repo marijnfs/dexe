@@ -10,10 +10,10 @@
 #include "util.h"
 
 struct Operation {
-	virtual void forward(Tensor &in, Tensor &out){}
+	virtual void forward(Tensor<float> &in, Tensor<float> &out){}
 
-	virtual void backward_weights(Tensor &in, Tensor &out_grad){}
-	virtual void backward(Tensor &in, Tensor &out, Tensor &out_grad, Tensor &in_grad){}
+	virtual void backward_weights(Tensor<float> &in, Tensor<float> &out_grad){}
+	virtual void backward(Tensor<float> &in, Tensor<float> &out, Tensor<float> &out_grad, Tensor<float> &in_grad){}
 	virtual TensorShape output_shape(TensorShape input) { return TensorShape{0, 0, 0, 0}; }
 };
 
@@ -32,10 +32,10 @@ struct ConvolutionOperation : public Operation, public Parametrised {
 
 	void init_normal(float mean, float std);
 
-	void forward(Tensor &in, Tensor &out);
+	void forward(Tensor<float> &in, Tensor<float> &out);
 
-	void backward_weights(Tensor &in, Tensor &out_grad);
-	void backward(Tensor &in, Tensor &out, Tensor &out_grad, Tensor &in_grad);
+	void backward_weights(Tensor<float> &in, Tensor<float> &out_grad);
+	void backward(Tensor<float> &in, Tensor<float> &out, Tensor<float> &out_grad, Tensor<float> &in_grad);
 	void update(float lr);
 	void l2(float l);
 
@@ -46,8 +46,8 @@ struct ConvolutionOperation : public Operation, public Parametrised {
 	TensorShape output_shape(TensorShape input);
 
 	cudnnConvolutionDescriptor_t conv;
-	FilterBank filter_bank, filter_bank_grad;
-	Tensor bias, bias_grad;
+	FilterBank<float> filter_bank, filter_bank_grad;
+	Tensor<float> bias, bias_grad;
 };
 
 struct SquashOperation : ConvolutionOperation {
@@ -59,8 +59,8 @@ struct SquashOperation : ConvolutionOperation {
 
 struct PoolingOperation : public Operation {
 	PoolingOperation(int kw, int kh);
-	void forward(Tensor &in, Tensor &out);
-	void backward(Tensor &in, Tensor &out, Tensor &out_grad, Tensor &in_grad);
+	void forward(Tensor<float> &in, Tensor<float> &out);
+	void backward(Tensor<float> &in, Tensor<float> &out, Tensor<float> &out_grad, Tensor<float> &in_grad);
 
 	TensorShape output_shape(TensorShape input);
 
@@ -69,23 +69,23 @@ struct PoolingOperation : public Operation {
 };
 
 struct TanhOperation : public Operation {
-	void forward(Tensor &in, Tensor &out);
-	void backward(Tensor &in, Tensor &out, Tensor &out_grad, Tensor &in_grad);
+	void forward(Tensor<float> &in, Tensor<float> &out);
+	void backward(Tensor<float> &in, Tensor<float> &out, Tensor<float> &out_grad, Tensor<float> &in_grad);
 
 	TensorShape output_shape(TensorShape input);
 };
 
 struct ReluOperation : public Operation {
-	void forward(Tensor &in, Tensor &out);
-	void backward(Tensor &in, Tensor &out, Tensor &out_grad, Tensor &in_grad);
+	void forward(Tensor<float> &in, Tensor<float> &out);
+	void backward(Tensor<float> &in, Tensor<float> &out, Tensor<float> &out_grad, Tensor<float> &in_grad);
 
 	TensorShape output_shape(TensorShape input);
 };
 
 struct SoftmaxOperation : public Operation {
 	SoftmaxOperation(bool matched = true);
-	void forward(Tensor &in, Tensor &out);
-	void backward(Tensor &in, Tensor &out, Tensor &out_grad, Tensor &in_grad);
+	void forward(Tensor<float> &in, Tensor<float> &out);
+	void backward(Tensor<float> &in, Tensor<float> &out, Tensor<float> &out_grad, Tensor<float> &in_grad);
 
 	TensorShape output_shape(TensorShape input);
 	bool matched;

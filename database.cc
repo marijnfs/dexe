@@ -1,4 +1,6 @@
 #include "database.h"
+#include "util.h"
+
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -24,7 +26,7 @@ DataBase::~DataBase() {
 	delete db;
 }
 
-void DataBase::floatify() {
+void DataBase::normalize() {
 	Iterator* it = db->NewIterator(leveldb::ReadOptions());
 
 	for (it->SeekToFirst(); it->Valid(); it->Next())
@@ -37,15 +39,23 @@ void DataBase::floatify() {
 			return;
 		}
 
+		vector<float> data;
+		copy(datum.data().begin(), datum.data().end(), back_inserter(data));
 
-		datum.clear_float_data();
-		vector<float> data(datum.data().size());
+		float mean(0);
+		for (size_t i(0); i < data.size(); ++i) mean += data[i];
+		mean /= data.size();
+		for (size_t i(0); i < data.size(); ++i) data[i] -= mean;
+		float std(0);
+		for (size_t i(0); i < data.size(); ++i) std += data[i] * data[i];
+		std = sqrt(std / (data.size() - 1));
+		for (size_t i(0); i < data.size(); ++i) data[i] /= std * 3;
+		
+		datum.clear_float_data();		
 		for (size_t i(0); i < data.size(); ++i) {
-			// cout << int(datum.data()[i]) << endl;
-			float val = float(datum.data()[i]) / (255 / 2);
-			datum.add_float_data(val);
-			// cout << data[i] << " ";
+			datum.add_float_data(data[i]);
 		}
+
 		string output;
 		datum.SerializeToString(&output);
 		db->Put(leveldb::WriteOptions(), it->key(), output);

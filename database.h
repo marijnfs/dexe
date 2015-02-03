@@ -11,7 +11,7 @@ struct DataBase {
 	~DataBase();
 	
 	caffe::Datum get_image(int index);
-	void floatify();
+	void normalize();
 	size_t count();
 
 	size_t N;

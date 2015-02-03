@@ -126,12 +126,30 @@ inline void handle_error(cudnnStatus_t status) {
 	}
 }
 
+template <typename F>
+inline void add_cuda(F const *from, F *to, int n, F const alpha);
+
+template <>
 inline void add_cuda(float const *from, float *to, int n, float const alpha) {
   handle_error(cublasSaxpy(Handler::cublas(), n, &alpha, from, 1, to, 1));
 }
 
+template <>
+inline void add_cuda<double>(double const *from, double *to, int n, double const alpha) {
+  handle_error(cublasDaxpy(Handler::cublas(), n, &alpha, from, 1, to, 1));
+}
+
+template <typename F>
+inline void scale_cuda(F *data, int n, F const alpha);
+
+template <>
 inline void scale_cuda(float *data, int n, float const alpha) {
 	handle_error( cublasSscal(Handler::cublas(), n, &alpha, data, 1) );
+}
+
+template <>
+inline void scale_cuda(double *data, int n, double const alpha) {
+	handle_error( cublasDscal(Handler::cublas(), n, &alpha, data, 1) );
 }
 
 /* template <typename T> */
@@ -201,9 +219,7 @@ struct Indices {
     }
 
 	void shuffle() { random_shuffle(indices); }
-	int operator[](int n) {
-		return indices[n];
-	}
+	int operator[](int n) { return indices[n]; }
 	
 	std::vector<int> indices;
 };

@@ -7,8 +7,8 @@
 struct Loss {
 	Loss(int n, int c);
 
-	virtual void calculate_loss(Tensor &in, std::vector<int> answers, Tensor &err) = 0;
-	virtual void calculate_loss(Tensor &in, int answer, Tensor &err);
+	virtual void calculate_loss(Tensor<float> &in, std::vector<int> answers, Tensor<float> &err) = 0;
+	virtual void calculate_loss(Tensor<float> &in, int answer, Tensor<float> &err);
 
 	virtual float loss();
 	virtual int n_correct();
@@ -22,13 +22,13 @@ struct Loss {
 struct SoftmaxLoss : public Loss {
 	SoftmaxLoss(int n, int c);
 
-	void calculate_loss(Tensor &in, std::vector<int> answers, Tensor &err);
+	void calculate_loss(Tensor<float> &in, std::vector<int> answers, Tensor<float> &err);
 };
 
 struct SquaredLoss : public Loss {
 	SquaredLoss(int n, int c);
 
-	void calculate_loss(Tensor &in, std::vector<int> answers, Tensor &err);
+	void calculate_loss(Tensor<float> &in, std::vector<int> answers, Tensor<float> &err);
 };
 
 #endif

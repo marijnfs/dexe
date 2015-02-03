@@ -37,13 +37,13 @@ struct Network {
 
 
 
-	Tensor &output();
+	Tensor<float> &output();
 	float loss();
 	float n_correct();
 
 	std::vector<Parametrised*> params;
 	std::vector<Operation*> operations;
-	std::vector<TensorSet*> tensors;
+	std::vector<TensorSet<float>*> tensors;
 	std::vector<TensorShape> shapes;
 
 	Loss *loss_ptr;

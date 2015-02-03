@@ -11,47 +11,49 @@ struct TensorShape {
 	int n, c, w, h;
 };
 
+template <typename F>
 struct Tensor {
 	Tensor(int n, int c, int w, int h);
-	Tensor(int n, int c, int w, int h, float *data);
+	Tensor(int n, int c, int w, int h, F *data);
 	Tensor(TensorShape shape);
-	Tensor(TensorShape shape, float *data);
+	Tensor(TensorShape shape, F *data);
 	~Tensor();
 
-	void init_normal(float mean, float std);
+	void init_normal(F mean, F std);
 	void zero();
 	
-	std::vector<float> to_vector();
-	void from_vector(std::vector<float> &in);
-	void from_ptr(float const *in);
+	std::vector<F> to_vector();
+	void from_vector(std::vector<F> &in);
+	void from_ptr(F const *in);
 	void from_tensor(Tensor &in);
-	void fill(float val);
+	void fill(F val);
 
   	int size() const;
 	TensorShape shape() const;
 
-	float *ptr() { return data; }
+	F *ptr() { return data; }
 
 	int n, c, w, h;
 	bool allocated;
 	cudnnTensorDescriptor_t td;
-	float *data;
-
+	F *data;
 };
 
-Tensor &operator-=(Tensor &in, Tensor const &other);
+template <typename F>
+Tensor<F> &operator-=(Tensor<F> &in, Tensor<F> const &other);
 
-
+template <typename F>
 struct TensorSet {
-	Tensor x, grad;
+	Tensor<F> x, grad;
 
 	TensorSet(int n, int c, int w, int h);
-	TensorSet(Tensor shape);
+	TensorSet(TensorShape shape);
 	TensorShape shape() const;
 
 	int n, c, w, h;
 };
 
+template <typename F>
 struct FilterBank {
 	FilterBank(int in_map_, int out_map_, int kw_, int kh_);
 	~FilterBank();
@@ -59,16 +61,16 @@ struct FilterBank {
 	int kw, kh;
 	cudnnFilterDescriptor_t fd;
 
-	float *weights;
+	F *weights;
 
 	int n_weights() { return in_map * out_map * kw * kh; }
-	void init_normal(float mean, float std);
-	std::vector<float> to_vector();
-	void from_vector(std::vector<float> &in);
-	void fill(float val);
+	void init_normal(F mean, F std);
+	std::vector<F> to_vector();
+	void from_vector(std::vector<F> &in);
+	void fill(F val);
 	void zero();
 
-	float *ptr() { return weights; }
+	F *ptr() { return weights; }
 
 };
 

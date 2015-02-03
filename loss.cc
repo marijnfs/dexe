@@ -4,10 +4,11 @@
 using namespace std;
 
 Loss::Loss(int n_, int c_) : n(n_), c(c_), last_loss(0), last_correct(0) {
-}
 
-void Loss::calculate_loss(Tensor &in, int answer, Tensor &err) {
-	vector<int> answers(1);
+}
+	
+void Loss::calculate_loss(Tensor<float> &in, int answer, Tensor<float> &err) {
+    vector<int> answers(1);
 	answers[0] = answer;
 	calculate_loss(in, answers, err);
 }
@@ -23,15 +24,16 @@ int Loss::n_correct() {
 SoftmaxLoss::SoftmaxLoss(int n_, int c_) : Loss(n_, c_) {
 }
 
-void SoftmaxLoss::calculate_loss(Tensor &in, vector<int> answers, Tensor &err) {
-	last_loss = 0;
+void SoftmaxLoss::calculate_loss(Tensor<float> &in, vector<int> answers, Tensor<float> &err) {
+    last_loss = 0;
 	last_correct = 0;
 	const float e(.00000001);
 	vector<float> err_v(err.size());
 	vector<float> prob = in.to_vector();
 
-	for (size_t i(0); i < answers.size(); i++) {
-		err_v[answers[i] + i * c] = 1.0;
+    for (size_t i(0); i < answers.size(); i++) {
+        err_v[answers[i] + i * c] = 1.0;
+
 		last_loss += -log(prob[answers[i]] + e);
 		int max(0);
 		float max_prob(0);
@@ -51,10 +53,10 @@ void SoftmaxLoss::calculate_loss(Tensor &in, vector<int> answers, Tensor &err) {
 SquaredLoss::SquaredLoss(int n_, int c_) : Loss(n_, c_) {
 }
 
-void SquaredLoss::calculate_loss(Tensor &in, vector<int> answers, Tensor &err) {
+void SquaredLoss::calculate_loss(Tensor<float> &in, vector<int> answers, Tensor<float> &err) {
 	last_loss = 0;
 	last_correct = 0;
-	const float e(.00000001);
+
 	vector<float> err_v(err.size());
 	vector<float> prob = in.to_vector();
 

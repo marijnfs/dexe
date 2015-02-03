@@ -6,7 +6,7 @@ using namespace std;
 
 Network::Network(TensorShape in) : loss_ptr(0), finished(false) {
 	shapes.push_back(in);
-	tensors.push_back(new TensorSet(in));
+	tensors.push_back(new TensorSet<float>(in));
 }
 
 void Network::add_conv(int outmap, int kw, int kh) {
@@ -40,12 +40,12 @@ void Network::add_softmax() {
 void Network::add_operation(Operation *op) {
 	operations.push_back(op);
 	shapes.push_back(last(operations)->output_shape(last(shapes)));
-	tensors.push_back(new TensorSet(last(shapes)));
+	tensors.push_back(new TensorSet<float>(last(shapes)));
 }
 
 void Network::finish() {
-	loss_ptr = new SoftmaxLoss(last(shapes).n, last(shapes).c);
-	//loss_ptr = new SquaredLoss(last(shapes).n, last(shapes).c);
+	//loss_ptr = new SoftmaxLoss(last(shapes).n, last(shapes).c);
+	loss_ptr = new SquaredLoss(last(shapes).n, last(shapes).c);
 	finished = true;
 }
 
@@ -111,6 +111,7 @@ vector<float> Network::fd_gradient(float const *cpu_data, int label, float e) {
 	for (size_t i(0); i < params.size(); ++i) {
 		cout << "params: " << i << "/" << params.size() << endl;
 		vector<float> vec = params[i]->to_vector();
+
 		vector<float> delta_vec(vec);
 		for (size_t n(0); n < vec.size(); ++n) {
 			delta_vec[n] = vec[n] + e;
@@ -119,7 +120,7 @@ vector<float> Network::fd_gradient(float const *cpu_data, int label, float e) {
 			forward(cpu_data);
 			calculate_loss(label);
 			float plus_loss = loss();
-
+			
 			delta_vec[n] = vec[n] - e;
 			params[i]->from_vector(delta_vec);
 
@@ -146,7 +147,7 @@ vector<float> Network::gradient() {
 	return full_grad;
 }
 
-Tensor &Network::output() {
+Tensor<float> &Network::output() {
 	assert_finished();
 	return last(tensors)->x;
 }

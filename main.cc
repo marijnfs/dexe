@@ -9,12 +9,12 @@
 using namespace std;
 
 void test() {
-	TensorSet x(1, 1, 4, 4);
+	TensorSet<float>x(1, 1, 4, 4);
 	x.x.init_normal(1.0, .5);
 
 	//ConvolutionOperation conv(1, 1, 4, 4);
 	PoolingOperation p(2, 2);
-	TensorSet out(p.output_shape(x.shape()));
+	TensorSet<float>out(p.output_shape(x.shape()));
 	p.forward(x.x, out.x);
 	cout << x.x.to_vector() << endl;
 	cout << out.x.to_vector() << endl;
@@ -33,14 +33,14 @@ void test2() {
 	//db_test.floatify();
 	//Indices indices(db.N);
 
-	double std(1.0);
+	double std(1.);
 	double lr(.001);
 
 	//Network network(TensorShape{1, 10, 1, 1});
 	//network.add_conv(10, 1, 1);
 	
 	Network network(TensorShape{1, 3, 32, 32});
-	Tensor data(TensorShape{1, 3, 32, 32});
+	Tensor<float> data(TensorShape{1, 3, 32, 32});
 	
 	data.init_normal(1.0, 1.0);
 	vector<float> bla = data.to_vector();
@@ -68,16 +68,16 @@ void test2() {
 	network.forward(img_data);
 	network.calculate_loss(label);
 	network.backward();
-	
+
 	vector<float> grad = network.gradient();
 	cout << grad.size() << endl;
+	cout << network.output().to_vector() << endl;
 
-	vector<float> fd_grad = network.fd_gradient(img_data, label, .00001);
+	vector<float> fd_grad = network.fd_gradient(img_data, label, .01);
 	cout << fd_grad.size() << endl;
 	
 	for (size_t i(0); i < grad.size(); ++i)
-		if (i >= 270 && i < 280)
-			//if (abs<float>(grad[i] + fd_grad[i]) > .001)
+		if (abs<float>(grad[i] + fd_grad[i]) > .001)
 			cout << i << "\t" << grad[i] << "\t" << fd_grad[i] << "\t" << abs<float>(grad[i] + fd_grad[i]) << "\t" << (abs<float>(grad[i] + fd_grad[i]) / abs<float>(grad[i]))  << endl;
 }
 
@@ -86,7 +86,8 @@ int main() {
 	DataBase db_test("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_test_leveldb");
 	Indices indices(db.N);
 
-	//db.floatify();
+	db.normalize();
+	db_test.normalize();
 
 	double std(.05);
 	double lr(.001);
@@ -138,10 +139,17 @@ int main() {
 		indices.shuffle();
 		for (size_t i(0); i < db.N; ++i) {
 			//cout << i << endl;
+			//caffe::Datum datum = db.get_image(49999);
+			//for (size_t n(0); n < datum.float_data_size(); ++n)
+			//		cout << datum.float_data(n) << " ";
+			//cout << endl;
+
+			//cout << "float data size: " << datum.float_data_size() << endl;
+			
 			caffe::Datum datum = db.get_image(indices[i]);
 			const float *img_data = datum.float_data().data();
 
-			//Tensor t(1, 10, 1, 1);
+			//Tensor<float> t(1, 10, 1, 1);
 			//t.init_normal(0.0, .005);
 			//vector<float> x = t.to_vector();
 

@@ -28,12 +28,12 @@ ConvolutionOperation::ConvolutionOperation(int in_map, int out_map, int kw, int 
 void ConvolutionOperation::update(float lr) {
 	// cout << filter_bank_grad.to_vector() << endl;
 
-	add_cuda(filter_bank_grad.ptr(), filter_bank.ptr(), filter_bank.n_weights(), lr);
-	add_cuda(bias_grad.ptr(), bias.ptr(), bias.size(), lr * .1);
+	add_cuda<float>(filter_bank_grad.ptr(), filter_bank.ptr(), filter_bank.n_weights(), lr);
+	add_cuda<float>(bias_grad.ptr(), bias.ptr(), bias.size(), lr * .1);
 }
 
 void ConvolutionOperation::l2(float l) {
-	add_cuda(filter_bank.ptr(), filter_bank_grad.ptr(), filter_bank.n_weights(), -l);
+	add_cuda<float>(filter_bank.ptr(), filter_bank_grad.ptr(), filter_bank.n_weights(), -l);
 }
 
 void ConvolutionOperation::init_normal(float mean, float std) {
@@ -65,17 +65,16 @@ vector<float> ConvolutionOperation::grad_to_vector() {
 	return grad;
 }
 
-void ConvolutionOperation::forward(Tensor &input, Tensor &output) {
+void ConvolutionOperation::forward(Tensor<float> &input, Tensor<float> &output) {
 	float alpha(1.0), beta(0.0);
 
 	float alpha_bias(1), beta_bias(1);
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM, 0, 0, &beta, output.td, output.data));
 
 	handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_SAME_C, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
-
 }
 
-void ConvolutionOperation::backward_weights(Tensor &input, Tensor &output_grad) {
+void ConvolutionOperation::backward_weights(Tensor<float> &input, Tensor<float> &output_grad) {
 	float alpha_bias(1.0), beta_bias(0.0);
 	handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, output_grad.td, output_grad.data, &beta_bias, bias_grad.td, bias_grad.data) );
 
@@ -83,7 +82,7 @@ void ConvolutionOperation::backward_weights(Tensor &input, Tensor &output_grad) 
 	handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, output_grad.td, output_grad.data, conv, &beta, filter_bank_grad.fd, filter_bank_grad.weights) );
 }
 
-void ConvolutionOperation::backward(Tensor &in, Tensor &out, Tensor &output_grad, Tensor &input_grad) {
+void ConvolutionOperation::backward(Tensor<float> &in, Tensor<float> &out, Tensor<float> &output_grad, Tensor<float> &input_grad) {
 	float alpha(1.0), beta(0.0);
 	handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, filter_bank.fd, filter_bank.weights, output_grad.td, output_grad.data, conv, &beta, input_grad.td, input_grad.data) );
 }
@@ -111,12 +110,12 @@ PoolingOperation::PoolingOperation(int kw_, int kh_) : kw(kw_), kh(kh_) {
 	cudnnSetPooling2dDescriptor(pool, CUDNN_POOLING_MAX, kw, kh, 0, 0, kw, kh);
 }
 
-void PoolingOperation::forward(Tensor &in, Tensor &out) {
+void PoolingOperation::forward(Tensor<float> &in, Tensor<float> &out) {
 	float alpha(1.0), beta(0.0);
 	handle_error( cudnnPoolingForward(Handler::cudnn(), pool, &alpha, in.td, in.data, &beta, out.td, out.data) );
 }
 
-void PoolingOperation::backward(Tensor &in, Tensor &out, Tensor &out_grad, Tensor &in_grad) {
+void PoolingOperation::backward(Tensor<float> &in, Tensor<float> &out, Tensor<float> &out_grad, Tensor<float> &in_grad) {
 	float alpha(1.0), beta(0.0);
 	handle_error( cudnnPoolingBackward(Handler::cudnn(), pool, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data) );
 }
@@ -126,12 +125,12 @@ TensorShape PoolingOperation::output_shape(TensorShape in) {
 	return TensorShape{in.n, in.c, in.w / kw, in.h / kh};
 }
 
-void TanhOperation::forward(Tensor &in, Tensor &out) {
+void TanhOperation::forward(Tensor<float> &in, Tensor<float> &out) {
   float alpha(1), beta(0);
   handle_error( cudnnActivationForward(Handler::cudnn(), CUDNN_ACTIVATION_TANH, &alpha, in.td, in.data, &beta, out.td, out.data));
 }
 
-void TanhOperation::backward(Tensor &in, Tensor &out, Tensor &out_grad, Tensor &in_grad) {
+void TanhOperation::backward(Tensor<float> &in, Tensor<float> &out, Tensor<float> &out_grad, Tensor<float> &in_grad) {
   float alpha(1), beta(0);
   handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_TANH, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data));
 }
@@ -140,12 +139,12 @@ TensorShape TanhOperation::output_shape(TensorShape in) {
 	return in;
 }
 
-void ReluOperation::forward(Tensor &in, Tensor &out) {
+void ReluOperation::forward(Tensor<float> &in, Tensor<float> &out) {
   float alpha(1), beta(0);
   handle_error( cudnnActivationForward(Handler::cudnn(), CUDNN_ACTIVATION_RELU, &alpha, in.td, in.data, &beta, out.td, out.data));
 }
 
-void ReluOperation::backward(Tensor &in, Tensor &out, Tensor &out_grad, Tensor &in_grad) {
+void ReluOperation::backward(Tensor<float> &in, Tensor<float> &out, Tensor<float> &out_grad, Tensor<float> &in_grad) {
   float alpha(1), beta(0);
   //handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_RELU, &alpha, in.td, in.data, out_grad.td, out_grad.data, out.td, out.data, &beta, in_grad.td, in_grad.data));
   handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_RELU, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data));
@@ -159,12 +158,12 @@ TensorShape ReluOperation::output_shape(TensorShape in) {
 SoftmaxOperation::SoftmaxOperation(bool matched_) : matched(matched_) {
 }
 
-void SoftmaxOperation::forward(Tensor &in, Tensor &out) {
+void SoftmaxOperation::forward(Tensor<float> &in, Tensor<float> &out) {
 	float alpha(1), beta(0);
 	handle_error( cudnnSoftmaxForward(Handler::cudnn(), CUDNN_SOFTMAX_FAST, CUDNN_SOFTMAX_MODE_INSTANCE, &alpha, in.td, in.data, &beta, out.td, out.data));
 }
 
-void SoftmaxOperation::backward(Tensor &in, Tensor &out, Tensor &out_grad, Tensor &in_grad) {
+void SoftmaxOperation::backward(Tensor<float> &in, Tensor<float> &out, Tensor<float> &out_grad, Tensor<float> &in_grad) {
 	float alpha(1), beta(0); 
 	//cout << out_grad.to_vector() << endl;
 	//cout << in_grad.to_vector() << endl;
