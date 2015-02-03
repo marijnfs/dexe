@@ -199,7 +199,6 @@ void SoftmaxOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out
 	//cout << in_grad.to_vector() << endl;
 	//cout << out.to_vector() << endl;
 	//cout << in.to_vector() << endl;
-	
 
 	if (matched) {//loss function matched 
 		in_grad.from_tensor(out_grad);

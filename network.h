@@ -7,6 +7,7 @@
 #include "operations.h"
 #include "loss.h"
 
+template <typename F>
 struct Network {
 	Network(TensorShape in);
 	~Network();
@@ -18,35 +19,35 @@ struct Network {
 	void add_relu();
 	void add_softmax();
 
-	void add_operation(Operation<float> *op);
+	void add_operation(Operation<F> *op);
 	void finish();
 	void assert_finished();
 
-	void forward(float const *cpu_data);
+	void forward(F const *cpu_data);
 	void calculate_loss(int label);
 	void calculate_loss(std::vector<int> &labels);
 	void backward();
 
-	void update(float lr);
-	void l2(float l);
-	void init_normal(float mean, float std);
-    void init_uniform(float var);
+	void update(F lr);
+	void l2(F l);
+	void init_normal(F mean, F std);
+    void init_uniform(F var);
 
-	std::vector<float> to_vector();
-	std::vector<float> fd_gradient(float const *cpu_data, int label, float e);
-	std::vector<float> gradient();
+	std::vector<F> to_vector();
+	std::vector<F> fd_gradient(F const *cpu_data, int label, F e);
+	std::vector<F> gradient();
 
 
-	Tensor<float> &output();
-	float loss();
-	float n_correct();
+	Tensor<F> &output();
+	F loss();
+	F n_correct();
 
-	std::vector<Parametrised<float>*> params;
-	std::vector<Operation<float>*> operations;
-	std::vector<TensorSet<float>*> tensors;
+	std::vector<Parametrised<F>*> params;
+	std::vector<Operation<F>*> operations;
+	std::vector<TensorSet<F>*> tensors;
 	std::vector<TensorShape> shapes;
 
-	Loss *loss_ptr;
+	Loss<F> *loss_ptr;
 	bool finished;
 };
 

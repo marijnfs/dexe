@@ -39,7 +39,7 @@ void test2() {
 	//Network network(TensorShape{1, 10, 1, 1});
 	//network.add_conv(10, 1, 1);
 	
-	Network network(TensorShape{1, 3, 32, 32});
+	Network<float> network(TensorShape{1, 3, 32, 32});
 	Tensor<float> data(TensorShape{1, 3, 32, 32});
 	
 	data.init_normal(1.0, 1.0);
@@ -86,15 +86,15 @@ int main() {
 	DataBase db_test("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_test_leveldb");
 	Indices indices(db.N);
 
-	db.normalize();
-	db_test.normalize();
+	db.normalize_chw();
+	db_test.normalize_chw();
 
 	double std(.05);
 	double lr(.001);
 
 	int n(1), c(3), h(32), w(32);
 	int outc(10);
-	Network network(TensorShape{n, c, w, h});
+	Network<float> network(TensorShape{n, c, w, h});
 	network.add_conv(100, 2, 2);
 	network.add_pool(2, 2);
 	network.add_tanh();

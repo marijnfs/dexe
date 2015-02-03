@@ -26,7 +26,7 @@ DataBase::~DataBase() {
 	delete db;
 }
 
-void DataBase::normalize() {
+void DataBase::normalize_chw() {
 	Iterator* it = db->NewIterator(leveldb::ReadOptions());
 
 	for (it->SeekToFirst(); it->Valid(); it->Next())
@@ -39,6 +39,7 @@ void DataBase::normalize() {
 			return;
 		}
 
+		//Normalization
 		vector<float> data;
 		copy(datum.data().begin(), datum.data().end(), back_inserter(data));
 
@@ -51,9 +52,14 @@ void DataBase::normalize() {
 		std = sqrt(std / (data.size() - 1));
 		for (size_t i(0); i < data.size(); ++i) data[i] /= std * 3;
 		
-		datum.clear_float_data();		
+		// CHW
+		int c = datum.channels();
+		int h = datum.height();
+		int w = datum.width();
+		
+		datum.clear_float_data();
 		for (size_t i(0); i < data.size(); ++i) {
-			datum.add_float_data(data[i]);
+			datum.add_float_data(data[(i * c) % (h * w * c) + (i / (w * h))]);
 		}
 
 		string output;
