@@ -52,7 +52,7 @@ Tensor::~Tensor() {
 }
 
 void Tensor::zero() {
-  handle_error( cudaMemset(data, 0, sizeof(float) * n * w * h * c));
+	handle_error( cudaMemset(data, 0, sizeof(float) * size()));
 }
 
 
@@ -113,6 +113,8 @@ FilterBank::FilterBank(int in_map_, int out_map_, int kw_, int kh_):
 	handle_error( cudnnCreateFilterDescriptor(&fd));
 	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_FLOAT, out_map, in_map, kh, kw));
 	handle_error( cudaMalloc( (void**)&weights, sizeof(float) * out_map * in_map * kw * kh));
+	if (ZERO_ON_INIT)
+	  zero();	
 }
 
 FilterBank::~FilterBank() {
@@ -123,6 +125,10 @@ FilterBank::~FilterBank() {
 void FilterBank::init_normal(float mean, float std) {
 	size_t even_size(((n_weights() + 1) / 2) * 2);
 	handle_error( curandGenerateNormal ( Handler::curand(), weights, even_size, mean, std) );
+}
+
+void FilterBank::zero() {
+	handle_error( cudaMemset(weights, 0, sizeof(float) * n_weights()));
 }
 
 vector<float> FilterBank::to_vector() {

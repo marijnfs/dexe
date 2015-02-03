@@ -45,6 +45,7 @@ void Network::add_operation(Operation *op) {
 
 void Network::finish() {
 	loss_ptr = new SoftmaxLoss(last(shapes).n, last(shapes).c);
+	//loss_ptr = new SquaredLoss(last(shapes).n, last(shapes).c);
 	finished = true;
 }
 
@@ -122,6 +123,7 @@ vector<float> Network::fd_gradient(float const *cpu_data, int label, float e) {
 			delta_vec[n] = vec[n] - e;
 			params[i]->from_vector(delta_vec);
 
+			//throw "";
 			forward(cpu_data);
 			calculate_loss(label);
 			float min_loss = loss();

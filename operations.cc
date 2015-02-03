@@ -1,7 +1,9 @@
 #include "operations.h"
 #include "handler.h"
 #include <cublas_v2.h>
+#include <cassert>
 
+using namespace std;
 
 ConvolutionOperation::ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep):
 	filter_bank(in_map, out_map, kw, kh),
@@ -18,14 +20,16 @@ ConvolutionOperation::ConvolutionOperation(int in_map, int out_map, int kw, int 
 	cout << "bias buffer: " << bias.size() << endl;
 	//todo: calculate padding
 	handle_error( cudnnCreateConvolutionDescriptor(&conv));
-	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
+
+	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION));
+	//handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
 }
 
 void ConvolutionOperation::update(float lr) {
 	// cout << filter_bank_grad.to_vector() << endl;
 
 	add_cuda(filter_bank_grad.ptr(), filter_bank.ptr(), filter_bank.n_weights(), lr);
-	add_cuda(bias_grad.ptr(), bias.ptr(), bias.size(), lr);
+	add_cuda(bias_grad.ptr(), bias.ptr(), bias.size(), lr * .1);
 }
 
 void ConvolutionOperation::l2(float l) {
@@ -34,7 +38,7 @@ void ConvolutionOperation::l2(float l) {
 
 void ConvolutionOperation::init_normal(float mean, float std) {
 	filter_bank.init_normal(mean, std);
-	bias.init_normal(mean, std);
+	//bias.init_normal(mean, std);
 }
 
 vector<float> ConvolutionOperation::to_vector() {
@@ -45,6 +49,7 @@ vector<float> ConvolutionOperation::to_vector() {
 }
 
 void ConvolutionOperation::from_vector(vector<float> &v) {
+	assert(v.size() == filter_bank.n_weights() + bias.size());
 	vector<float> filter_bank_weights(v.begin(), v.begin() + filter_bank.n_weights());
 	filter_bank.from_vector(filter_bank_weights);
 	
@@ -156,7 +161,7 @@ SoftmaxOperation::SoftmaxOperation(bool matched_) : matched(matched_) {
 
 void SoftmaxOperation::forward(Tensor &in, Tensor &out) {
 	float alpha(1), beta(0);
-	handle_error( cudnnSoftmaxForward(Handler::cudnn(), CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE, &alpha, in.td, in.data, &beta, out.td, out.data));
+	handle_error( cudnnSoftmaxForward(Handler::cudnn(), CUDNN_SOFTMAX_FAST, CUDNN_SOFTMAX_MODE_INSTANCE, &alpha, in.td, in.data, &beta, out.td, out.data));
 }
 
 void SoftmaxOperation::backward(Tensor &in, Tensor &out, Tensor &out_grad, Tensor &in_grad) {
@@ -176,49 +181,5 @@ void SoftmaxOperation::backward(Tensor &in, Tensor &out, Tensor &out_grad, Tenso
 
 TensorShape SoftmaxOperation::output_shape(TensorShape in) {
 	return in;
-}
-
-
-SoftmaxLoss::SoftmaxLoss(int n_, int c_) : n(n_), c(c_), last_loss(0), last_correct(0) {
-
-}
-
-void SoftmaxLoss::calculate_loss(Tensor &in, vector<int> answers, Tensor &err) {
-	last_loss = 0;
-	last_correct = 0;
-	const float e(.00000001);
-	vector<float> err_v(err.size());
-	vector<float> prob = in.to_vector();
-	for (size_t i(0); i < answers.size(); i++) {
-		err_v[answers[i] + i * c] = 1.0;
-		last_loss += -log(prob[answers[i]] + e);
-		//last_loss += (prob[answers[i]] - 1.0) * (prob[answers[i]] - 1.0);
-
-		int max(0);
-		float max_prob(0);
-		for (size_t n(0); n < c; ++n)
-			if (prob[n] > max_prob) {
-				max_prob = prob[n];
-				max = n;
-			}
-		if (max == answers[i]) ++last_correct;
-	}
-	err.from_vector(err_v);
-	err -= in;
-	//cout << "err: " << err.to_vector() << endl;
-}
-
-void SoftmaxLoss::calculate_loss(Tensor &in, int answer, Tensor &err) {
-	vector<int> answers(1);
-	answers[0] = answer;
-	calculate_loss(in, answers, err);
-}
-
-float SoftmaxLoss::loss() {
-	return last_loss;
-}
-
-int SoftmaxLoss::n_correct() {
-	return last_correct;
 }
 

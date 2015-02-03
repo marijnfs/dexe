@@ -91,20 +91,4 @@ struct SoftmaxOperation : public Operation {
 	bool matched;
 };
 
-
-struct SoftmaxLoss {
-	SoftmaxLoss(int n, int c);
-
-	void calculate_loss(Tensor &in, vector<int> answers, Tensor &err);
-	void calculate_loss(Tensor &in, int answer, Tensor &err);
-
-	float loss();
-	int n_correct();
-
-	int n, c;
-
-	float last_loss;
-	int last_correct;
-};
-
 #endif

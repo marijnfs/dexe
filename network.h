@@ -1,10 +1,11 @@
 #ifndef __NETWORK_H__
 #define __NETWORK_H__
 
-#include "operations.h"
+
 #include "util.h"
 #include "tensor.h"
-
+#include "operations.h"
+#include "loss.h"
 
 struct Network {
 	Network(TensorShape in);
@@ -45,7 +46,7 @@ struct Network {
 	std::vector<TensorSet*> tensors;
 	std::vector<TensorShape> shapes;
 
-	SoftmaxLoss *loss_ptr;
+	Loss *loss_ptr;
 	bool finished;
 };
 

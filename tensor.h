@@ -66,6 +66,7 @@ struct FilterBank {
 	std::vector<float> to_vector();
 	void from_vector(std::vector<float> &in);
 	void fill(float val);
+	void zero();
 
 	float *ptr() { return weights; }
 
@@ -74,5 +75,6 @@ struct FilterBank {
 inline std::ostream &operator<<(std::ostream &o, TensorShape s) {	
 	return o << "[" << s.n << "," << s.c << "," << s.w << "," << s.h << "]";
 }
+
 
 #endif

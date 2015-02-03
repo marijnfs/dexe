@@ -12,8 +12,6 @@
 
 #include "handler.h"
 
-using namespace std;
-
 struct StringException : public std::exception {
 	StringException(std::string msg_): msg(msg_){}
 	char const* what() const throw() {return msg.c_str();}
