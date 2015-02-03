@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstdlib>
 
 #include "tensor.h"
 #include "util.h"
@@ -136,6 +137,14 @@ void Tensor<double>::init_normal(double mean, double std) {
 }
 
 template <typename F>
+void Tensor<F>::init_uniform(F var) {
+	vector<F> vec = to_vector();
+	for (size_t i(0); i < vec.size(); ++i)
+		vec[i] = -var + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(2 * var)));
+	from_vector(vec);
+}
+
+template <typename F>
 void Tensor<F>::fill(F val) {
 	vector<F> vals(size());
 	::fill<F>(vals, val);
@@ -206,6 +215,14 @@ template <>
 void FilterBank<double>::init_normal(double mean, double std) {
 	size_t even_size(((n_weights() + 1) / 2) * 2);
 	handle_error( curandGenerateNormalDouble ( Handler::curand(), weights, even_size, mean, std) );
+}
+
+template <typename F>
+void FilterBank<F>::init_uniform(F var) {
+	vector<F> vec = to_vector();
+	for (size_t i(0); i < vec.size(); ++i)
+		vec[i] = -var + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(2 * var)));
+	from_vector(vec);
 }
 
 template <typename F>

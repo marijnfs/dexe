@@ -10,42 +10,42 @@ Network::Network(TensorShape in) : loss_ptr(0), finished(false) {
 }
 
 void Network::add_conv(int outmap, int kw, int kh) {
-	ConvolutionOperation *conv = new ConvolutionOperation(last(shapes).c, outmap, kw, kh);
+	ConvolutionOperation<float> *conv = new ConvolutionOperation<float>(last(shapes).c, outmap, kw, kh);
 	add_operation(conv);
 	params.push_back(conv);
 }
 
 void Network::add_pool(int kw, int kh) {
-	add_operation(new PoolingOperation(kw, kh));
+	add_operation(new PoolingOperation<float>(kw, kh));
 }
 
 void Network::add_squash(int c) {
-	SquashOperation *squash = new SquashOperation(last(shapes), c);
+	SquashOperation<float> *squash = new SquashOperation<float>(last(shapes), c);
 	add_operation(squash);
 	params.push_back(squash);
 }
 
 void Network::add_tanh() {
-	add_operation(new TanhOperation());
+	add_operation(new TanhOperation<float>());
 }
 
 void Network::add_relu() {
-	add_operation(new ReluOperation());
+	add_operation(new ReluOperation<float>());
 }
 
 void Network::add_softmax() {
-	add_operation(new SoftmaxOperation());
+	add_operation(new SoftmaxOperation<float>());
 }
 
-void Network::add_operation(Operation *op) {
+void Network::add_operation(Operation<float> *op) {
 	operations.push_back(op);
 	shapes.push_back(last(operations)->output_shape(last(shapes)));
 	tensors.push_back(new TensorSet<float>(last(shapes)));
 }
 
 void Network::finish() {
-	//loss_ptr = new SoftmaxLoss(last(shapes).n, last(shapes).c);
-	loss_ptr = new SquaredLoss(last(shapes).n, last(shapes).c);
+	loss_ptr = new SoftmaxLoss(last(shapes).n, last(shapes).c);
+	//loss_ptr = new SquaredLoss(last(shapes).n, last(shapes).c);
 	finished = true;
 }
 
@@ -94,6 +94,11 @@ void Network::l2(float l) {
 void Network::init_normal(float mean, float std) {
 	for (size_t i(0); i < params.size(); ++i)
 		params[i]->init_normal(mean, std);
+}
+
+void Network::init_uniform(float var) {
+	for (size_t i(0); i < params.size(); ++i)
+		params[i]->init_uniform(var);
 }
 
 vector<float> Network::to_vector() {

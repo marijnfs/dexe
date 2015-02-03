@@ -18,7 +18,7 @@ struct Network {
 	void add_relu();
 	void add_softmax();
 
-	void add_operation(Operation *op);
+	void add_operation(Operation<float> *op);
 	void finish();
 	void assert_finished();
 
@@ -30,19 +30,19 @@ struct Network {
 	void update(float lr);
 	void l2(float l);
 	void init_normal(float mean, float std);
+    void init_uniform(float var);
 
 	std::vector<float> to_vector();
 	std::vector<float> fd_gradient(float const *cpu_data, int label, float e);
 	std::vector<float> gradient();
 
 
-
 	Tensor<float> &output();
 	float loss();
 	float n_correct();
 
-	std::vector<Parametrised*> params;
-	std::vector<Operation*> operations;
+	std::vector<Parametrised<float>*> params;
+	std::vector<Operation<float>*> operations;
 	std::vector<TensorSet<float>*> tensors;
 	std::vector<TensorShape> shapes;
 

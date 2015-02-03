@@ -20,6 +20,7 @@ struct Tensor {
 	~Tensor();
 
 	void init_normal(F mean, F std);
+	void init_uniform(F var);
 	void zero();
 	
 	std::vector<F> to_vector();
@@ -65,6 +66,8 @@ struct FilterBank {
 
 	int n_weights() { return in_map * out_map * kw * kh; }
 	void init_normal(F mean, F std);
+	void init_uniform(F var);
+
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &in);
 	void fill(F val);

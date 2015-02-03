@@ -13,7 +13,7 @@ void test() {
 	x.x.init_normal(1.0, .5);
 
 	//ConvolutionOperation conv(1, 1, 4, 4);
-	PoolingOperation p(2, 2);
+	PoolingOperation<float> p(2, 2);
 	TensorSet<float>out(p.output_shape(x.shape()));
 	p.forward(x.x, out.x);
 	cout << x.x.to_vector() << endl;
@@ -124,7 +124,8 @@ int main() {
 	network.add_squash(10);
 	network.add_softmax();
 	network.finish();
-	network.init_normal(0, std);
+	//network.init_normal(0, std);
+	network.init_uniform(std);
 
 	//conv_operation1.init_normal(0, STD);
 	//squash_operation.init_normal(0, STD);
