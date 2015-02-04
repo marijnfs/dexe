@@ -6,6 +6,7 @@
 #include "database.h"
 #include "network.h"
 #include "img.h"
+#include "colour.h"
 
 #include <ctime>
 
@@ -89,9 +90,9 @@ int main() {
 	DataBase db("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_train_leveldb");
 	DataBase db_test("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_test_leveldb");
 	Indices indices(db.N);
-
-	db.normalize_chw();
-	db_test.normalize_chw();
+			
+	//db.normalize_chw();
+	//db_test.normalize_chw();
 
 	double std(.05);
 	double lr(.001);
@@ -102,6 +103,7 @@ int main() {
 	//network.add_conv(100, 2, 2);
 	//network.add_pool(8, 8);
 	//network.add_tanh();
+
 
 	network.add_conv(100, 2, 2);
 	network.add_pool(2, 2);
@@ -128,7 +130,24 @@ int main() {
 
 	network.add_squash(100);
 	network.add_tanh();
-	
+
+	/*
+	network.add_conv(96, 9, 9);
+	network.add_pool(2, 2);
+	network.add_tanh();
+
+	network.add_conv(100, 9, 9);
+	network.add_pool(2, 2);
+	network.add_tanh();
+
+	network.add_conv(100, 5, 5);
+	network.add_pool(2, 2);
+	network.add_tanh();
+
+	network.add_squash(100);
+	network.add_tanh();
+	*/
+
 	network.add_squash(10);
 	network.add_softmax();
 	network.finish();
@@ -155,8 +174,8 @@ int main() {
 
 			//cout << "float data size: " << datum.float_data_size() << endl;
 			
-			//caffe::Datum datum = db.get_image(indices[i]);
-			caffe::Datum datum = db.get_image(i);
+			caffe::Datum datum = db.get_image(indices[i]);
+			//caffe::Datum datum = db.get_image(i);
 			const float *img_data = datum.float_data().data();
 
 			//write_img("./bloe.jpg", datum.channels(), datum.width(), datum.height(), img_data);
@@ -174,6 +193,7 @@ int main() {
 			//ostringstream str;
 			//str << "/home/marijnfs/tmp/test_" << indices[i] << "_" << datum.label() << ".bmp" << endl;
 			//cout << str.str() << endl;
+			
 			//network.tensors[0]->x.write_img(str.str());
 
 			network.calculate_loss(datum.label());
@@ -186,7 +206,7 @@ int main() {
 			//cout << (fd_grad[n] != 0 ? (grad[n] / fd_grad[n]) : grad[n]) << " " << grad[n] << ", ";
 			//return 1;
 
-			//network.l2(.000001);
+			network.l2(.0001);
 			network.update(lr);
 
 			err += network.loss();
@@ -202,8 +222,8 @@ int main() {
 		float test_err(0);
 		int test_n_correct(0);
 		
-		/*for (size_t i(0); i < db_test.N; ++i) {
-			caffe::Datum datum = db.get_image(indices[i]);
+		for (size_t i(0); i < db_test.N; ++i) {
+			caffe::Datum datum = db_test.get_image(i);
 			const float *img_data = datum.float_data().data();
 
 			network.forward(img_data);
@@ -211,10 +231,10 @@ int main() {
 				
 			test_err += network.loss();
 			test_n_correct += network.n_correct();
-			
-			}*/
-		cout << "elapsed: " << t.since() << " err: " << (err / db.N) << " correct: " << n_correct << "/" << db.N << endl;
-		//cout << "test err: " << (test_err / db_test.N) << " correct: " << test_n_correct << "/" << db_test.N << endl;
+		}
+
+		cout << "elapsed: " << t.since() << " err: " << RED << (err / db.N) << DEFAULT << " correct: " << BLUE << n_correct << DEFAULT << "/" << db.N << endl;
+		cout << "test err: " << FG_RED << (test_err / db_test.N) << DEFAULT << " correct: " << BLUE << test_n_correct << DEFAULT << "/" << db_test.N << endl;
 	}
 }
 

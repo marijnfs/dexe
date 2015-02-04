@@ -104,7 +104,8 @@ void ConvolutionOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> 
 
 template <typename F>
 TensorShape ConvolutionOperation<F>::output_shape(TensorShape in) {
-	return TensorShape{in.n, filter_bank.out_map, in.w, in.h};
+	int x_even((filter_bank.kw + 1) % 2), y_even((filter_bank.kh + 1) % 2);
+	return TensorShape{in.n, filter_bank.out_map, in.w + x_even, in.h + y_even};
 }
 
 template <typename F>
@@ -161,6 +162,32 @@ void TanhOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_gr
 
 template <typename F>
 TensorShape TanhOperation<F>::output_shape(TensorShape in) {
+	return in;
+}
+
+template <typename F>
+STanhOperation<F>::STanhOperation(TensorShape s) : tmp(s) {
+}
+
+template <typename F>
+void STanhOperation<F>::forward(Tensor<F> &in, Tensor<F> &out) {
+  F alpha(1.7159), beta(0);
+  tmp.x.from_tensor(in);
+  scale_cuda(tmp.x.data, tmp.x.size(), 2./3.);
+  handle_error( cudnnActivationForward(Handler::cudnn(), CUDNN_ACTIVATION_TANH, &alpha, tmp.x.td, tmp.x.data, &beta, out.td, out.data));
+}
+
+template <typename F>
+void STanhOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad) {
+  F alpha(1.0), beta(0);
+  tmp.x.from_tensor(out);  
+  scale_cuda(tmp.x.data, tmp.x.size(), 1.0 / 1.7159);
+  handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_TANH, &alpha, tmp.x.td, tmp.x.data, out_grad.td, out_grad.data, tmp.x.td, tmp.x.data, &beta, in_grad.td, in_grad.data));
+  scale_cuda(in_grad.data, in_grad.size(), 3./2.);
+}
+
+template <typename F>
+TensorShape STanhOperation<F>::output_shape(TensorShape in) {
 	return in;
 }
 

@@ -84,6 +84,16 @@ struct TanhOperation : public Operation<F> {
 };
 
 template <typename F>
+struct STanhOperation : public Operation<F> {
+	STanhOperation(TensorShape s);
+	void forward(Tensor<F> &in, Tensor<F> &out);
+	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad);
+
+	TensorShape output_shape(TensorShape input);
+	TensorSet<F> tmp;
+};
+
+template <typename F>
 struct ReluOperation : public Operation<F> {
 	void forward(Tensor<F> &in, Tensor<F> &out);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad);
