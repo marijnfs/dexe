@@ -18,3 +18,8 @@ struct DataBase {
 };
 
 
+struct DatabaseRaw {
+	DatabaseRaw(std::string path);
+
+	
+};

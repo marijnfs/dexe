@@ -4,6 +4,7 @@
 #include "tensor.h"
 #include "util.h"
 #include "handler.h"
+#include "img.h"
 
 using namespace std;
 
@@ -140,7 +141,7 @@ template <typename F>
 void Tensor<F>::init_uniform(F var) {
 	vector<F> vec = to_vector();
 	for (size_t i(0); i < vec.size(); ++i)
-		vec[i] = -var + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(2 * var)));
+		vec[i] = -var + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX)/(2.0 * var));
 	from_vector(vec);
 }
 
@@ -154,6 +155,16 @@ void Tensor<F>::fill(F val) {
 template <typename F>
 int Tensor<F>::size() const {
 	return n * c * w * h;
+}
+
+template <typename F>
+void Tensor<F>::write_img(string filename) {
+	vector<F> v = to_vector();
+	vector<float> vf(v.size());
+
+	for (size_t i(0); i < v.size(); ++i)
+		vf[i] = v[(i * h * w) % (h * w * c) + (i / c)];
+	::write_img(filename, c, w, h, &vf[0]);
 }
 
 template <typename F>
@@ -242,6 +253,7 @@ void FilterBank<F>::from_vector(vector<F> &in) {
 	assert(n_weights() == in.size());
  	handle_error( cudaMemcpy(weights, &in[0], in.size() * sizeof(F), cudaMemcpyHostToDevice));
 }
+
 
 template <typename F>
 void FilterBank<F>::fill(F val) {

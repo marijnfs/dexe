@@ -14,7 +14,7 @@ DataBase::DataBase(string path) : N(0) {
 	Status status = DB::Open(options, path, &db);
 
 	if (!status.ok()) {
-		cerr << "Unable to open/create test database './testdb'" << endl;
+		cerr << "Unable to open/create test database " << path << endl;
 		cerr << status.ToString() << endl;
 		return;
 	}
@@ -27,11 +27,12 @@ DataBase::~DataBase() {
 }
 
 void DataBase::normalize_chw() {
+	cout << "Normalizing dataset" << endl;
 	Iterator* it = db->NewIterator(leveldb::ReadOptions());
 
 	for (it->SeekToFirst(); it->Valid(); it->Next())
 	{
-		cout << "|" << it->key().ToString() << "|" <<endl; //" : " << it->value().ToString() << endl;
+		//cout << "|" << it->key().ToString() << "|" <<endl; //" : " << it->value().ToString() << endl;
 		Datum datum;
 		
 		if (!datum.ParseFromString(it->value().ToString())) {
@@ -40,18 +41,32 @@ void DataBase::normalize_chw() {
 		}
 
 		//Normalization
-		vector<float> data;
-		copy(datum.data().begin(), datum.data().end(), back_inserter(data));
+		vector<float> data(datum.data().size());
+		unsigned char const *byte_data = reinterpret_cast<unsigned char const *>(datum.data().c_str());
+		for (size_t i(0); i < data.size(); ++i)
+			data[i] = float(byte_data[i]);
 
-		float mean(0);
+
+		/*float mean(0);
 		for (size_t i(0); i < data.size(); ++i) mean += data[i];
 		mean /= data.size();
 		for (size_t i(0); i < data.size(); ++i) data[i] -= mean;
 		float std(0);
 		for (size_t i(0); i < data.size(); ++i) std += data[i] * data[i];
 		std = sqrt(std / (data.size() - 1));
-		for (size_t i(0); i < data.size(); ++i) data[i] /= std * 3;
-		
+		for (size_t i(0); i < data.size(); ++i) data[i] /= std * 3.;
+		*/
+
+		float min(99999), max(-99999);
+		for (size_t i(0); i < data.size(); ++i) {
+			if (data[i] > max) max = data[i];
+			if (data[i] < min) min = data[i];
+		}
+		for (size_t i(0); i < data.size(); ++i)
+			data[i] = 2.0 * (data[i] - min) / (max - min) - 1.0;
+
+
+		//for (size_t i(0); i < data.size(); ++i) data[i] /= 256.;
 		// CHW
 		int c = datum.channels();
 		int h = datum.height();
@@ -59,8 +74,11 @@ void DataBase::normalize_chw() {
 		
 		datum.clear_float_data();
 		for (size_t i(0); i < data.size(); ++i) {
-			datum.add_float_data(data[(i * c) % (h * w * c) + (i / (w * h))]);
+			//datum.add_float_data(data[(i * c) % (h * w * c) + (i / (w * h))]); // hwc to chw
+ 			//datum.add_float_data(data[(i * h * w) % (h * w * c) + (i / c)]); //chw to hwc
+			datum.add_float_data(data[i]);
 		}
+		//cout << c << " " << h << " " << w << " " << data.size() << endl;
 
 		string output;
 		datum.SerializeToString(&output);

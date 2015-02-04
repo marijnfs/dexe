@@ -28,11 +28,13 @@ struct Tensor {
 	void from_ptr(F const *in);
 	void from_tensor(Tensor &in);
 	void fill(F val);
+	void write_img(std::string filename);
 
   	int size() const;
 	TensorShape shape() const;
 
 	F *ptr() { return data; }
+  
 
 	int n, c, w, h;
 	bool allocated;
