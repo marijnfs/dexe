@@ -141,7 +141,7 @@ template <typename F>
 void Tensor<F>::init_uniform(F var) {
 	vector<F> vec = to_vector();
 	for (size_t i(0); i < vec.size(); ++i)
-		vec[i] = -var + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX)/(2.0 * var));
+		vec[i] = -var + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX)/(2.0 * var));
 	from_vector(vec);
 }
 

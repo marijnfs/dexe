@@ -209,8 +209,21 @@ inline void random_shuffle(std::vector<T> &v) {
 }
 
 template <typename T>
+inline T norm(std::vector<T> &v) {
+	T sum(0);
+	typename std::vector<T>::const_iterator it(v.begin()), end(v.end());
+	for (; it != end; ++it)
+		sum += *it * *it;
+	return sqrt(sum);
+}
+
+template <typename T>
 inline T abs(T a) {
 	return a > 0.0 ? a : -a;
+}
+
+inline float rand_float() {
+	return static_cast<float>(rand()) / (static_cast<float>(RAND_MAX));
 }
 
 struct Indices {

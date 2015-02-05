@@ -178,43 +178,50 @@ int main() {
 			//caffe::Datum datum = db.get_image(i);
 			const float *img_data = datum.float_data().data();
 
-			//write_img("./bloe.jpg", datum.channels(), datum.width(), datum.height(), img_data);
-			//throw "";
-			//Tensor<float> t(1, 10, 1, 1);
-			//t.init_normal(0.0, .005);
-			//vector<float> x = t.to_vector();
-
-			//vector<double> dx;
-			//copy(img_data, img_data + datum.float_data_size(), back_inserter(dx));
-
-			network.forward(img_data);
-			//network.tensors[0]->x.from_ptr(img_data);
-			
 			//ostringstream str;
 			//str << "/home/marijnfs/tmp/test_" << indices[i] << "_" << datum.label() << ".bmp" << endl;
-			//cout << str.str() << endl;
-			
 			//network.tensors[0]->x.write_img(str.str());
 
+			// =================
+			// Normal backprop
+			network.forward(img_data);
 			network.calculate_loss(datum.label());
 			network.backward();
-			//vector<float> grad = network.gradient();
-
-			//vector<float> fd_grad = network.fd_gradient(img_data, datum.label(), .00001);
-			//vector<float> fd_grad = network.fd_gradient(&x[0], datum.label(), .001);
-			//for (size_t n(0); n < grad.size(); ++n)
-			//cout << (fd_grad[n] != 0 ? (grad[n] / fd_grad[n]) : grad[n]) << " " << grad[n] << ", ";
-			//return 1;
-
-			network.l2(.0001);
 			network.update(lr);
+			
+
+			// ================
+			// Adversarial backprop
+			network.forward(img_data);
+			network.calculate_loss(datum.label());
+			network.backward_data();
+
+			vector<float> data_grad = network.tensors[0]->grad.to_vector();
+			float grad_norm = norm(data_grad);
+			
+			if (i == 5000)
+				network.tensors[0]->x.write_img("norm.bmp");
+			add_cuda<float>(network.tensors[0]->grad.data, network.tensors[0]->x.data, network.tensors[0]->x.size(), -1 * rand_float() / (grad_norm * grad_norm));
+			if (i == 5000)
+				network.tensors[0]->x.write_img("adv.bmp");
+
+			//throw "";
+			network.forward();
+			network.calculate_loss(datum.label());
+			network.backward();
+			network.update(lr);			
+
+
+
+			//network.l2(.0001);
+
 
 			err += network.loss();
 			n_correct += network.n_correct();
 			
 			if (i % 5000 == 0) {
 				vector<float> ov = network.output().to_vector();
-				cout << i << " " << datum.label() << " " << ov << " " << ov[datum.label()] << endl;
+				cout << i << " (" << indices[i] << ") " << datum.label() << " " << ov << " " << ov[datum.label()] << endl;
 			}
 		}
 
@@ -234,7 +241,7 @@ int main() {
 		}
 
 		cout << "elapsed: " << t.since() << " err: " << RED << (err / db.N) << DEFAULT << " correct: " << BLUE << n_correct << DEFAULT << "/" << db.N << endl;
-		cout << "test err: " << FG_RED << (test_err / db_test.N) << DEFAULT << " correct: " << BLUE << test_n_correct << DEFAULT << "/" << db_test.N << endl;
+		cout << "test err: " << RED << (test_err / db_test.N) << DEFAULT << " correct: " << BLUE << test_n_correct << DEFAULT << "/" << db_test.N << endl;
 	}
 }
 

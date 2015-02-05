@@ -69,6 +69,12 @@ void Network<F>::forward(F const *cpu_data) {
 	assert_finished();
 	first(tensors)->x.from_ptr(cpu_data);
 	
+	forward();
+}
+
+template <typename F>
+void Network<F>::forward() {
+	assert_finished();
 	for (size_t i(0); i < operations.size(); ++i)
 		operations[i]->forward(tensors[i]->x, tensors[i+1]->x);
 }
@@ -91,6 +97,12 @@ void Network<F>::backward() {
 		operations[i]->backward(tensors[i]->x, tensors[i+1]->x, tensors[i+1]->grad, tensors[i]->grad);
 		operations[i]->backward_weights(tensors[i]->x, tensors[i+1]->grad);
 	}
+}
+
+template <typename F>
+void Network<F>::backward_data() {
+	for (int i(operations.size() - 1); i >= 0; --i)
+		operations[i]->backward(tensors[i]->x, tensors[i+1]->x, tensors[i+1]->grad, tensors[i]->grad);
 }
 
 template <typename F>
