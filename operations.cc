@@ -70,6 +70,11 @@ void ConvolutionOperation<F>::from_vector(vector<F> &v) {
 }
 
 template <typename F>
+int ConvolutionOperation<F>::size() {
+	return filter_bank.n_weights() + bias.size();
+}
+
+template <typename F>
 vector<F> ConvolutionOperation<F>::grad_to_vector() {
 	vector<F> grad = filter_bank_grad.to_vector();
 	vector<F> bias_grad_vec = bias_grad.to_vector();

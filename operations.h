@@ -26,6 +26,7 @@ struct Parametrised {
 	virtual void l2(F l) {}
 	virtual std::vector<F> to_vector() { return std::vector<F>(); }
 	virtual void from_vector(std::vector<F> &v) { }
+	virtual int size() { return 0; }
 	virtual std::vector<F> grad_to_vector() { return std::vector<F>(); }
 };
 
@@ -43,10 +44,11 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad);
 	void update(F lr);
 	void l2(F l);
-
+	
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &v);
 	std::vector<F> grad_to_vector();
+	int size();
 
 	TensorShape output_shape(TensorShape input);
 

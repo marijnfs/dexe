@@ -7,6 +7,7 @@
 #include "network.h"
 #include "img.h"
 #include "colour.h"
+#include "adv.h"
 
 #include <ctime>
 
@@ -32,8 +33,8 @@ void test() {
 }
 
 void test2() {
-	//DataBase db("/home/marijnfs/dev/caffe/examples/cifar10/cifar10_train_leveldb");
-	//DataBase db_test("/home/marijnfs/dev/caffe/examples/cifar10/cifar10_test_leveldb");
+	//Database db("/home/marijnfs/dev/caffe/examples/cifar10/cifar10_train_leveldb");
+	//Database db_test("/home/marijnfs/dev/caffe/examples/cifar10/cifar10_test_leveldb");
 	//db_test.floatify();
 	//Indices indices(db.N);
 
@@ -85,12 +86,16 @@ void test2() {
 			cout << i << "\t" << grad[i] << "\t" << fd_grad[i] << "\t" << abs<float>(grad[i] + fd_grad[i]) << "\t" << (abs<float>(grad[i] + fd_grad[i]) / abs<float>(grad[i]))  << endl;
 }
 
+
 int main() {
 	srand(time(0));
-	DataBase db("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_train_leveldb");
-	DataBase db_test("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_test_leveldb");
+	Database db("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_train_leveldb");
+	Database db_test("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_test_leveldb");
+	Database db_adv("./adv");
+	db_adv.from_database(db); //copy
+
 	Indices indices(db.N);
-			
+	
 	//db.normalize_chw();
 	//db_test.normalize_chw();
 
@@ -105,31 +110,32 @@ int main() {
 	//network.add_tanh();
 
 
-	network.add_conv(100, 2, 2);
+	network.add_conv(100, 3, 3);
 	network.add_pool(2, 2);
 	network.add_tanh();
 	
-	network.add_conv(200, 2, 2);
+	network.add_conv(200, 3, 3);
 	network.add_pool(2, 2);
 	network.add_tanh();
 	
-	network.add_conv(300, 2, 2);
+	network.add_conv(300, 3, 3);
 	network.add_pool(2, 2);
 	//network.add_conv(300, 1, 1);
 	network.add_tanh();
 
-	network.add_conv(400, 2, 2);
+	network.add_conv(400, 3, 3);
 	network.add_pool(2, 2);
 	//network.add_conv(400, 1, 1);
 	network.add_tanh();
 
-	network.add_conv(500, 2, 2);
+	network.add_conv(500, 3, 3);
 	network.add_pool(2, 2);
 	//network.add_conv(500, 1, 1);
 	network.add_tanh();
 
-	network.add_squash(100);
-	network.add_tanh();
+	//fully connected
+	//network.add_squash(100);
+	//network.add_tanh();
 
 	/*
 	network.add_conv(96, 9, 9);
@@ -158,6 +164,14 @@ int main() {
 	//squash_operation.init_normal(0, STD);
 
 	for (size_t e(0); e < 50000; ++e) {
+		//if ((e > 0) && (e % 4 == 0))
+		//if ((e % 4 == 0))
+		//MakeAdvDatabase(db, db_adv, network, 15.);
+		
+		//MakeAdvDatabase(db, db_adv, network, 15.);
+		int n(1000);
+		AddNAdv(db, db_adv, network, n, .2);
+
 		cout << "epoch: " << e << " lr: " << lr << endl;
 		lr *= .99;
 		Timer t;
@@ -165,7 +179,7 @@ int main() {
 		int n_correct(0);
 
 		indices.shuffle();
-		for (size_t i(0); i < db.N; ++i) {
+		for (size_t i(0); i < db_adv.N; ++i) {
 			//cout << i << endl;
 			//caffe::Datum datum = db.get_image(49999);
 			//for (size_t n(0); n < datum.float_data_size(); ++n)
@@ -174,13 +188,10 @@ int main() {
 
 			//cout << "float data size: " << datum.float_data_size() << endl;
 			
-			caffe::Datum datum = db.get_image(indices[i]);
-			//caffe::Datum datum = db.get_image(i);
+			//caffe::Datum datum = db.get_image(indices[i]);
+			caffe::Datum datum = db_adv.get_image(indices[i]);
 			const float *img_data = datum.float_data().data();
 
-			//ostringstream str;
-			//str << "/home/marijnfs/tmp/test_" << indices[i] << "_" << datum.label() << ".bmp" << endl;
-			//network.tensors[0]->x.write_img(str.str());
 
 			// =================
 			// Normal backprop
@@ -188,8 +199,9 @@ int main() {
 			network.calculate_loss(datum.label());
 			network.backward();
 			network.update(lr);
-			
 
+
+			/*
 			// ================
 			// Adversarial backprop
 			network.forward(img_data);
@@ -197,20 +209,46 @@ int main() {
 			network.backward_data();
 
 			vector<float> data_grad = network.tensors[0]->grad.to_vector();
-			float grad_norm = norm(data_grad);
-			
-			if (i == 5000)
+			//float grad_norm = norm(data_grad);
+			float grad_norm = l1_norm(data_grad);
+			float factor = rand_float();
+			if (i % 5000 == 0)
 				network.tensors[0]->x.write_img("norm.bmp");
-			add_cuda<float>(network.tensors[0]->grad.data, network.tensors[0]->x.data, network.tensors[0]->x.size(), -1 * rand_float() / (grad_norm * grad_norm));
-			if (i == 5000)
-				network.tensors[0]->x.write_img("adv.bmp");
+		   	//add_cuda<float>(network.tensors[0]->grad.data, network.tensors[0]->x.data, network.tensors[0]->x.size(), -1 * factor / (grad_norm * grad_norm));
+			cout << "cost1: " << network.loss() << endl;
+			add_cuda<float>(network.tensors[0]->grad.data, network.tensors[0]->x.data, network.tensors[0]->x.size(), -.3 * datum.float_data().size() / (grad_norm));
 
-			//throw "";
+			if (i % 5000 == 0) {
+				cout << "factor: " << factor << endl;
+				network.tensors[0]->x.write_img("adv.bmp");
+			}
+			*/
+			/*
+			//little test
+			{
+				network.forward(img_data);
+				for (size_t i(0); i < 1000; ++i) {
+					network.forward();
+					network.calculate_loss(datum.label());
+					network.backward_data();
+					add_cuda<float>(network.tensors[0]->grad.data, network.tensors[0]->x.data, network.tensors[0]->x.size(), -.3 * datum.float_data().size() / (grad_norm) / 1000.);
+				}
+				network.tensors[0]->x.write_img("adv_smooth.bmp");
+				network.forward();
+				network.calculate_loss(datum.label());
+				cout << "cost3: " << network.loss() << endl;
+
+				MakeAdvDatabase(db, db_adv, network, .3);
+				throw "";
+			}
+			*/
+			/*
 			network.forward();
 			network.calculate_loss(datum.label());
 			network.backward();
-			network.update(lr);			
-
+			network.update(lr);
+			*/			
+			// ========================
 
 
 			//network.l2(.0001);
@@ -240,7 +278,7 @@ int main() {
 			test_n_correct += network.n_correct();
 		}
 
-		cout << "elapsed: " << t.since() << " err: " << RED << (err / db.N) << DEFAULT << " correct: " << BLUE << n_correct << DEFAULT << "/" << db.N << endl;
+		cout << "elapsed: " << t.since() << " err: " << RED << (err / db_adv.N) << DEFAULT << " correct: " << BLUE << n_correct << DEFAULT << "/" << db_adv.N << endl;
 		cout << "test err: " << RED << (test_err / db_test.N) << DEFAULT << " correct: " << BLUE << test_n_correct << DEFAULT << "/" << db_test.N << endl;
 	}
 }

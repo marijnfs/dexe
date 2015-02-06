@@ -209,6 +209,11 @@ inline void random_shuffle(std::vector<T> &v) {
 }
 
 template <typename T>
+inline T abs(T a) {
+	return a > 0.0 ? a : -a;
+}
+
+template <typename T>
 inline T norm(std::vector<T> &v) {
 	T sum(0);
 	typename std::vector<T>::const_iterator it(v.begin()), end(v.end());
@@ -218,10 +223,27 @@ inline T norm(std::vector<T> &v) {
 }
 
 template <typename T>
-inline T abs(T a) {
-	return a > 0.0 ? a : -a;
+inline T l1_norm(std::vector<T> &v) {
+	T sum(0);
+	typename std::vector<T>::const_iterator it(v.begin()), end(v.end());
+	for (; it != end; ++it)
+		sum += abs<T>(*it);
+	return sum;
 }
 
+
+template <typename T>
+inline void normalize(std::vector<T> *v) {
+	float mean(0);
+	for (size_t i(0); i < v->size(); ++i) mean += (*v)[i];
+	mean /= v->size();
+	for (size_t i(0); i < v->size(); ++i) (*v)[i] -= mean;
+	float std(0);
+	for (size_t i(0); i < v->size(); ++i) std += (*v)[i] * (*v)[i];
+	std = sqrt(std / (v->size() - 1));
+	for (size_t i(0); i < v->size(); ++i) (*v)[i] /= std;
+}
+	
 inline float rand_float() {
 	return static_cast<float>(rand()) / (static_cast<float>(RAND_MAX));
 }

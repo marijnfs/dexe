@@ -157,6 +157,34 @@ int Tensor<F>::size() const {
 	return n * c * w * h;
 }
 
+template <>
+float Tensor<float>::norm() {
+	float result(0);	
+	handle_error( cublasSdot(Handler::cublas(), size(), data, 1, data, 1, &result) );
+	return sqrt(result);
+}
+
+template <>
+double Tensor<double>::norm() {
+	double result(0);	
+	handle_error( cublasDdot(Handler::cublas(), size(), data, 1, data, 1, &result) );
+	return sqrt(result);
+}
+
+template <>
+float Tensor<float>::sum() {
+	float result(0);
+	handle_error( cublasSasum(Handler::cublas(), size(), data, 1, &result) );
+	return result;
+}
+
+template <>
+double Tensor<double>::sum() {
+	double result(0);
+	handle_error( cublasDasum(Handler::cublas(), size(), data, 1, &result) );
+	return result;
+}
+
 template <typename F>
 void Tensor<F>::write_img(string filename) {
 	vector<F> v = to_vector();

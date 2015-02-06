@@ -9,7 +9,7 @@ using namespace std;
 using namespace leveldb;
 using namespace caffe;
 
-DataBase::DataBase(string path) : N(0) {
+Database::Database(string path) : N(0) {
 	options.create_if_missing = true;
 	Status status = DB::Open(options, path, &db);
 
@@ -22,11 +22,19 @@ DataBase::DataBase(string path) : N(0) {
 	N = count();
 }
 
-DataBase::~DataBase() {
+Database::~Database() {
 	delete db;
 }
 
-void DataBase::normalize_chw() {
+void Database::from_database(Database &other) {
+	cout << "Copying database" << endl;
+	Iterator* it = other.db->NewIterator(leveldb::ReadOptions());
+
+	for (it->SeekToFirst(); it->Valid(); it->Next())
+		db->Put(leveldb::WriteOptions(), it->key(), it->value());
+}
+
+void Database::normalize_chw() {
 	cout << "Normalizing dataset" << endl;
 	Iterator* it = db->NewIterator(leveldb::ReadOptions());
 
@@ -46,6 +54,7 @@ void DataBase::normalize_chw() {
 		for (size_t i(0); i < data.size(); ++i)
 			data[i] = float(byte_data[i]);
 
+		normalize(&data);
 
 		/*float mean(0);
 		for (size_t i(0); i < data.size(); ++i) mean += data[i];
@@ -54,9 +63,10 @@ void DataBase::normalize_chw() {
 		float std(0);
 		for (size_t i(0); i < data.size(); ++i) std += data[i] * data[i];
 		std = sqrt(std / (data.size() - 1));
-		for (size_t i(0); i < data.size(); ++i) data[i] /= std * 3.;
+		for (size_t i(0); i < data.size(); ++i) data[i] /= std;
 		*/
 
+		/*
 		float min(99999), max(-99999);
 		for (size_t i(0); i < data.size(); ++i) {
 			if (data[i] > max) max = data[i];
@@ -64,7 +74,7 @@ void DataBase::normalize_chw() {
 		}
 		for (size_t i(0); i < data.size(); ++i)
 			data[i] = 2.0 * (data[i] - min) / (max - min) - 1.0;
-
+		*/
 
 		//for (size_t i(0); i < data.size(); ++i) data[i] /= 256.;
 		// CHW
@@ -86,7 +96,7 @@ void DataBase::normalize_chw() {
 	}
 }
 
-size_t DataBase::count() {
+size_t Database::count() {
 	Iterator* it = db->NewIterator(leveldb::ReadOptions());
 
 	size_t N(0);
@@ -95,14 +105,17 @@ size_t DataBase::count() {
 	return N;
 }
 
-caffe::Datum DataBase::get_image(int index) {
+string Database::get_key(int index) {
 	ostringstream oss;
 	oss << setw(5) << setfill('0') << index;
+	return oss.str();	
+}
 
+caffe::Datum Database::get_image(int index) {
 	string data;
-	leveldb::Slice key = oss.str();
+	leveldb::Slice key = get_key(index);
 	if (!db->Get(ReadOptions(), key, &data).ok()) {
-		cerr << "couldn't load key " << oss.str() << endl;
+		cerr << "couldn't load key " << endl;
 		exit(1);
 	}
 
@@ -113,3 +126,11 @@ caffe::Datum DataBase::get_image(int index) {
 	}
 	return datum;
 }
+
+void Database::add(Datum &datum) {
+	string output;
+	datum.SerializeToString(&output);
+	db->Put(leveldb::WriteOptions(), get_key(N), output);
+	++N;
+}
+

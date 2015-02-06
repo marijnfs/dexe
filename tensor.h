@@ -30,6 +30,9 @@ struct Tensor {
 	void fill(F val);
 	void write_img(std::string filename);
 
+	F sum();
+	F norm();
+
   	int size() const;
 	TensorShape shape() const;
 
