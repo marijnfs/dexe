@@ -222,6 +222,7 @@ inline T norm(std::vector<T> &v) {
 	return sqrt(sum);
 }
 
+
 template <typename T>
 inline T l1_norm(std::vector<T> &v) {
 	T sum(0);

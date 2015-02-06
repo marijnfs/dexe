@@ -94,8 +94,6 @@ int main() {
 	Database db_adv("./adv");
 	db_adv.from_database(db); //copy
 
-	Indices indices(db.N);
-	
 	//db.normalize_chw();
 	//db_test.normalize_chw();
 
@@ -164,20 +162,23 @@ int main() {
 	//squash_operation.init_normal(0, STD);
 
 	for (size_t e(0); e < 50000; ++e) {
-		//if ((e > 0) && (e % 4 == 0))
+		
 		//if ((e % 4 == 0))
 		//MakeAdvDatabase(db, db_adv, network, 15.);
 		
 		//MakeAdvDatabase(db, db_adv, network, 15.);
-		int n(1000);
-		AddNAdv(db, db_adv, network, n, .2);
+		if ((e > 0) && (e % 4 == 0)) {
+			int n(db.N);
+			AddNAdv(db, db_adv, network, n, 1.);
+		}
 
 		cout << "epoch: " << e << " lr: " << lr << endl;
 		lr *= .99;
 		Timer t;
 		float err(0);
 		int n_correct(0);
-
+		
+		Indices indices(db_adv.N);
 		indices.shuffle();
 		for (size_t i(0); i < db_adv.N; ++i) {
 			//cout << i << endl;

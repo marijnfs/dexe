@@ -32,6 +32,7 @@ void Database::from_database(Database &other) {
 
 	for (it->SeekToFirst(); it->Valid(); it->Next())
 		db->Put(leveldb::WriteOptions(), it->key(), it->value());
+	N = count();
 }
 
 void Database::normalize_chw() {
