@@ -5,7 +5,7 @@
 #include "database.h"
 
 void MakeAdvDatabase(Database &in, Database &out, Network<float> &network, float step);
-void AddNAdv(Database &in, Database &out, Network<float> &network, int n, float step);
+void AddNAdv(Database &in, Database &out, Network<float> &network, int n, float step, int n_step);
 
 
 #endif

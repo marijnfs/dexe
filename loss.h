@@ -2,6 +2,7 @@
 #define __LOSS_H__
 
 #include "tensor.h"
+#include "util.h"
 #include <vector>
 
 template <typename F>
@@ -10,6 +11,7 @@ struct Loss {
 	
 	virtual void calculate_loss(Tensor<F> &in, std::vector<int> answers, Tensor<F> &err) = 0;
 	virtual void calculate_loss(Tensor<F> &in, int answer, Tensor<F> &err);
+	virtual void calculate_average_loss(Tensor<F> &in, Tensor<F> &err) { throw StringException("not implemented"); }
 
 	virtual F loss();
 	virtual int n_correct();
@@ -25,6 +27,7 @@ struct SoftmaxLoss : public Loss<F> {
 	SoftmaxLoss(int n, int c);
 
 	void calculate_loss(Tensor<F> &in, std::vector<int> answers, Tensor<F> &err);
+    void calculate_average_loss(Tensor<F> &in, Tensor<F> &err);
 };
 
 template <typename F>

@@ -16,6 +16,8 @@ struct Operation {
 	virtual void backward_weights(Tensor<F> &in, Tensor<F> &out_grad){}
 	virtual void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad){}
 	virtual TensorShape output_shape(TensorShape input) { return TensorShape{0, 0, 0, 0}; }
+
+	virtual void forward_dry_run(Tensor<F> &in, Tensor<F> &out){}
 };
 
 template <typename F>
@@ -32,7 +34,7 @@ struct Parametrised {
 
 template <typename F>
 struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
-	ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep = true);
+	ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep = true, size_t workspace_limit = 0);
 	~ConvolutionOperation();
 
 	void init_normal(F mean, F std);
@@ -45,6 +47,8 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	void update(F lr);
 	void l2(F l);
 	
+	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
+
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &v);
 	std::vector<F> grad_to_vector();
@@ -55,6 +59,10 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	cudnnConvolutionDescriptor_t conv;
 	FilterBank<F> filter_bank, filter_bank_grad;
 	Tensor<F> bias, bias_grad;
+
+	cudnnConvolutionFwdAlgo_t algo;
+	char *workspace;
+	size_t workspace_size;
 };
 
 template <typename F>

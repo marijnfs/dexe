@@ -6,11 +6,14 @@
 using namespace std;
 
 template <typename F>
-ConvolutionOperation<F>::ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep):
+ConvolutionOperation<F>::ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep, size_t workspace_limit_):
 	filter_bank(in_map, out_map, kw, kh),
 	filter_bank_grad(in_map, out_map, kw, kh),
 	bias(1, out_map, 1, 1),
-	bias_grad(1, out_map, 1, 1)
+	bias_grad(1, out_map, 1, 1),
+	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
+	workspace(0),
+	workspace_size(workspace_limit_)
 {
 	int pad_h(0), pad_w(0), stride_w(1), stride_h(1), upscalex(1), upscaley(1);
 	if (keep) {
@@ -87,7 +90,8 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output) {
 	F alpha(1.0), beta(0.0);
 
 	F alpha_bias(1), beta_bias(1);
-	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM, 0, 0, &beta, output.td, output.data));
+	
+	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, algo, workspace, workspace_size, &beta, output.td, output.data));
 
 	handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_SAME_C, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 }
@@ -114,8 +118,21 @@ TensorShape ConvolutionOperation<F>::output_shape(TensorShape in) {
 }
 
 template <typename F>
+void ConvolutionOperation<F>::forward_dry_run(Tensor<F> &in, Tensor<F> &out) { // allocates workspace
+	//handle_error( cudnnGetConvolutionForwardAlgorithm(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, workspace_size, &algo) );
+	algo = CUDNN_CONVOLUTION_FWD_ALGO_GEMM;
+	handle_error( cudnnGetConvolutionForwardWorkspaceSize(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, algo, &workspace_size) );
+	cout << "workspace size: " << workspace_size << endl;
+	if (workspace_size)
+		handle_error( cudaMalloc( (void**)&workspace, workspace_size) );
+}
+
+template <typename F>
 ConvolutionOperation<F>::~ConvolutionOperation() {
 	cudnnDestroyConvolutionDescriptor(conv);
+
+    if (workspace)
+		cudaFree(workspace);
 }
 
 template <typename F>

@@ -1,5 +1,6 @@
 #include <sstream>
 #include "adv.h"
+#include "balancer.h"
 
 using namespace std;
 
@@ -86,7 +87,7 @@ void MakeAdvDatabase(Database &in, Database &out, Network<float> &network, float
 	cout << "took: " << t.since() << endl;
 }
 
-void AddNAdv(Database &in, Database &out, Network<float> &network, int n, float percent) {
+void AddNAdv(Database &in, Database &out, Network<float> &network, int n, float step, int n_step) {
 	Timer t;
 	float target_loss = -log(1.0 / network.output().c);
 	cout << "Adding " << n << " random adv to database" << endl;
@@ -99,8 +100,11 @@ void AddNAdv(Database &in, Database &out, Network<float> &network, int n, float 
 	Tensor<float> g3(network.shapes[0]);
 	Tensor<float> g4(network.shapes[0]);
 
+	//step *= -1;
 	Indices indices(in.N);
 	indices.shuffle();
+
+	size_t i(0);
 	for (size_t i(0); i < n; ++i) {
 		caffe::Datum datum = in.get_image(indices[i]);
 		const float *img_data = datum.float_data().data();
@@ -108,35 +112,44 @@ void AddNAdv(Database &in, Database &out, Network<float> &network, int n, float 
 		
 		int iteration(0);
 		while (true) {
+			if (iteration > n_step) //thats enough
+				break;
+
 			network.tensors[0]->x.from_tensor(x);
 			network.forward();
 			network.calculate_loss(datum.label());
+			//network.calculate_average_loss();
 			if (i % 200 == 0) {
 				ostringstream oss;
 				oss << "/home/marijnfs/tmp/" << i << "_" << iteration << "_norm.bmp";
 				x.write_img(oss.str());
-				cout << iteration << " loss: " << network.loss() << endl;
+				cout << iteration << " loss: " << network.loss() << " " << target_loss << endl;
 			}
 			//cout << iteration << " " << network.loss() << endl;
 
-			if (network.loss() >= target_loss * .9)
-				break;
+			
+			//if (network.loss() >= target_loss * .9)
+			//		break;
+
+			//if (network.loss() < target_loss * 1.001)
+			//		break;
 			network.backward_data();
 			
-			float step = min(network.loss() * percent, target_loss - network.loss());
+			//float step = -min(network.loss() * percent, network.loss() - target_loss);
 			
 			float g1_norm = x_grad.norm();
-			g1_norm *= g1_norm;
+			//g1_norm *= g1_norm;
 			
 			g1.from_tensor(network.tensors[0]->grad);
-
-			
 			add_cuda<float>(x_grad.data, network.tensors[0]->x.data, network.tensors[0]->x.size(), -.5 * step / g1_norm);
 			network.forward();
+
 			network.calculate_loss(datum.label());
+			//network.calculate_average_loss();
+
 			network.backward_data();
 			float g2_norm = x_grad.norm();
-			g2_norm *= g2_norm;
+			//g2_norm *= g2_norm;
 			g2.from_tensor(network.tensors[0]->grad);
 			
 			network.tensors[0]->x.from_tensor(x);
@@ -144,19 +157,23 @@ void AddNAdv(Database &in, Database &out, Network<float> &network, int n, float 
 			
 			network.forward();
 			network.calculate_loss(datum.label());
+			//network.calculate_average_loss();
+
 			network.backward_data();
 			float g3_norm = x_grad.norm();
-			g3_norm *= g3_norm;
+			//g3_norm *= g3_norm;
 			g3.from_tensor(network.tensors[0]->grad);
 			
 			network.tensors[0]->x.from_tensor(x);
 			add_cuda<float>(x_grad.data, network.tensors[0]->x.data, network.tensors[0]->x.size(), -1.0 * step / g3_norm);
 			network.forward();
+
+			//network.calculate_average_loss();
 			network.calculate_loss(datum.label());
 			network.backward_data();
 			
 			float g4_norm = x_grad.norm();
-			g4_norm *= g4_norm;
+			//g4_norm *= g4_norm;
 			g4.from_tensor(network.tensors[0]->grad);
 			
 			add_cuda<float>(g1.data, x.data, x.size(), -step / 6.0 / g1_norm);
@@ -172,6 +189,7 @@ void AddNAdv(Database &in, Database &out, Network<float> &network, int n, float 
 			ostringstream oss;
 			oss << "/home/marijnfs/tmp/" << i << "_adv.bmp";
 			x.write_img(oss.str());
+			cout << "output, class " << network.output().to_vector() << " " << datum.label() << endl;
 		}
 		
 		vector<float> adv_img = x.to_vector();
@@ -182,6 +200,7 @@ void AddNAdv(Database &in, Database &out, Network<float> &network, int n, float 
 			datum.add_float_data(adv_img[i]);
 
 		out.add(datum);
+		i = (i + 1) % in.N;
 	}
 	cout << "took: " << t.since() << endl;
 }

@@ -8,7 +8,9 @@
 #include "img.h"
 #include "colour.h"
 #include "adv.h"
+#include "balancer.h"
 
+#include <unistd.h>
 #include <ctime>
 
 using namespace std;
@@ -39,7 +41,7 @@ void test2() {
 	//Indices indices(db.N);
 
 	double std(1.);
-	double lr(.001);
+	double lr(.002);
 
 	//Network network(TensorShape{1, 10, 1, 1});
 	//network.add_conv(10, 1, 1);
@@ -88,6 +90,8 @@ void test2() {
 
 
 int main() {
+	Balancer::start(2);
+
 	srand(time(0));
 	Database db("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_train_leveldb");
 	Database db_test("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_test_leveldb");
@@ -102,11 +106,19 @@ int main() {
 
 	int n(1), c(3), h(32), w(32);
 	int outc(10);
-	Network<float> network(TensorShape{n, c, w, h});
-	//network.add_conv(100, 2, 2);
-	//network.add_pool(8, 8);
-	//network.add_tanh();
+	Network<float> network(TensorShape{n, c, w, h});	
 
+	/*
+	network.add_conv(128, 8, 8);
+	network.add_pool(4, 4);
+	network.add_tanh();
+	network.add_conv(196, 4, 4);
+	network.add_pool(2, 2);
+	network.add_tanh();
+	network.add_conv(196, 2, 2);
+	network.add_pool(2, 2);
+	network.add_tanh();
+	*/
 
 	network.add_conv(100, 3, 3);
 	network.add_pool(2, 2);
@@ -148,9 +160,10 @@ int main() {
 	network.add_pool(2, 2);
 	network.add_tanh();
 
+	*/
+
 	network.add_squash(100);
 	network.add_tanh();
-	*/
 
 	network.add_squash(10);
 	network.add_softmax();
@@ -161,16 +174,24 @@ int main() {
 	//conv_operation1.init_normal(0, STD);
 	//squash_operation.init_normal(0, STD);
 
+	Balancer::init(2);
+	Balancer::advance(1, 300*3);
+
 	for (size_t e(0); e < 50000; ++e) {
-		
 		//if ((e % 4 == 0))
 		//MakeAdvDatabase(db, db_adv, network, 15.);
 		
 		//MakeAdvDatabase(db, db_adv, network, 15.);
-		if ((e > 0) && (e % 4 == 0)) {
-			int n(db.N);
-			AddNAdv(db, db_adv, network, n, 1.);
-		}
+		//if (e > 6 && (e % 2 == 0)) {
+
+		/*
+		if (Balancer::ready(0)) {
+			//int n(db.N);
+			int n(1000);
+			Balancer::start(0);
+			AddNAdv(db, db_adv, network, n, 5., 5);
+			Balancer::stop(0);
+			}*/
 
 		cout << "epoch: " << e << " lr: " << lr << endl;
 		lr *= .99;
@@ -180,7 +201,11 @@ int main() {
 		
 		Indices indices(db_adv.N);
 		indices.shuffle();
+
+		size_t i(0);
 		for (size_t i(0); i < db_adv.N; ++i) {
+		//while (Balancer::ready(1)) {
+			Balancer::start(1);
 			//cout << i << endl;
 			//caffe::Datum datum = db.get_image(49999);
 			//for (size_t n(0); n < datum.float_data_size(); ++n)
@@ -198,9 +223,11 @@ int main() {
 			// Normal backprop
 			network.forward(img_data);
 			network.calculate_loss(datum.label());
-			network.backward();
-			network.update(lr);
 
+			if (network.loss() > .01) {  //speedup, skip if prob > .99
+				network.backward();
+				network.update(lr);
+			}
 
 			/*
 			// ================
@@ -262,6 +289,8 @@ int main() {
 				vector<float> ov = network.output().to_vector();
 				cout << i << " (" << indices[i] << ") " << datum.label() << " " << ov << " " << ov[datum.label()] << endl;
 			}
+			i = (i + 1) % db_adv.N;
+			Balancer::stop(1);
 		}
 
 

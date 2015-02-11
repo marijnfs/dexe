@@ -12,7 +12,7 @@ Network<F>::Network(TensorShape in) : loss_ptr(0), finished(false) {
 
 template <typename F>
 void Network<F>::add_conv(int outmap, int kw, int kh) {
-	ConvolutionOperation<F> *conv = new ConvolutionOperation<F>(last(shapes).c, outmap, kw, kh);
+	ConvolutionOperation<F> *conv = new ConvolutionOperation<F>(last(shapes).c, outmap, kw, kh, true, 512 * 1024 * 1024);
 	add_operation(conv);
 	params.push_back(conv);
 }
@@ -55,6 +55,10 @@ template <typename F>
 void Network<F>::finish() {
 	loss_ptr = new SoftmaxLoss<F>(last(shapes).n, last(shapes).c);
 	//loss_ptr = new SquaredLoss<F>(last(shapes).n, last(shapes).c);
+
+	for (size_t i(0); i < operations.size(); ++i)
+		operations[i]->forward_dry_run(tensors[i]->x, tensors[i+1]->x);
+
 	finished = true;
 }
 
@@ -89,6 +93,12 @@ template <typename F>
 void Network<F>::calculate_loss(std::vector<int> &labels) {
 	assert_finished();
 	loss_ptr->calculate_loss(last(tensors)->x, labels, last(tensors)->grad);
+}
+
+template <typename F>
+void Network<F>::calculate_average_loss() {
+	assert_finished();
+	loss_ptr->calculate_average_loss(last(tensors)->x, last(tensors)->grad);
 }
 
 template <typename F>
@@ -189,6 +199,12 @@ template <typename F>
 Tensor<F> &Network<F>::output() {
 	assert_finished();
 	return last(tensors)->x;
+}
+
+template <typename F>
+Tensor<F> &Network<F>::input() {
+	assert_finished();
+	return tensors[0]->x;
 }
 
 template <typename F>

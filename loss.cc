@@ -40,16 +40,37 @@ void SoftmaxLoss<F>::calculate_loss(Tensor<F> &in, vector<int> answers, Tensor<F
     for (size_t i(0); i < answers.size(); i++) {
         err_v[answers[i] + i * Loss<F>::c] = 1.0;
 
-        Loss<F>::last_loss += -log(prob[answers[i]] + e);
+        Loss<F>::last_loss += -log(prob[answers[i] + i * Loss<F>::c] + e);
 		int max(0);
 		F max_prob(0);
         for (size_t n(0); n < Loss<F>::c; ++n)
-			if (prob[n] > max_prob) {
-				max_prob = prob[n];
+			if (prob[n + i * Loss<F>::c] > max_prob) {
+				max_prob = prob[n + i * Loss<F>::c];
 				max = n;
 			}
             if (max == answers[i]) ++Loss<F>::last_correct;
 	}
+
+	err.from_vector(err_v);
+	err -= in;
+	//cout << "err: " << err.to_vector() << endl;
+}
+
+template <typename F>
+void SoftmaxLoss<F>::calculate_average_loss(Tensor<F> &in, Tensor<F> &err) {
+    Loss<F>::last_loss = 0;
+    Loss<F>::last_correct = 0;
+	const F e(.00000001);
+	vector<F> err_v(err.size());
+
+	F guess = 1.0 / in.c;
+
+	err.fill(guess);
+	vector<F> prob = in.to_vector();
+
+    for (size_t i(0); i < prob.size(); ++i)
+		Loss<F>::last_loss += -log(prob[i] + e);
+	Loss<F>::last_loss *= guess;
 
 	err.from_vector(err_v);
 	err -= in;

@@ -20,7 +20,7 @@ struct StringException : public std::exception {
 };
 
 struct Timer {
-	Timer() {t = clock();}
+	Timer() {start();}
 	void start() {t = clock();}
 	double since() {return double(clock() - t) / double(CLOCKS_PER_SEC);}
 

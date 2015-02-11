@@ -1,7 +1,7 @@
 #ifndef __DATABASE_H__
 #define __DATABASE_H__
 
-#include "leveldb/db.h"
+#include <leveldb/db.h>
 #include "caffe.pb.h"
 #include <string>
 
