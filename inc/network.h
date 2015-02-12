@@ -27,7 +27,9 @@ struct Network {
 	void forward(F const *cpu_data);
 	void calculate_loss(int label);
 	void calculate_loss(std::vector<int> &labels);
+	void calculate_loss(Tensor<F> &target);
 	void calculate_average_loss();
+	void backward(F const *cpu_data);
 	void backward();
 	void backward_data();
 

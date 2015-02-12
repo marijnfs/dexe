@@ -102,7 +102,23 @@ void Network<F>::calculate_average_loss() {
 }
 
 template <typename F>
+void Network<F>::calculate_loss(Tensor<F> &target) {
+	assert_finished();
+	loss_ptr->calculate_loss(last(tensors)->x, target, last(tensors)->grad);
+}
+
+template <typename F>
+void Network<F>::backward(F const * cpu_data) {
+	assert_finished();
+	last(tensors)->grad.from_ptr(cpu_data);
+	
+	backward();
+}
+
+
+template <typename F>
 void Network<F>::backward() {
+	assert_finished();
 	for (int i(operations.size() - 1); i >= 0; --i) {
 		operations[i]->backward(tensors[i]->x, tensors[i+1]->x, tensors[i+1]->grad, tensors[i]->grad);
 		operations[i]->backward_weights(tensors[i]->x, tensors[i+1]->grad);

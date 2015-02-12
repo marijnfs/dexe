@@ -78,6 +78,16 @@ void SoftmaxLoss<F>::calculate_average_loss(Tensor<F> &in, Tensor<F> &err) {
 }
 
 template <typename F>
+void SoftmaxLoss<F>::calculate_loss(Tensor<F> &in, Tensor<F> &target, Tensor<F> &err) {
+    Loss<F>::last_loss = 0;
+    Loss<F>::last_correct = 0;
+
+	err.from_tensor(target);
+	err -= in;
+	//cout << "err: " << err.to_vector() << endl;
+}
+
+template <typename F>
 SquaredLoss<F>::SquaredLoss(int n_, int c_) : Loss<F>(n_, c_) {
 }
 
