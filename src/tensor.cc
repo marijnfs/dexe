@@ -110,6 +110,11 @@ vector<F> Tensor<F>::to_vector() {
 }
 
 template <typename F>
+void Tensor<F>::to_ptr(F *ptr) {
+	handle_error( cudaMemcpy(ptr, data, size() * sizeof(F), cudaMemcpyDeviceToHost));
+}
+
+template <typename F>
 void Tensor<F>::from_vector(vector<F> &in) {
 	assert(size() == in.size());
  	handle_error( cudaMemcpy(data, &in[0], in.size() * sizeof(F), cudaMemcpyHostToDevice));

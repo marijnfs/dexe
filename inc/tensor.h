@@ -24,6 +24,7 @@ struct Tensor {
 	void zero();
 	
 	std::vector<F> to_vector();
+	void to_ptr(F *ptr);
 	void from_vector(std::vector<F> &in);
 	void from_ptr(F const *in);
 	void from_tensor(Tensor &in);

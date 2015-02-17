@@ -38,7 +38,11 @@ struct Network {
 	void init_normal(F mean, F std);
     void init_uniform(F var);
 
+	void save(std::string path);
+	void load(std::string path);
+
 	std::vector<F> to_vector();
+	void from_vector(std::vector<F> &vec);
 	std::vector<F> fd_gradient(F const *cpu_data, int label, F e);
 	std::vector<F> gradient();
 

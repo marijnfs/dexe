@@ -1,6 +1,9 @@
 #include "network.h"
+#include "util.h"
+
 #include <algorithm>
 #include <iterator>
+#include <fstream>
 
 using namespace std;
 
@@ -158,6 +161,20 @@ void Network<F>::init_uniform(F var) {
 }
 
 template <typename F>
+void Network<F>::save(std::string path) {
+	ofstream of(path, ios::binary);
+	vector<F> data = to_vector();
+	byte_write_vec(of, data);
+}
+
+template <typename F>
+void Network<F>::load(std::string path) {
+	ifstream in(path, ios::binary);
+	vector<F> data = byte_read_vec<F>(in);
+	from_vector(data);
+}
+
+template <typename F>
 vector<F> Network<F>::to_vector() {
 	vector<F> full_vec;
 	for (size_t i(0); i < params.size(); ++i) {
@@ -165,6 +182,16 @@ vector<F> Network<F>::to_vector() {
 		copy(vec.begin(), vec.end(), back_inserter(full_vec));
 	}
 	return full_vec;
+}
+
+template <typename F>
+void Network<F>::from_vector(vector<F> &vec) {
+	typename vector<F>::iterator it(vec.begin());
+	for (size_t i(0); i < params.size(); ++i) {
+		vector<F> v(it, it + params[i]->size());
+		params[i]->from_vector(v);
+		it += params[i]->size();
+	}
 }
 
 template <typename F>

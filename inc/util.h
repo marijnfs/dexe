@@ -2,6 +2,8 @@
 #define __UTIL_H__
 
 #include <iostream>
+#include <fstream>
+#include <cstdlib>
 #include <vector>
 #include <cudnn.h>
 #include <cublas_v2.h>
@@ -9,6 +11,7 @@
 #include <time.h>
 #include <stdint.h>
 #include <algorithm>
+#include <stdint.h>
 
 #include "handler.h"
 
@@ -259,5 +262,34 @@ struct Indices {
 	
 	std::vector<int> indices;
 };
+
+template <typename T>
+inline void byte_write(std::ofstream &out, T &t) {
+	out.write(reinterpret_cast<char*>(&t), sizeof(T));
+}
+
+template <typename T>
+inline void byte_write_vec(std::ofstream &out, std::vector<T> &v) {
+	uint64_t s(v.size());
+	byte_write(out, s);
+	for (size_t i(0); i < v.size(); ++i)
+		byte_write(out, v[i]);
+}
+
+template <typename T>
+inline T byte_read(std::ifstream &in) {
+	T t;
+	in.read(reinterpret_cast<char*>(&t), sizeof(T));
+	return t;
+}
+
+template <typename T>
+inline std::vector<T> byte_read_vec(std::ifstream &in) {
+	size_t s = byte_read<uint64_t>(in);
+	std::vector<T> v;
+	for (size_t i(0); i < s; ++i)
+		v.push_back(byte_read<T>(in));
+	return v;
+}
 
 #endif

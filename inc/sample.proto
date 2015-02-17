@@ -1,0 +1,4 @@
+message Sample {
+		repeated float input  = 1 [packed=true];
+		repeated float output = 2 [packed=true];
+}
