@@ -248,6 +248,13 @@ inline void normalize(std::vector<T> *v) {
 	for (size_t i(0); i < v->size(); ++i) (*v)[i] /= std;
 }
 	
+template <typename T>
+inline void normalize_1(std::vector<T> *v) {
+	T sum = std::accumulate(v->begin(), v->end(), 0);
+	for (size_t i(0); i < v->size(); ++i) (*v)[i] /= sum;
+}
+
+
 inline float rand_float() {
 	return static_cast<float>(rand()) / (static_cast<float>(RAND_MAX));
 }

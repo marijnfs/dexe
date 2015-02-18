@@ -116,13 +116,18 @@ void Tensor<F>::to_ptr(F *ptr) {
 
 template <typename F>
 void Tensor<F>::from_vector(vector<F> &in) {
-	assert(size() == in.size());
+	if (size() != in.size()) {
+		throw StringException("sizes don't match");
+	}
  	handle_error( cudaMemcpy(data, &in[0], in.size() * sizeof(F), cudaMemcpyHostToDevice));
 }
 
 template <typename F>
 void Tensor<F>::from_tensor(Tensor &in) {
- 	handle_error( cudaMemcpy(data, in.data, in.size() * sizeof(F), cudaMemcpyDeviceToDevice));
+	if (size() != in.size()) {
+ 			throw StringException("sizes don't match");
+	}
+	handle_error( cudaMemcpy(data, in.data, in.size() * sizeof(F), cudaMemcpyDeviceToDevice));
 }
 
 template <typename F>

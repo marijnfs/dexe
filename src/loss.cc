@@ -17,7 +17,7 @@ void Loss<F>::calculate_loss(Tensor<F> &in, int answer, Tensor<F> &err) {
 
 template <typename F>
 F Loss<F>::loss() {
-	return last_loss;
+	return this->last_loss;
 }
 
 template <typename F>
@@ -31,8 +31,8 @@ SoftmaxLoss<F>::SoftmaxLoss(int n_, int c_) : Loss<F>(n_, c_) {
 
 template <typename F>
 void SoftmaxLoss<F>::calculate_loss(Tensor<F> &in, vector<int> answers, Tensor<F> &err) {
-    Loss<F>::last_loss = 0;
-    Loss<F>::last_correct = 0;
+    this->last_loss = 0;
+    this->last_correct = 0;
 	const F e(.00000001);
 	vector<F> err_v(err.size());
 	vector<F> prob = in.to_vector();
@@ -58,8 +58,8 @@ void SoftmaxLoss<F>::calculate_loss(Tensor<F> &in, vector<int> answers, Tensor<F
 
 template <typename F>
 void SoftmaxLoss<F>::calculate_average_loss(Tensor<F> &in, Tensor<F> &err) {
-    Loss<F>::last_loss = 0;
-    Loss<F>::last_correct = 0;
+    this->last_loss = 0;
+    this->last_correct = 0;
 	const F e(.00000001);
 	vector<F> err_v(err.size());
 
@@ -69,8 +69,8 @@ void SoftmaxLoss<F>::calculate_average_loss(Tensor<F> &in, Tensor<F> &err) {
 	vector<F> prob = in.to_vector();
 
     for (size_t i(0); i < prob.size(); ++i)
-		Loss<F>::last_loss += -log(prob[i] + e);
-	Loss<F>::last_loss *= guess;
+		this->last_loss += -log(prob[i] + e);
+	this->last_loss *= guess;
 
 	err.from_vector(err_v);
 	err -= in;
@@ -79,11 +79,19 @@ void SoftmaxLoss<F>::calculate_average_loss(Tensor<F> &in, Tensor<F> &err) {
 
 template <typename F>
 void SoftmaxLoss<F>::calculate_loss(Tensor<F> &in, Tensor<F> &target, Tensor<F> &err) {
-    Loss<F>::last_loss = 0;
-    Loss<F>::last_correct = 0;
+    this->last_loss = 0;
+	//Loss<F>::last_loss = 0;
+    this->last_correct = 0;
 
+	//err.zero();
 	err.from_tensor(target);
 	err -= in;
+	vector<F> errs = err.to_vector();
+	//cout << "calculate loss bla";
+	for (auto v : errs) {
+		//cout << "vv:" << (v * v) << " ";
+		this->last_loss += v * v;
+	}
 	//cout << "err: " << err.to_vector() << endl;
 }
 
@@ -93,8 +101,8 @@ SquaredLoss<F>::SquaredLoss(int n_, int c_) : Loss<F>(n_, c_) {
 
 template <typename F>
 void SquaredLoss<F>::calculate_loss(Tensor<F> &in, vector<int> answers, Tensor<F> &err) {
-    Loss<F>::last_loss = 0;
-    Loss<F>::last_correct = 0;
+    this->last_loss = 0;
+    this->last_correct = 0;
 
 	vector<F> err_v(err.size());
 	vector<F> prob = in.to_vector();
@@ -103,9 +111,9 @@ void SquaredLoss<F>::calculate_loss(Tensor<F> &in, vector<int> answers, Tensor<F
        err_v[answers[i] + i * Loss<F>::c] = 1.0;
           for (size_t n(0); n < Loss<F>::c; ++n)
 			if (n == answers[i])
-				Loss<F>::last_loss += .5 * (prob[n] - 1.0) * (prob[n] - 1.0);
+				this->last_loss += .5 * (prob[n] - 1.0) * (prob[n] - 1.0);
 			else
-				Loss<F>::last_loss += .5 * (prob[n] - 0.0) * (prob[n] - 0.0);
+				this->last_loss += .5 * (prob[n] - 0.0) * (prob[n] - 0.0);
 
 		//cout << prob << endl;
 		int max(0);
