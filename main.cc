@@ -12,26 +12,42 @@
 
 #include <unistd.h>
 #include <ctime>
+#include <cuda.h>
 
 using namespace std;
 
-void test() {
-	TensorSet<float>x(1, 1, 4, 4);
-	x.x.init_normal(1.0, .5);
-
-	//ConvolutionOperation conv(1, 1, 4, 4);
-	PoolingOperation<float> p(2, 2);
-	TensorSet<float>out(p.output_shape(x.shape()));
-	p.forward(x.x, out.x);
-	cout << x.x.to_vector() << endl;
-	cout << out.x.to_vector() << endl;
-
-	out.grad.fill(-1);
-	p.backward(x.x, out.x, out.grad, x.grad);
-	cout << x.grad.to_vector() << endl;
-	cout << out.grad.to_vector() << endl;
+void test1() {
+	Network<float> network(TensorShape{1, 3, 640, 480});
 	
+	network.add_conv(32, 3, 3);
+	network.add_pool(2, 2);
+	network.add_relu();
 
+	network.add_conv(64, 3, 3);
+	network.add_pool(2, 2);
+	network.add_relu();
+
+
+	network.add_conv(128, 3, 3);
+	network.add_pool(2, 2);
+	network.add_relu();
+
+	network.add_conv(256, 3, 3);
+	network.add_relu();
+	network.add_pool(2, 2);
+
+	network.add_conv(640, 3, 3);
+	network.add_relu();
+	network.add_pool(2, 2);
+	
+	network.add_softmax();
+	network.finish();
+
+	Timer timer;
+	network.input().init_normal(1.0, .5);
+	network.forward();
+	cudaDeviceSynchronize();
+	cout << timer.since() << endl;
 }
 
 void test2() {
@@ -90,6 +106,8 @@ void test2() {
 
 
 int main() {
+	test1();
+	return 1;
 	Balancer::start(2);
 
 	srand(time(0));

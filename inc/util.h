@@ -56,6 +56,11 @@ inline void handle_error(cublasStatus_t status) {
 
     case CUBLAS_STATUS_INTERNAL_ERROR:
       throw StringException("CUBLAS_STATUS_INTERNAL_ERROR");
+	case CUBLAS_STATUS_NOT_SUPPORTED:
+		throw StringException("CUBLAS_STATUS_NOT_SUPPORTED");	
+	default:
+		throw StringException("SOME CUBLAS ERROR");
+	
     }
 
   throw StringException("<unknown>");
@@ -93,6 +98,8 @@ inline void handle_error(curandStatus_t status) {
     throw StringException("Architecture mismatch, GPU does not support requested feature"); 
   case CURAND_STATUS_INTERNAL_ERROR: 
     throw StringException("Internal library error"); 
+  default:
+	  throw StringException("SOME CURAND ERROR");
   }
 
   throw StringException("Unknown error"); 
@@ -108,7 +115,7 @@ inline void handle_error(cudaError_t err) {
 
 inline void handle_error(cudnnStatus_t status) {
 	switch(status) {
-		case CUDNN_STATUS_SUCCESS:
+	    case CUDNN_STATUS_SUCCESS:
 			break;
 		case CUDNN_STATUS_NOT_INITIALIZED:
 			throw StringException("CUDNN_STATUS_NOT_INITIALIZED");
@@ -126,6 +133,8 @@ inline void handle_error(cudnnStatus_t status) {
 			throw StringException("CUDNN_STATUS_NOT_SUPPORTED");
 		case CUDNN_STATUS_LICENSE_ERROR:
 			throw StringException("CUDNN_STATUS_LICENSE_ERROR");
+     	default:
+	     	throw StringException("SOME CUDNN ERROR");
 	}
 }
 

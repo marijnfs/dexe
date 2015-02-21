@@ -19,6 +19,7 @@ SampleDatabase::SampleDatabase(string path) : N(0) {
 	}
 
 	N = count();
+	cout << "loaded " << N << " samples" << endl;
 }
 
 SampleDatabase::~SampleDatabase() {
