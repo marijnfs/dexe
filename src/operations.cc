@@ -6,14 +6,15 @@
 using namespace std;
 
 template <typename F>
-ConvolutionOperation<F>::ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep, size_t workspace_limit_):
+ConvolutionOperation<F>::ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep_, size_t workspace_limit_):
 	filter_bank(in_map, out_map, kw, kh),
 	filter_bank_grad(in_map, out_map, kw, kh),
 	bias(1, out_map, 1, 1),
 	bias_grad(1, out_map, 1, 1),
 	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
 	workspace(0),
-	workspace_size(workspace_limit_)
+	workspace_size(workspace_limit_),
+	keep(keep_)
 {
 	int pad_h(0), pad_w(0), stride_w(1), stride_h(1), upscalex(1), upscaley(1);
 	if (keep) {

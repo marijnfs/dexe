@@ -23,9 +23,9 @@ class Colour {
 	}
 };
 
-Colour RED(FG_RED);
-Colour GREEN(FG_GREEN);
-Colour BLUE(FG_BLUE);
-Colour DEFAULT(FG_DEFAULT);
+static Colour RED(FG_RED);
+static Colour GREEN(FG_GREEN);
+static Colour BLUE(FG_BLUE);
+static Colour DEFAULT(FG_DEFAULT);
 
 #endif

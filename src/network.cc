@@ -186,12 +186,14 @@ vector<F> Network<F>::to_vector() {
 
 template <typename F>
 void Network<F>::from_vector(vector<F> &vec) {
+	cout << "in from vector" << endl;
 	typename vector<F>::iterator it(vec.begin());
 	for (size_t i(0); i < params.size(); ++i) {
 		vector<F> v(it, it + params[i]->size());
 		params[i]->from_vector(v);
 		it += params[i]->size();
 	}
+	cout << "done from vector" << endl;
 }
 
 template <typename F>

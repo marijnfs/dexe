@@ -63,6 +63,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	cudnnConvolutionFwdAlgo_t algo;
 	char *workspace;
 	size_t workspace_size;
+	bool keep;
 };
 
 template <typename F>

@@ -35,6 +35,7 @@ void Database::from_database(Database &other) {
 	N = count();
 }
 
+
 void Database::normalize_chw() {
 	cout << "Normalizing dataset" << endl;
 	Iterator* it = db->NewIterator(leveldb::ReadOptions());
