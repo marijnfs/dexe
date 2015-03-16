@@ -1,5 +1,6 @@
 #include "operations.h"
 #include "handler.h"
+#include "gate.h"
 #include <cublas_v2.h>
 #include <cassert>
 
@@ -189,18 +190,18 @@ TensorShape TanhOperation<F>::output_shape(TensorShape in) {
 }
 
 template <typename F>
-void ScaleOperation<F>::forward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out) {
-	scale(in, in2, out);
+void GateOperation<F>::forward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out) {
+	gate(in, in2, out);
 }
 
 template <typename F>
-void ScaleOperation<F>::backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad) {
-	scale(out_grad, in2, in_grad);
-	scale(out_grad, in, in2_grad);
+void GateOperation<F>::backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad) {
+	gate(out_grad, in2, in_grad);
+	gate(out_grad, in, in2_grad);
 }
 
 template <typename F>
-TensorShape ScaleOperation<F>::output_shape(TensorShape in) {
+TensorShape GateOperation<F>::output_shape(TensorShape in) {
 	return in;
 }
 

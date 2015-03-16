@@ -22,7 +22,7 @@ void gate<double>(Tensor<double> &a, Tensor<double> &b, Tensor<double> &out) {
 	dim3 dimBlock( BLOCKSIZE );
 	dim3 dimGrid( s / BLOCKSIZE + (s % BLOCKSIZE ? 0 : 1));
 	
-	divide_kerneld<<<dimGrid, dimBlock>>>(a.size(), a.data, b.data, out.data);
+	gate_kerneld<<<dimGrid, dimBlock>>>(a.size(), a.data, b.data, out.data);
 }
 
 template <>
@@ -33,5 +33,5 @@ void gate<float>(Tensor<float> &a, Tensor<float> &b, Tensor<float> &out) {
 	dim3 dimBlock( BLOCKSIZE );
 	dim3 dimGrid( s / BLOCKSIZE + (s % BLOCKSIZE ? 0 : 1));
 	
-	divide_kernelf<<<dimGrid, dimBlock>>>(a.size(), a.data, b.data, out.data);
+	gate_kernelf<<<dimGrid, dimBlock>>>(a.size(), a.data, b.data, out.data);
 }
