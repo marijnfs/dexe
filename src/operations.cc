@@ -189,6 +189,41 @@ TensorShape TanhOperation<F>::output_shape(TensorShape in) {
 }
 
 template <typename F>
+void ScaleOperation<F>::forward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out) {
+	scale(in, in2, out);
+}
+
+template <typename F>
+void ScaleOperation<F>::backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad) {
+	scale(out_grad, in2, in_grad);
+	scale(out_grad, in, in2_grad);
+}
+
+template <typename F>
+TensorShape ScaleOperation<F>::output_shape(TensorShape in) {
+	return in;
+}
+
+
+template <typename F>
+void SigmoidOperation<F>::forward(Tensor<F> &in, Tensor<F> &out) {
+  F alpha(1), beta(0);
+  handle_error( cudnnActivationForward(Handler::cudnn(), CUDNN_ACTIVATION_SIGMOID, &alpha, in.td, in.data, &beta, out.td, out.data));
+}
+
+template <typename F>
+void SigmoidOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad) {
+  F alpha(1), beta(0);
+  handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_SIGMOID, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data));
+}
+
+template <typename F>
+TensorShape SigmoidOperation<F>::output_shape(TensorShape in) {
+	return in;
+}
+
+
+template <typename F>
 STanhOperation<F>::STanhOperation(TensorShape s) : tmp(s) {
 }
 
@@ -266,14 +301,18 @@ template struct ConvolutionOperation<float>;
 template struct SquashOperation<float>;
 template struct PoolingOperation<float>;
 template struct TanhOperation<float>;
+template struct SigmoidOperation<float>;
 template struct ReluOperation<float>;
 template struct SoftmaxOperation<float>;
+template struct GateOperation<float>;
 
 template struct ConvolutionOperation<double>;
 template struct SquashOperation<double>;
 template struct PoolingOperation<double>;
 template struct TanhOperation<double>;
+template struct SigmoidOperation<double>;
 template struct ReluOperation<double>;
 template struct SoftmaxOperation<double>;
+template struct GateOperation<double>;
 
 

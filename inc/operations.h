@@ -21,6 +21,17 @@ struct Operation {
 };
 
 template <typename F>
+struct Operation2 {
+	virtual void forward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out){}
+
+	virtual void backward_weights(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out_grad){}
+	virtual void backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad){}
+	virtual TensorShape output_shape(TensorShape input) { return TensorShape{0, 0, 0, 0}; }
+
+	virtual void forward_dry_run(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out){}
+};
+
+template <typename F>
 struct Parametrised {
 	virtual void init_normal(F mean, F std) = 0;
 	virtual void init_uniform(F var) = 0;
@@ -75,6 +86,15 @@ struct SquashOperation : ConvolutionOperation<F> {
 };
 
 template <typename F>
+struct GateOperation : public Operation2<F> {
+	GateOperation();
+	TensorShape output_shape(TensorShape input);
+
+	virtual void forward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out);
+	virtual void backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad);
+};
+
+template <typename F>
 struct PoolingOperation : public Operation<F> {
 	PoolingOperation(int kw, int kh);
 	void forward(Tensor<F> &in, Tensor<F> &out);
@@ -88,6 +108,14 @@ struct PoolingOperation : public Operation<F> {
 
 template <typename F>
 struct TanhOperation : public Operation<F> {
+	void forward(Tensor<F> &in, Tensor<F> &out);
+	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad);
+
+	TensorShape output_shape(TensorShape input);
+};
+
+template <typename F>
+struct SigmoidOperation : public Operation<F> {
 	void forward(Tensor<F> &in, Tensor<F> &out);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad);
 
