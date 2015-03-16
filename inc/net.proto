@@ -1,0 +1,31 @@
+message Net {
+		repeated Layer input  = 1 [packed=true];
+}
+
+message Layer {
+		enum Type {
+			 CONV = 1;
+			 SQUASH = 2;
+			 POOL = 3;
+			 TANH = 4;
+			 RELU = 5;
+			 SOFTMAX = 6;
+		}
+		required Type type = 1;
+		required bytes data;
+		
+}
+
+message ConvLayer {
+		required int32 In = 1;
+		required int32 Out = 2;
+		required int32 KW = 3;
+		required int32 KH = 4;
+		required bool keep = 5;
+		repeated float32 weights = 6;
+}
+
+message PoolLayer {
+		required int32 KW = 1;
+		required int32 KH = 2;
+}
