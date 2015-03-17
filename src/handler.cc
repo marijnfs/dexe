@@ -14,6 +14,10 @@ void Handler::init_handler() {
   handle_error( cublasCreate(&h_cublas));
 }
 
+void Handler::set_device(int n) {
+  handle_error( cudaSetDevice(n) );
+}
+
 void Handler::s_init() {
   s_handler = new Handler();
   s_handler->init_handler();
@@ -34,5 +38,5 @@ curandGenerator_t &Handler::curand() {
 cublasHandle_t &Handler::cublas() {
   if (!s_handler)
     s_handler->s_init();
-  return s_handler->h_cublas;    
+  return s_handler->h_cublas;
 }

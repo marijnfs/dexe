@@ -13,6 +13,8 @@ struct Handler {
   static curandGenerator_t &curand();
   static cublasHandle_t &cublas();
   static void s_init();
+  static void set_device(int n);
+
   cudnnHandle_t h_cudnn;
   curandGenerator_t h_curand;
   cublasHandle_t h_cublas;
