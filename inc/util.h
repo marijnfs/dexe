@@ -221,7 +221,7 @@ inline void random_shuffle(std::vector<T> &v) {
 }
 
 template <typename T>
-inline T abs(T a) {
+inline T abs(T a, bool bla = true) {
 	return a > 0.0 ? a : -a;
 }
 

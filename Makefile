@@ -6,8 +6,12 @@ debug:
 
 lib:
 	nvcc -std=c++11 -O3 -Iinc -shared --compiler-options '-fPIC' -arch compute_30 src/*.cc src/*.cu -o libmcdnn.so
-	cp libmcdnn.so ../selfgo/
-	cp inc/*.h ../selfgo/
+	#cp libmcdnn.so ../selfgo/
+	#cp inc/*.h ../selfgo/
+
+install:
+	sudo cp libmcdnn.so /usr/local/lib
+
 
 libdebug:
 	nvcc -std=c++11 -g -Iinc -shared --compiler-options '-fPIC' -arch compute_30 src/*.cc -o libmcdnn.so
