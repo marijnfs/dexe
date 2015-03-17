@@ -35,6 +35,7 @@ template <typename F>
 void ConvolutionOperation<F>::update(F lr) {
 	// cout << filter_bank_grad.to_vector() << endl;
 
+	cout << filter_bank_grad.to_vector() << endl;
 	add_cuda<F>(filter_bank_grad.ptr(), filter_bank.ptr(), filter_bank.n_weights(), lr);
 	add_cuda<F>(bias_grad.ptr(), bias.ptr(), bias.size(), lr * .1);
 }
@@ -128,7 +129,9 @@ TensorShape ConvolutionOperation<F>::output_shape(TensorShape in) {
 template <typename F>
 void ConvolutionOperation<F>::forward_dry_run(Tensor<F> &in, Tensor<F> &out) { // allocates workspace
 	//handle_error( cudnnGetConvolutionForwardAlgorithm(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, workspace_size, &algo) );
-	algo = CUDNN_CONVOLUTION_FWD_ALGO_GEMM;
+	//algo = CUDNN_CONVOLUTION_FWD_ALGO_GEMM;
+	algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+
 	handle_error( cudnnGetConvolutionForwardWorkspaceSize(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, algo, &workspace_size) );
 	cout << "workspace size: " << workspace_size << endl;
 	if (workspace_size)
