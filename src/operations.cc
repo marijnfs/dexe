@@ -69,7 +69,7 @@ void ConvolutionOperation<F>::from_vector(vector<F> &v) {
 	assert(v.size() == filter_bank.n_weights() + bias.size());
 	vector<F> filter_bank_weights(v.begin(), v.begin() + filter_bank.n_weights());
 	filter_bank.from_vector(filter_bank_weights);
-	
+
 	vector<F> bias_weights(v.begin() + filter_bank.n_weights(), v.begin() + filter_bank.n_weights() + bias.size());
 	bias.from_vector(bias_weights);
 }
@@ -92,18 +92,24 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
 	F alpha(1.0);
 
 	F alpha_bias(1), beta_bias(1);
-	
+
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, algo, workspace, workspace_size, &beta, output.td, output.data));
 
 	handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_SAME_C, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 }
 
 template <typename F>
-void ConvolutionOperation<F>::backward_weights(Tensor<F> &input, Tensor<F> &output_grad) {
-	F alpha_bias(1.0), beta_bias(0.0);
+void ConvolutionOperation<F>::zero_grad() {
+	filter_bank_grad.zero();
+	bias_grad.zero();
+}
+
+template <typename F>
+void ConvolutionOperation<F>::backward_weights(Tensor<F> &input, Tensor<F> &output_grad, F beta) {
+	F alpha_bias(1.0), beta_bias(beta);
 	handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, output_grad.td, output_grad.data, &beta_bias, bias_grad.td, bias_grad.data) );
 
-	F alpha(1.0), beta(0.0);
+	F alpha(1.0);
 	handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, output_grad.td, output_grad.data, conv, &beta, filter_bank_grad.fd, filter_bank_grad.weights) );
 }
 
@@ -240,7 +246,7 @@ void STanhOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
 template <typename F>
 void STanhOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad) {
   F alpha(1.0), beta(0);
-  tmp.x.from_tensor(out);  
+  tmp.x.from_tensor(out);
   scale_cuda(tmp.x.data, tmp.x.size(), 1.0 / 1.7159);
   handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_TANH, &alpha, tmp.x.td, tmp.x.data, out_grad.td, out_grad.data, tmp.x.td, tmp.x.data, &beta, in_grad.td, in_grad.data));
   scale_cuda(in_grad.data, in_grad.size(), 3./2.);
@@ -281,16 +287,16 @@ void SoftmaxOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
 
 template <typename F>
 void SoftmaxOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad) {
-	F alpha(1), beta(0); 
+	F alpha(1), beta(0);
 	//cout << out_grad.to_vector() << endl;
 	//cout << in_grad.to_vector() << endl;
 	//cout << out.to_vector() << endl;
 	//cout << in.to_vector() << endl;
 
-	if (matched) {//loss function matched 
+	if (matched) {//loss function matched
 		in_grad.from_tensor(out_grad);
 	}
-	else		
+	else
 		handle_error( cudnnSoftmaxBackward(Handler::cudnn(), CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE, &alpha, out.td, out.data, out_grad.td, out_grad.data, &beta, in_grad.td, in_grad.data));
 }
 

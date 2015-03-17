@@ -10,7 +10,7 @@ using namespace std;
 
 
 template <>
-Tensor<float>::Tensor(int n_, int c_, int w_, int h_): 
+Tensor<float>::Tensor(int n_, int c_, int w_, int h_):
   n(n_), w(w_), h(h_), c(c_), allocated(true)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
@@ -22,7 +22,7 @@ Tensor<float>::Tensor(int n_, int c_, int w_, int h_):
 }
 
 template <>
-Tensor<float>::Tensor(int n_, int c_, int w_, int h_, float *data_): 
+Tensor<float>::Tensor(int n_, int c_, int w_, int h_, float *data_):
   n(n_), w(w_), h(h_), c(c_), allocated(false), data(data_)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
@@ -30,7 +30,7 @@ Tensor<float>::Tensor(int n_, int c_, int w_, int h_, float *data_):
 }
 
 template <>
-Tensor<float>::Tensor(TensorShape s): 
+Tensor<float>::Tensor(TensorShape s):
   n(s.n), w(s.w), h(s.h), c(s.c), allocated(true)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
@@ -42,7 +42,7 @@ Tensor<float>::Tensor(TensorShape s):
 }
 
 template <>
-Tensor<float>::Tensor(TensorShape s, float *data_): 
+Tensor<float>::Tensor(TensorShape s, float *data_):
   n(s.n), w(s.w), h(s.h), c(s.c), allocated(false), data(data_)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
@@ -50,7 +50,7 @@ Tensor<float>::Tensor(TensorShape s, float *data_):
 }
 
 template <>
-Tensor<double>::Tensor(int n_, int c_, int w_, int h_): 
+Tensor<double>::Tensor(int n_, int c_, int w_, int h_):
   n(n_), w(w_), h(h_), c(c_), allocated(true)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
@@ -62,7 +62,7 @@ Tensor<double>::Tensor(int n_, int c_, int w_, int h_):
 }
 
 template <>
-Tensor<double>::Tensor(int n_, int c_, int w_, int h_, double *data_): 
+Tensor<double>::Tensor(int n_, int c_, int w_, int h_, double *data_):
   n(n_), w(w_), h(h_), c(c_), allocated(false), data(data_)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
@@ -70,7 +70,7 @@ Tensor<double>::Tensor(int n_, int c_, int w_, int h_, double *data_):
 }
 
 template <>
-Tensor<double>::Tensor(TensorShape s): 
+Tensor<double>::Tensor(TensorShape s):
   n(s.n), w(s.w), h(s.h), c(s.c), allocated(true)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
@@ -82,7 +82,7 @@ Tensor<double>::Tensor(TensorShape s):
 }
 
 template <>
-Tensor<double>::Tensor(TensorShape s, double *data_): 
+Tensor<double>::Tensor(TensorShape s, double *data_):
   n(s.n), w(s.w), h(s.h), c(s.c), allocated(false), data(data_)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
@@ -132,7 +132,7 @@ void Tensor<F>::from_tensor(Tensor &in) {
 
 template <typename F>
 void Tensor<F>::from_ptr(F const *in) {
-	handle_error( cudaMemcpy(data, in, size() * sizeof(F), cudaMemcpyHostToDevice));	
+	handle_error( cudaMemcpy(data, in, size() * sizeof(F), cudaMemcpyHostToDevice));
 }
 
 template <>
@@ -169,14 +169,14 @@ int Tensor<F>::size() const {
 
 template <>
 float Tensor<float>::norm() {
-	float result(0);	
+	float result(0);
 	handle_error( cublasSdot(Handler::cublas(), size(), data, 1, data, 1, &result) );
 	return sqrt(result);
 }
 
 template <>
 double Tensor<double>::norm() {
-	double result(0);	
+	double result(0);
 	handle_error( cublasDdot(Handler::cublas(), size(), data, 1, data, 1, &result) );
 	return sqrt(result);
 }
@@ -211,7 +211,7 @@ TensorShape Tensor<F>::shape() const {
 }
 
 template <typename F>
-TensorSet<F>::TensorSet(int n_, int c_, int w_, int h_) : 
+TensorSet<F>::TensorSet(int n_, int c_, int w_, int h_) :
 	n(n_), c(c_), w(w_), h(h_), x(n_, c_, w_, h_), grad(n_, c_, w_, h_)
 {
 }
@@ -227,25 +227,25 @@ TensorShape TensorSet<F>::shape() const {
 }
 
 template <>
-FilterBank<float>::FilterBank(int in_map_, int out_map_, int kw_, int kh_): 
+FilterBank<float>::FilterBank(int in_map_, int out_map_, int kw_, int kh_):
   in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_)
 {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
 	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_FLOAT, out_map, in_map, kh, kw));
 	handle_error( cudaMalloc( (void**)&weights, sizeof(float) * out_map * in_map * kw * kh));
 	if (ZERO_ON_INIT)
-	  zero();	
+	  zero();
 }
 
 template <>
-FilterBank<double>::FilterBank(int in_map_, int out_map_, int kw_, int kh_): 
+FilterBank<double>::FilterBank(int in_map_, int out_map_, int kw_, int kh_):
   in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_)
 {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
 	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_DOUBLE, out_map, in_map, kh, kw));
 	handle_error( cudaMalloc( (void**)&weights, sizeof(double) * out_map * in_map * kw * kh));
 	if (ZERO_ON_INIT)
-	  zero();	
+	  zero();
 }
 
 template <typename F>
