@@ -139,6 +139,13 @@ void ConvolutionOperation<F>::forward_dry_run(Tensor<F> &in, Tensor<F> &out) { /
 }
 
 template <typename F>
+void ConvolutionOperation<F>::scale_grad(F val) {
+  scale_cuda(filter_bank_grad.ptr(), filter_bank_grad.n_weights(), val);
+  scale_cuda(bias_grad.ptr(), bias_grad.size(), val);
+}
+
+
+template <typename F>
 ConvolutionOperation<F>::~ConvolutionOperation() {
 	cudnnDestroyConvolutionDescriptor(conv);
 

@@ -38,10 +38,13 @@ struct Parametrised {
 	virtual void update(F lr) {}
 	virtual void l2(F l) {}
 	virtual void zero_grad() {}
+	virtual void scale_grad(float val) {}
+
 	virtual std::vector<F> to_vector() { return std::vector<F>(); }
 	virtual void from_vector(std::vector<F> &v) { }
 	virtual int size() { return 0; }
 	virtual std::vector<F> grad_to_vector() { return std::vector<F>(); }
+
 };
 
 template <typename F>
@@ -59,6 +62,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	void update(F lr);
 	void l2(F l);
 	void zero_grad();
+	void scale_grad(F val);
 
 	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
 

@@ -49,7 +49,7 @@ void write_img1c(std::string filename, int w, int h, float const *values) {
 	}
 	///	cout << endl;
  
-	Mat mat(w, h, CV_32F3, reinterpret_cast<void*>(&bla[0]));
+	Mat mat(w, h, CV_32F, reinterpret_cast<void*>(&bla[0]));
 	mat *= 255.;
 	mat.convertTo(mat, CV_8UC3);
 	//cvtColor(mat, mat, CV_RGB2BGR);
