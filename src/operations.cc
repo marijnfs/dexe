@@ -30,6 +30,8 @@ ConvolutionOperation<F>::ConvolutionOperation(int in_map, int out_map, int kw, i
 	//handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
 }
 
+
+
 template <typename F>
 void ConvolutionOperation<F>::update(F lr) {
 	// cout << filter_bank_grad.to_vector() << endl;
@@ -143,6 +145,15 @@ void ConvolutionOperation<F>::scale_grad(F val) {
   scale_cuda(bias_grad.ptr(), bias_grad.size(), val);
 }
 
+
+template <typename F>
+void ConvolutionOperation<F>::register_params(std::vector<CudaPtr<F> > &params, std::vector<CudaPtr<F> > &grads) {
+	params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()});
+	params.push_back(CudaPtr<F>{&bias.data, bias.size()});
+
+	grads.push_back(CudaPtr<F>{&filter_bank_grad.weights, filter_bank_grad.n_weights()});
+	grads.push_back(CudaPtr<F>{&bias_grad.data, bias_grad.size()});
+}
 
 template <typename F>
 ConvolutionOperation<F>::~ConvolutionOperation() {

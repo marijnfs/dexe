@@ -8,6 +8,7 @@
 
 #include "tensor.h"
 #include "util.h"
+#include "cudaptr.h"
 
 template <typename F>
 struct Operation {
@@ -39,6 +40,7 @@ struct Parametrised {
 	virtual void l2(F l) {}
 	virtual void zero_grad() {}
 	virtual void scale_grad(float val) {}
+	virtual void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &grads) {}
 
 	virtual std::vector<F> to_vector() { return std::vector<F>(); }
 	virtual void from_vector(std::vector<F> &v) { }
@@ -63,6 +65,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	void l2(F l);
 	void zero_grad();
 	void scale_grad(F val);
+	void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &grads);
 
 	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
 
