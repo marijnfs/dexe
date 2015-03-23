@@ -57,52 +57,52 @@ inline void handle_error(cublasStatus_t status) {
     case CUBLAS_STATUS_INTERNAL_ERROR:
       throw StringException("CUBLAS_STATUS_INTERNAL_ERROR");
 	case CUBLAS_STATUS_NOT_SUPPORTED:
-		throw StringException("CUBLAS_STATUS_NOT_SUPPORTED");	
+		throw StringException("CUBLAS_STATUS_NOT_SUPPORTED");
 	default:
 		throw StringException("SOME CUBLAS ERROR");
-	
+
     }
 
   throw StringException("<unknown>");
 }
 
 inline void handle_error(curandStatus_t status) {
-  switch(status) { 
-  case CURAND_STATUS_SUCCESS: 
+  switch(status) {
+  case CURAND_STATUS_SUCCESS:
     return;
-  case CURAND_STATUS_VERSION_MISMATCH: 
-    throw StringException("Header file and linked library version do not match"); 
+  case CURAND_STATUS_VERSION_MISMATCH:
+    throw StringException("Header file and linked library version do not match");
 
-  case CURAND_STATUS_NOT_INITIALIZED: 
-    throw StringException("Generator not initialized"); 
-  case CURAND_STATUS_ALLOCATION_FAILED: 
-    throw StringException("Memory allocation failed"); 
-  case CURAND_STATUS_TYPE_ERROR: 
-    throw StringException("Generator is wrong type"); 
-  case CURAND_STATUS_OUT_OF_RANGE: 
-    throw StringException("Argument out of range"); 
-  case CURAND_STATUS_LENGTH_NOT_MULTIPLE: 
-    throw StringException("Length requested is not a multple of dimension"); 
-    // In CUDA >= 4.1 only 
-#if CUDART_VERSION >= 4010 
-  case CURAND_STATUS_DOUBLE_PRECISION_REQUIRED: 
-    throw StringException("GPU does not have double precision required by MRG32k3a"); 
-#endif 
-  case CURAND_STATUS_LAUNCH_FAILURE: 
-    throw StringException("Kernel launch failure"); 
-  case CURAND_STATUS_PREEXISTING_FAILURE: 
-    throw StringException("Preexisting failure on library entry"); 
-  case CURAND_STATUS_INITIALIZATION_FAILED: 
-    throw StringException("Initialization of CUDA failed"); 
-  case CURAND_STATUS_ARCH_MISMATCH: 
-    throw StringException("Architecture mismatch, GPU does not support requested feature"); 
-  case CURAND_STATUS_INTERNAL_ERROR: 
-    throw StringException("Internal library error"); 
+  case CURAND_STATUS_NOT_INITIALIZED:
+    throw StringException("Generator not initialized");
+  case CURAND_STATUS_ALLOCATION_FAILED:
+    throw StringException("Memory allocation failed");
+  case CURAND_STATUS_TYPE_ERROR:
+    throw StringException("Generator is wrong type");
+  case CURAND_STATUS_OUT_OF_RANGE:
+    throw StringException("Argument out of range");
+  case CURAND_STATUS_LENGTH_NOT_MULTIPLE:
+    throw StringException("Length requested is not a multple of dimension");
+    // In CUDA >= 4.1 only
+#if CUDART_VERSION >= 4010
+  case CURAND_STATUS_DOUBLE_PRECISION_REQUIRED:
+    throw StringException("GPU does not have double precision required by MRG32k3a");
+#endif
+  case CURAND_STATUS_LAUNCH_FAILURE:
+    throw StringException("Kernel launch failure");
+  case CURAND_STATUS_PREEXISTING_FAILURE:
+    throw StringException("Preexisting failure on library entry");
+  case CURAND_STATUS_INITIALIZATION_FAILED:
+    throw StringException("Initialization of CUDA failed");
+  case CURAND_STATUS_ARCH_MISMATCH:
+    throw StringException("Architecture mismatch, GPU does not support requested feature");
+  case CURAND_STATUS_INTERNAL_ERROR:
+    throw StringException("Internal library error");
   default:
 	  throw StringException("SOME CURAND ERROR");
   }
 
-  throw StringException("Unknown error"); 
+  throw StringException("Unknown error");
 }
 
 inline void handle_error(cudaError_t err) {
@@ -134,6 +134,7 @@ inline void handle_error(cudnnStatus_t status) {
 		case CUDNN_STATUS_LICENSE_ERROR:
 			throw StringException("CUDNN_STATUS_LICENSE_ERROR");
      	default:
+     		std::cerr << "err: " << status << std::endl;
 	     	throw StringException("SOME CUDNN ERROR");
 	}
 }
@@ -256,7 +257,7 @@ inline void normalize(std::vector<T> *v) {
 	std = sqrt(std / (v->size() - 1));
 	for (size_t i(0); i < v->size(); ++i) (*v)[i] /= std;
 }
-	
+
 template <typename T>
 inline void normalize_1(std::vector<T> *v) {
 	T sum = std::accumulate(v->begin(), v->end(), 0);
@@ -275,7 +276,7 @@ struct Indices {
 
 	void shuffle() { random_shuffle(indices); }
 	int operator[](int n) { return indices[n]; }
-	
+
 	std::vector<int> indices;
 };
 

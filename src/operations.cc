@@ -26,7 +26,6 @@ ConvolutionOperation<F>::ConvolutionOperation(int in_map, int out_map, int kw, i
 	cout << "bias buffer: " << bias.size() << endl;
 	//todo: calculate padding
 	handle_error( cudnnCreateConvolutionDescriptor(&conv));
-
 	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION));
 	//handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
 }
@@ -35,7 +34,8 @@ template <typename F>
 void ConvolutionOperation<F>::update(F lr) {
 	// cout << filter_bank_grad.to_vector() << endl;
 
-	cout << filter_bank_grad.to_vector() << endl;
+	// cout << filter_bank_grad.to_vector() << " " << bias_grad.to_vector() << endl;
+	// cout << filter_bank.to_vector() << " " << bias.to_vector() << endl;
 	add_cuda<F>(filter_bank_grad.ptr(), filter_bank.ptr(), filter_bank.n_weights(), lr);
 	add_cuda<F>(bias_grad.ptr(), bias.ptr(), bias.size(), lr * .1);
 }
@@ -95,7 +95,6 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
 	F alpha_bias(1), beta_bias(1);
 
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, algo, workspace, workspace_size, &beta, output.td, output.data));
-
 	handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_SAME_C, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 }
 
@@ -128,9 +127,9 @@ TensorShape ConvolutionOperation<F>::output_shape(TensorShape in) {
 
 template <typename F>
 void ConvolutionOperation<F>::forward_dry_run(Tensor<F> &in, Tensor<F> &out) { // allocates workspace
-	//handle_error( cudnnGetConvolutionForwardAlgorithm(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, workspace_size, &algo) );
+	handle_error( cudnnGetConvolutionForwardAlgorithm(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, workspace_size, &algo) );
 	//algo = CUDNN_CONVOLUTION_FWD_ALGO_GEMM;
-	algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+	//algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
 
 	handle_error( cudnnGetConvolutionForwardWorkspaceSize(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, algo, &workspace_size) );
 	cout << "workspace size: " << workspace_size << endl;
@@ -292,7 +291,8 @@ SoftmaxOperation<F>::SoftmaxOperation(bool matched_) : matched(matched_) {
 template <typename F>
 void SoftmaxOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
 	F alpha(1);
-	handle_error( cudnnSoftmaxForward(Handler::cudnn(), CUDNN_SOFTMAX_FAST, CUDNN_SOFTMAX_MODE_INSTANCE, &alpha, in.td, in.data, &beta, out.td, out.data));
+//	handle_error( cudnnSoftmaxForward(Handler::cudnn(), CUDNN_SOFTMAX_FAST, CUDNN_SOFTMAX_MODE_INSTANCE, &alpha, in.td, in.data, &beta, out.td, out.data));
+	handle_error( cudnnSoftmaxForward(Handler::cudnn(), CUDNN_SOFTMAX_FAST, CUDNN_SOFTMAX_MODE_CHANNEL, &alpha, in.td, in.data, &beta, out.td, out.data));
 }
 
 template <typename F>
