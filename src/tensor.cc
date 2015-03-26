@@ -15,8 +15,11 @@ Tensor<float>::Tensor(int n_, int c_, int w_, int h_):
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
-	size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
-	handle_error( cudaMalloc( (void**)&data, sizeof(float) * even_size));
+
+	//size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
+	// size_t even_size(size());
+	// handle_error( cudaMalloc( (void**)&data, sizeof(float) * even_size));
+	handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
 	if (ZERO_ON_INIT)
 	  zero();
 }
@@ -35,7 +38,8 @@ Tensor<float>::Tensor(TensorShape s):
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
-	size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
+	//size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
+	size_t even_size(size());
 	handle_error( cudaMalloc( (void**)&data, sizeof(float) * even_size));
 	if (ZERO_ON_INIT)
 	  zero();
@@ -55,7 +59,8 @@ Tensor<double>::Tensor(int n_, int c_, int w_, int h_):
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
-	size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
+	//size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
+	size_t even_size(size());
 	handle_error( cudaMalloc( (void**)&data, sizeof(double) * even_size));
 	if (ZERO_ON_INIT)
 	  zero();
@@ -75,7 +80,8 @@ Tensor<double>::Tensor(TensorShape s):
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
-	size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
+	//size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
+	size_t even_size(size());
 	handle_error( cudaMalloc( (void**)&data, sizeof(double) * even_size));
 	if (ZERO_ON_INIT)
 	  zero();
@@ -137,14 +143,18 @@ void Tensor<F>::from_ptr(F const *in) {
 
 template <>
 void Tensor<float>::init_normal(float mean, float std) {
-	size_t even_size(((size() + 1) / 2) * 2);
-	handle_error( curandGenerateNormal(Handler::curand(), data, even_size, mean, std) );
+	//size_t even_size(((size() + 1) / 2) * 2);
+	::init_normal(data, size(), mean, std);
+	// size_t even_size(size());
+	// handle_error( curandGenerateNormal(Handler::curand(), data, even_size, mean, std) );
 }
 
 template <>
 void Tensor<double>::init_normal(double mean, double std) {
-	size_t even_size(((size() + 1) / 2) * 2);
-	handle_error( curandGenerateNormalDouble(Handler::curand(), data, even_size, mean, std) );
+	//size_t even_size(((size() + 1) / 2) * 2);
+	::init_normal(data, size(), mean, std);
+	// size_t even_size(size());
+	// handle_error( curandGenerateNormalDouble(Handler::curand(), data, even_size, mean, std) );
 }
 
 template <typename F>
@@ -256,14 +266,15 @@ FilterBank<F>::~FilterBank() {
 
 template <>
 void FilterBank<float>::init_normal(float mean, float std) {
-	size_t even_size(((n_weights() + 1) / 2) * 2);
-	handle_error( curandGenerateNormal ( Handler::curand(), weights, even_size, mean, std) );
+	::init_normal(weights, n_weights(), mean, std);
 }
 
 template <>
 void FilterBank<double>::init_normal(double mean, double std) {
-	size_t even_size(((n_weights() + 1) / 2) * 2);
-	handle_error( curandGenerateNormalDouble ( Handler::curand(), weights, even_size, mean, std) );
+	::init_normal(weights, n_weights(), mean, std);
+	// size_t even_size(((n_weights() + 1) / 2) * 2);
+	// size_t even_size(n_weights());
+	// handle_error( curandGenerateNormalDouble ( Handler::curand(), weights, even_size, mean, std) );
 }
 
 template <typename F>

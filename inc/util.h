@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <cassert>
 #include <vector>
 #include <cudnn.h>
 #include <cublas_v2.h>
@@ -308,5 +309,9 @@ inline std::vector<T> byte_read_vec(std::ifstream &in) {
 		v.push_back(byte_read<T>(in));
 	return v;
 }
+
+template <typename T>
+void init_normal(T *data, int n, T mean, T std);
+
 
 #endif

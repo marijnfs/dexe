@@ -35,3 +35,40 @@ void gate<float>(Tensor<float> &a, Tensor<float> &b, Tensor<float> &out) {
 
 	gate_kernelf<<<dimGrid, dimBlock>>>(s, a.data, b.data, out.data);
 }
+
+///range
+
+__global__ void range_kerneld(double *a, int N, double const min, double const max) {
+	int const i = threadIdx.x + blockIdx.x * blockDim.x;
+	if (i >= N)
+		return;
+	a[i] = a[i] * (max - min) + min;
+}
+
+__global__ void range_kernelf(float *a, int N, float const min, float const max) {
+	int const i = threadIdx.x + blockIdx.x * blockDim.x;
+	if (i >= N)
+		return;
+	a[i] = 	a[i] * (max - min) + min;
+}
+
+
+template <>
+void range<float>(float *a, int N, float const min, float const max) {
+	int const BLOCKSIZE(1024);
+
+	int dimBlock( BLOCKSIZE );
+	int dimGrid( (N + BLOCKSIZE - 1) / BLOCKSIZE );
+
+	range_kernelf<<<dimGrid, dimBlock>>>(a, N, min, max);
+}
+
+template <>
+void range<double>(double *a, int N, double const min, double const max) {
+	int const BLOCKSIZE(1024);
+
+	int dimBlock( BLOCKSIZE );
+	int dimGrid( (N + BLOCKSIZE - 1) / BLOCKSIZE );
+
+	range_kerneld<<<dimGrid, dimBlock>>>(a, N, min, max);
+}
