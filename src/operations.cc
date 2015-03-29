@@ -22,8 +22,8 @@ ConvolutionOperation<F>::ConvolutionOperation(int in_map, int out_map, int kw, i
 		pad_w = kw / 2;
 		pad_h = kh / 2;
 	}
-	cout << "weight buffer: " << filter_bank.n_weights() << endl;
-	cout << "bias buffer: " << bias.size() << endl;
+	// cout << "weight buffer: " << filter_bank.n_weights() << endl;
+	// cout << "bias buffer: " << bias.size() << endl;
 	//todo: calculate padding
 	handle_error( cudnnCreateConvolutionDescriptor(&conv));
 	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION));
@@ -134,7 +134,8 @@ void ConvolutionOperation<F>::forward_dry_run(Tensor<F> &in, Tensor<F> &out) { /
 	//algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
 
 	handle_error( cudnnGetConvolutionForwardWorkspaceSize(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, algo, &workspace_size) );
-	cout << "workspace size: " << workspace_size << endl;
+	if (workspace_size)
+		cout << "workspace size: " << workspace_size << endl;
 	if (workspace_size)
 		handle_error( cudaMalloc( (void**)&workspace, workspace_size) );
 }
@@ -194,7 +195,7 @@ void PoolingOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out
 
 template <typename F>
 TensorShape PoolingOperation<F>::output_shape(TensorShape in) {
-	cout << in.c << endl;
+	// cout << in.c << endl;
 	return TensorShape{in.n, in.c, in.w / kw, in.h / kh};
 }
 
