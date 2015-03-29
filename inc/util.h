@@ -311,6 +311,12 @@ inline std::vector<T> byte_read_vec(std::ifstream &in) {
 }
 
 template <typename T>
+void init_uniform(T *data, int n, T std);
+
+__global__ void normal_kernel(int seed, float *data, int n, float mean, float std);
+__global__ void normal_kerneld(int seed, double *data, int n, double mean, double std);
+
+template <typename T>
 void init_normal(T *data, int n, T mean, T std);
 
 

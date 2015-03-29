@@ -9,8 +9,11 @@ Handler::Handler():
 
 void Handler::init_handler() {
   handle_error( cudnnCreate(&h_cudnn));
+
+  //handle_error( curandCreateGenerator(&h_curand, CURAND_RNG_PSEUDO_XORWOW));
   handle_error( curandCreateGenerator(&h_curand,CURAND_RNG_PSEUDO_DEFAULT));
   handle_error( curandSetPseudoRandomGeneratorSeed(h_curand, 1234ULL));
+  //handle_error( curandSetQuasiRandomGeneratorDimensions(h_curand, 1) );
   handle_error( cublasCreate(&h_cublas));
 }
 
