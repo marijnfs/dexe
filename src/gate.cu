@@ -72,3 +72,71 @@ void range<double>(double *a, int N, double const min, double const max) {
 
 	range_kerneld<<<dimGrid, dimBlock>>>(a, N, min, max);
 }
+
+__global__ void tanh_deriv_kernelf(float *out_err, float *act, float *in_err, int N) {
+	int const i = threadIdx.x + blockIdx.x * blockDim.x;
+	if (i >= N)
+		return;
+	in_err[i] = (1.0 - (act[i] * act[i])) * out_err[i];
+}
+
+__global__ void tanh_deriv_kerneld(double *out_err, double *act, double *in_err, int N) {
+	int const i = threadIdx.x + blockIdx.x * blockDim.x;
+	if (i >= N)
+		return;
+	in_err[i] = (1.0 - (act[i] * act[i])) * out_err[i];
+}
+
+template <>
+void tanh_deriv<float>(float *out_err, float *act, float *in_err, int n) {
+	int const BLOCKSIZE(1024);
+
+	int dimBlock( BLOCKSIZE );
+	int dimGrid( (n  + BLOCKSIZE - 1) / BLOCKSIZE);
+
+	tanh_deriv_kernelf<<<dimGrid, dimBlock>>>(out_err, act, in_err, n);
+}
+
+template <>
+void tanh_deriv<double>(double *out_err, double *act, double *in_err, int n) {
+	int const BLOCKSIZE(1024);
+
+	int dimBlock( BLOCKSIZE );
+	int dimGrid( (n  + BLOCKSIZE - 1) / BLOCKSIZE);
+
+	tanh_deriv_kerneld<<<dimGrid, dimBlock>>>(out_err, act, in_err, n);
+}
+
+__global__ void sigm_deriv_kernelf(float *out_err, float *act, float *in_err, int N) {
+	int const i = threadIdx.x + blockIdx.x * blockDim.x;
+	if (i >= N)
+		return;
+	in_err[i] = (1.0 - act[i]) * act[i] * out_err[i];
+}
+
+__global__ void sigm_deriv_kerneld(double *out_err, double *act, double *in_err, int N) {
+	int const i = threadIdx.x + blockIdx.x * blockDim.x;
+	if (i >= N)
+		return;
+	in_err[i] = (1.0 - act[i]) * act[i] * out_err[i];
+}
+
+template <>
+void sigm_deriv<float>(float *out_err, float *act, float *in_err, int n) {
+	int const BLOCKSIZE(1024);
+
+	int dimBlock( BLOCKSIZE );
+	int dimGrid( (n  + BLOCKSIZE - 1) / BLOCKSIZE);
+
+	sigm_deriv_kernelf<<<dimGrid, dimBlock>>>(out_err, act, in_err, n);
+}
+
+template <>
+void sigm_deriv<double>(double *out_err, double *act, double *in_err, int n) {
+	int const BLOCKSIZE(1024);
+
+	int dimBlock( BLOCKSIZE );
+	int dimGrid( (n  + BLOCKSIZE - 1) / BLOCKSIZE);
+
+	sigm_deriv_kerneld<<<dimGrid, dimBlock>>>(out_err, act, in_err, n);
+}

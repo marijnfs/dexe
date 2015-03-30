@@ -208,7 +208,8 @@ void TanhOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
 template <typename F>
 void TanhOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta) {
   F alpha(1);
-  handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_TANH, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data));
+  //handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_TANH, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data));
+  tanh_deriv<F>(out_grad.data, out.data, in_grad.data, out.size());
 }
 
 template <typename F>
@@ -242,7 +243,8 @@ void SigmoidOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
 template <typename F>
 void SigmoidOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta) {
   F alpha(1);
-  handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_SIGMOID, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data));
+  //handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_SIGMOID, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data));
+  sigm_deriv<F>(out_grad.data, out.data, in_grad.data, out.size());
 }
 
 template <typename F>
