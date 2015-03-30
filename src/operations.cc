@@ -56,7 +56,7 @@ void ConvolutionOperation<F>::init_normal(F mean, F std) {
 template <typename F>
 void ConvolutionOperation<F>::init_uniform(F var) {
 	filter_bank.init_uniform(var);
-	bias.init_uniform(var);
+	//bias.init_uniform(var);
 }
 
 template <typename F>
