@@ -46,7 +46,6 @@ struct Parametrised {
 	virtual void from_vector(std::vector<F> &v) { }
 	virtual int size() { return 0; }
 	virtual std::vector<F> grad_to_vector() { return std::vector<F>(); }
-
 };
 
 template <typename F>
@@ -66,6 +65,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	void zero_grad();
 	void scale_grad(F val);
 	void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &grads);
+	void share(ConvolutionOperation<F> &other);
 
 	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
 
