@@ -82,6 +82,7 @@ int ConvolutionOperation<F>::size() {
 	return filter_bank.n_weights() + bias.size();
 }
 
+
 template <typename F>
 vector<F> ConvolutionOperation<F>::grad_to_vector() {
 	vector<F> grad = filter_bank_grad.to_vector();
@@ -140,6 +141,7 @@ void ConvolutionOperation<F>::forward_dry_run(Tensor<F> &in, Tensor<F> &out) { /
 		handle_error( cudaMalloc( (void**)&workspace, workspace_size) );
 }
 
+
 template <typename F>
 void ConvolutionOperation<F>::scale_grad(F val) {
   scale_cuda(filter_bank_grad.ptr(), filter_bank_grad.n_weights(), val);
@@ -154,6 +156,20 @@ void ConvolutionOperation<F>::register_params(std::vector<CudaPtr<F> > &params, 
 
 	grads.push_back(CudaPtr<F>{&filter_bank_grad.weights, filter_bank_grad.n_weights()});
 	grads.push_back(CudaPtr<F>{&bias_grad.data, bias_grad.size()});
+}
+
+template <typename F>
+void ConvolutionOperation<F>::share(ConvolutionOperation<F> &other){
+	cudaFree(other.filter_bank.weights);
+	cudaFree(other.bias.data);
+	cudaFree(other.filter_bank_grad.weights);
+	cudaFree(other.bias_grad.data);
+
+	other.filter_bank.weights = filter_bank.weights;
+	other.bias.data = bias.data;
+	other.filter_bank_grad.weights = filter_bank_grad.weights;
+	other.bias_grad.data = bias_grad.data;
+
 }
 
 template <typename F>
