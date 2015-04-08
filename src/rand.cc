@@ -6,6 +6,7 @@ Rand *Rand::s_rand = 0;
 
 Rand::Rand() : engine(rd()) {
     // Choose a random mean between 1 and 6
+    engine.seed(245);
 }
 
 Rand &Rand::inst() {

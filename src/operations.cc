@@ -1,6 +1,6 @@
 #include "operations.h"
 #include "handler.h"
-#include "gate.h"
+#include "kernels.h"
 #include <cublas_v2.h>
 #include <cassert>
 
@@ -98,6 +98,7 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
 	F alpha_bias(1), beta_bias(1);
 
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, algo, workspace, workspace_size, &beta, output.td, output.data));
+	// handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_FEATURE_MAP, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 	handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_SAME_C, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 }
 
@@ -146,6 +147,7 @@ template <typename F>
 void ConvolutionOperation<F>::scale_grad(F val) {
   scale_cuda(filter_bank_grad.ptr(), filter_bank_grad.n_weights(), val);
   scale_cuda(bias_grad.ptr(), bias_grad.size(), val);
+  throw "";
 }
 
 
@@ -216,16 +218,22 @@ TensorShape PoolingOperation<F>::output_shape(TensorShape in) {
 }
 
 template <typename F>
+TanhOperation<F>::TanhOperation(F scale_) : scale(scale_) {
+
+}
+
+template <typename F>
 void TanhOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
   F alpha(1);
-  handle_error( cudnnActivationForward(Handler::cudnn(), CUDNN_ACTIVATION_TANH, &alpha, in.td, in.data, &beta, out.td, out.data));
+  //handle_error( cudnnActivationForward(Handler::cudnn(), CUDNN_ACTIVATION_TANH, &alpha, in.td, in.data, &beta, out.td, out.data));
+  tanh_forward<F>(in.data, out.data, out.size(), beta, scale);
 }
 
 template <typename F>
 void TanhOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta) {
   F alpha(1);
   //handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_TANH, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data));
-  tanh_deriv<F>(out_grad.data, out.data, in_grad.data, out.size());
+  tanh_deriv<F>(out_grad.data, out.data, in_grad.data, out.size(), beta, scale);
 }
 
 template <typename F>
@@ -234,33 +242,22 @@ TensorShape TanhOperation<F>::output_shape(TensorShape in) {
 }
 
 template <typename F>
-void GateOperation<F>::forward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, F beta) {
-	gate(in, in2, out);
-}
+SigmoidOperation<F>::SigmoidOperation(F scale_) : scale(scale_) {
 
-template <typename F>
-void GateOperation<F>::backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad, F beta) {
-	gate(out_grad, in2, in_grad);
-	gate(out_grad, in, in2_grad);
 }
-
-template <typename F>
-TensorShape GateOperation<F>::output_shape(TensorShape in) {
-	return in;
-}
-
 
 template <typename F>
 void SigmoidOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
   F alpha(1);
-  handle_error( cudnnActivationForward(Handler::cudnn(), CUDNN_ACTIVATION_SIGMOID, &alpha, in.td, in.data, &beta, out.td, out.data));
+  sigm_forward<F>(in.data, out.data, out.size(), beta, scale);
+  //cout << out.to_vector()[0];
+  //handle_error( cudnnActivationForward(Handler::cudnn(), CUDNN_ACTIVATION_SIGMOID, &alpha, in.td, in.data, &beta, out.td, out.data));
 }
 
 template <typename F>
 void SigmoidOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta) {
-  F alpha(1);
   //handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_SIGMOID, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data));
-  sigm_deriv<F>(out_grad.data, out.data, in_grad.data, out.size());
+  sigm_deriv<F>(out_grad.data, out.data, in_grad.data, out.size(), beta, scale);
 }
 
 template <typename F>
@@ -315,6 +312,22 @@ TensorShape ReluOperation<F>::output_shape(TensorShape in) {
 }
 
 template <typename F>
+void GateOperation<F>::forward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, F beta) {
+	gate(in, in2, out);
+}
+
+template <typename F>
+void GateOperation<F>::backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad, F beta) {
+	gate(out_grad, in2, in_grad);
+	gate(out_grad, in, in2_grad);
+}
+
+template <typename F>
+TensorShape GateOperation<F>::output_shape(TensorShape in) {
+	return in;
+}
+
+template <typename F>
 SoftmaxOperation<F>::SoftmaxOperation(bool matched_) : matched(matched_) {
 }
 
@@ -322,7 +335,7 @@ template <typename F>
 void SoftmaxOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
 	F alpha(1);
 //	handle_error( cudnnSoftmaxForward(Handler::cudnn(), CUDNN_SOFTMAX_FAST, CUDNN_SOFTMAX_MODE_INSTANCE, &alpha, in.td, in.data, &beta, out.td, out.data));
-	handle_error( cudnnSoftmaxForward(Handler::cudnn(), CUDNN_SOFTMAX_FAST, CUDNN_SOFTMAX_MODE_CHANNEL, &alpha, in.td, in.data, &beta, out.td, out.data));
+	handle_error( cudnnSoftmaxForward(Handler::cudnn(), CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_CHANNEL, &alpha, in.td, in.data, &beta, out.td, out.data));
 }
 
 template <typename F>
@@ -337,7 +350,7 @@ void SoftmaxOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out
 		in_grad.from_tensor(out_grad);
 	}
 	else
-		handle_error( cudnnSoftmaxBackward(Handler::cudnn(), CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_INSTANCE, &alpha, out.td, out.data, out_grad.td, out_grad.data, &beta, in_grad.td, in_grad.data));
+		handle_error( cudnnSoftmaxBackward(Handler::cudnn(), CUDNN_SOFTMAX_ACCURATE, CUDNN_SOFTMAX_MODE_CHANNEL, &alpha, out.td, out.data, out_grad.td, out_grad.data, &beta, in_grad.td, in_grad.data));
 }
 
 template <typename F>

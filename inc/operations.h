@@ -117,18 +117,24 @@ struct PoolingOperation : public Operation<F> {
 
 template <typename F>
 struct TanhOperation : public Operation<F> {
+  TanhOperation(F scale = 1.0);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
 
 	TensorShape output_shape(TensorShape input);
+
+	F scale;
 };
 
 template <typename F>
 struct SigmoidOperation : public Operation<F> {
+  SigmoidOperation(F scale = 1.0);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
 
 	TensorShape output_shape(TensorShape input);
+
+	F scale;
 };
 
 template <typename F>
@@ -151,7 +157,7 @@ struct ReluOperation : public Operation<F> {
 
 template <typename F>
 struct SoftmaxOperation : public Operation<F> {
-	SoftmaxOperation(bool matched = true);
+	SoftmaxOperation(bool matched = false);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
 
