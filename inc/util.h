@@ -319,5 +319,8 @@ __global__ void normal_kerneld(int seed, double *data, int n, double mean, doubl
 template <typename T>
 void init_normal(T *data, int n, T mean, T std);
 
+__global__ void rand_zero_kernel(int seed, float *data, int n, float p);
+void rand_zero(float *data, int n, float p);
+
 
 #endif
