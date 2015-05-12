@@ -9,6 +9,7 @@
 #include <cudnn.h>
 #include <cublas_v2.h>
 #include <curand.h>
+#include <curand_kernel.h>
 #include <time.h>
 #include <stdint.h>
 #include <algorithm>
@@ -259,6 +260,30 @@ inline void normalize(std::vector<T> *v) {
 	for (size_t i(0); i < v->size(); ++i) (*v)[i] /= std;
 }
 
+// template <typename T>
+inline void normalize(std::vector<float>::iterator v_it, std::vector<float>::iterator v_end) {
+	std::vector<float>::iterator it = v_it, end = v_end;
+	size_t size = end - it;
+	float mean(0);
+	for (; it != end; ++it) mean += *it;
+	mean /= size;
+	
+	it = v_it;
+	end = v_end;	
+	for (; it != end; ++it) *it -= mean;
+	
+	it = v_it;
+	end = v_end;	
+	float std(0);
+	for (; it != end; ++it) std += (*it) * (*it);
+	
+	it = v_it;
+	end = v_end;	
+	std = sqrt(std / (size - 1));
+	for (; it != end; ++it) *it /= std;
+}
+
+
 template <typename T>
 inline void normalize_1(std::vector<T> *v) {
 	T sum = std::accumulate(v->begin(), v->end(), 0);
@@ -319,7 +344,8 @@ __global__ void normal_kerneld(int seed, double *data, int n, double mean, doubl
 template <typename T>
 void init_normal(T *data, int n, T mean, T std);
 
-__global__ void rand_zero_kernel(int seed, float *data, int n, float p);
+__global__ void rand_init_kernel(int seed, curandStatePhilox4_32_10_t *states, int n);
+__global__ void rand_zero_kernel(float *data, int n, float p, curandStatePhilox4_32_10_t *states);
 void rand_zero(float *data, int n, float p);
 
 
