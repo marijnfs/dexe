@@ -111,9 +111,9 @@ int main() {
 	Balancer::start(2);
 
 	srand(time(0));
-	Database db("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_train_leveldb");
-	Database db_test("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_test_leveldb");
-	Database db_adv("./adv");
+	Database<caffe::Datum> db("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_train_leveldb");
+	Database<caffe::Datum> db_test("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_test_leveldb");
+	Database<caffe::Datum> db_adv("./adv");
 	db_adv.from_database(db); //copy
 
 	//db.normalize_chw();

@@ -5,7 +5,7 @@
 using namespace std;
 
 
-void MakeAdvDatabase(Database &in, Database &out, Network<float> &network, float step) {
+void MakeAdvDatabase(Database<caffe::Datum> &in, Database<caffe::Datum> &out, Network<float> &network, float step) {
 	Timer t;
 	cout << "Making adv database" << endl;
 
@@ -87,7 +87,7 @@ void MakeAdvDatabase(Database &in, Database &out, Network<float> &network, float
 	cout << "took: " << t.since() << endl;
 }
 
-void AddNAdv(Database &in, Database &out, Network<float> &network, int n, float step, int n_step) {
+void AddNAdv(Database<caffe::Datum> &in, Database<caffe::Datum> &out, Network<float> &network, int n, float step, int n_step) {
 	Timer t;
 	float target_loss = -log(1.0 / network.output().c);
 	cout << "Adding " << n << " random adv to database" << endl;

@@ -1,6 +1,8 @@
 #include "database.h"
 #include "util.h"
 
+#include "img.pb.h" //Img protobuf
+
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -9,7 +11,8 @@ using namespace std;
 using namespace leveldb;
 using namespace caffe;
 
-Database::Database(string path) : N(0) {
+template <typename T>
+Database<T>::Database(string path) : N(0) {
 	options.create_if_missing = true;
 	Status status = DB::Open(options, path, &db);
 
@@ -22,11 +25,13 @@ Database::Database(string path) : N(0) {
 	N = count();
 }
 
-Database::~Database() {
+template <typename T>
+Database<T>::~Database() {
 	delete db;
 }
 
-void Database::from_database(Database &other) {
+template <typename T>
+void Database<T>::from_database(Database &other) {
 	cout << "Copying database" << endl;
 	Iterator* it = other.db->NewIterator(leveldb::ReadOptions());
 
@@ -36,6 +41,7 @@ void Database::from_database(Database &other) {
 }
 
 
+/*
 void Database::normalize_chw() {
 	cout << "Normalizing dataset" << endl;
 	Iterator* it = db->NewIterator(leveldb::ReadOptions());
@@ -80,6 +86,7 @@ void Database::normalize_chw() {
 
 		//for (size_t i(0); i < data.size(); ++i) data[i] /= 256.;
 		// CHW
+/*
 		int c = datum.channels();
 		int h = datum.height();
 		int w = datum.width();
@@ -97,8 +104,10 @@ void Database::normalize_chw() {
 		db->Put(leveldb::WriteOptions(), it->key(), output);
 	}
 }
+*/
 
-size_t Database::count() {
+template <typename T>
+size_t Database<T>::count() {
 	Iterator* it = db->NewIterator(leveldb::ReadOptions());
 
 	size_t N(0);
@@ -107,13 +116,15 @@ size_t Database::count() {
 	return N;
 }
 
-string Database::get_key(int index) {
+template <typename T>
+string Database<T>::get_key(int index) {
 	ostringstream oss;
 	oss << setw(5) << setfill('0') << index;
 	return oss.str();	
 }
 
-caffe::Datum Database::get_image(int index) {
+template <typename T>
+T Database<T>::get_image(int index) {
 	string data;
 	leveldb::Slice key = get_key(index);
 	if (!db->Get(ReadOptions(), key, &data).ok()) {
@@ -121,7 +132,7 @@ caffe::Datum Database::get_image(int index) {
 		exit(1);
 	}
 
-	Datum datum;
+	T datum;
 	if (!datum.ParseFromString(data)) {
 		cerr << "couldn't parse data" << endl;
 		exit(1);	
@@ -129,10 +140,13 @@ caffe::Datum Database::get_image(int index) {
 	return datum;
 }
 
-void Database::add(Datum &datum) {
+template <typename T>
+void Database<T>::add(T &datum) {
 	string output;
 	datum.SerializeToString(&output);
 	db->Put(leveldb::WriteOptions(), get_key(N), output);
 	++N;
 }
 
+template struct Database<caffe::Datum>;
+template struct Database<Img>;
