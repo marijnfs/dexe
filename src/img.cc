@@ -25,8 +25,8 @@ void write_img(std::string filename, int c, int w, int h, float const *values) {
 	Mat mat(w, h, CV_32FC3, reinterpret_cast<void*>(&bla[0]));
 	mat *= 255.;
 	mat.convertTo(mat, CV_8UC3);
-	//cvtColor(mat, mat, CV_RGB2BGR);
-	//cout << mat << endl;
+	cvtColor(mat, mat, CV_RGB2BGR);
+
 	if (!imwrite(filename, mat))
 		throw StringException("Couldnt write img file");
 }

@@ -134,7 +134,7 @@ void ConvolutionOperation<F>::forward_dry_run(Tensor<F> &in, Tensor<F> &out) { /
 	handle_error( cudnnGetConvolutionForwardAlgorithm(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, workspace_size, &algo) );
 	//algo = CUDNN_CONVOLUTION_FWD_ALGO_GEMM;
 	//algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
-
+	algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
 	handle_error( cudnnGetConvolutionForwardWorkspaceSize(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, algo, &workspace_size) );
 	if (workspace_size)
 		cout << "workspace size: " << workspace_size << endl;
