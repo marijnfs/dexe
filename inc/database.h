@@ -2,13 +2,11 @@
 #define __DATABASE_H__
 
 #include <leveldb/db.h>
-#include "caffe.pb.h"
 #include <string>
-
+#include <map>
 //read a caffe database
 
 
-template <typename T>
 struct Database {
 	leveldb::DB* db;
 	leveldb::Options options;
@@ -17,17 +15,26 @@ struct Database {
 	~Database();
 	
 	//caffe::Datum get_image(int index);
-	T get_image(int index);
-	std::string get_key(int index);
+	//T get_image(int index);
 	//void add(caffe::Datum &datum);
-	void add(T &datum);
+
+	template <typename T>
+	void add(std::string, T &datum);
+
+	template <typename T>
+	void store(std::string, int index, T &datum);
+
+	template <typename T>
+	T load(std::string, int index);
+	std::string get_key(std::string name, int index);
 
 
-	void from_database(Database &other);
+	void clone_from_database(Database &other);
 	//void normalize_chw();
-	size_t count();
+	size_t count(std::string);
+	void index();
 
-	size_t N;
+	std::map<std::string, int> counts;
 };
 
 

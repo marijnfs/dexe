@@ -111,10 +111,10 @@ int main() {
 	Balancer::start(2);
 
 	srand(time(0));
-	Database<caffe::Datum> db("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_train_leveldb");
-	Database<caffe::Datum> db_test("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_test_leveldb");
-	Database<caffe::Datum> db_adv("./adv");
-	db_adv.from_database(db); //copy
+	Database db("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_train_leveldb");
+	Database db_test("/home/marijnfs/dev/caffe-rk/examples/cifar10/cifar10_test_leveldb");
+	Database db_adv("./adv");
+	db_adv.clone_from_database(db); //copy
 
 	//db.normalize_chw();
 	//db_test.normalize_chw();
@@ -217,15 +217,15 @@ int main() {
 		float err(0);
 		int n_correct(0);
 		
-		Indices indices(db_adv.N);
+		Indices indices(db_adv.count("root"));
 		indices.shuffle();
 
 		size_t i(0);
-		for (size_t i(0); i < db_adv.N; ++i) {
+		for (size_t i(0); i < db_adv.count("root"); ++i) {
 		//while (Balancer::ready(1)) {
 			Balancer::start(1);
 			//cout << i << endl;
-			//caffe::Datum datum = db.get_image(49999);
+			//caffe::Datum datum = db.load<caffe::Datum>(49999);
 			//for (size_t n(0); n < datum.float_data_size(); ++n)
 			//		cout << datum.float_data(n) << " ";
 			//cout << endl;
@@ -233,7 +233,7 @@ int main() {
 			//cout << "float data size: " << datum.float_data_size() << endl;
 			
 			//caffe::Datum datum = db.get_image(indices[i]);
-			caffe::Datum datum = db_adv.get_image(indices[i]);
+			caffe::Datum datum = db_adv.load<caffe::Datum>("root", indices[i]);
 			const float *img_data = datum.float_data().data();
 
 
@@ -307,7 +307,7 @@ int main() {
 				vector<float> ov = network.output().to_vector();
 				cout << i << " (" << indices[i] << ") " << datum.label() << " " << ov << " " << ov[datum.label()] << endl;
 			}
-			i = (i + 1) % db_adv.N;
+			i = (i + 1) % db_adv.count("root");
 			Balancer::stop(1);
 		}
 
@@ -315,8 +315,8 @@ int main() {
 		float test_err(0);
 		int test_n_correct(0);
 		
-		for (size_t i(0); i < db_test.N; ++i) {
-			caffe::Datum datum = db_test.get_image(i);
+		for (size_t i(0); i < db_test.count("root"); ++i) {
+			caffe::Datum datum = db_test.load<caffe::Datum>("root", i);
 			const float *img_data = datum.float_data().data();
 
 			network.forward(img_data);
@@ -326,8 +326,8 @@ int main() {
 			test_n_correct += network.n_correct();
 		}
 
-		cout << "elapsed: " << t.since() << " err: " << RED << (err / db_adv.N) << DEFAULT << " correct: " << BLUE << n_correct << DEFAULT << "/" << db_adv.N << endl;
-		cout << "test err: " << RED << (test_err / db_test.N) << DEFAULT << " correct: " << BLUE << test_n_correct << DEFAULT << "/" << db_test.N << endl;
+		cout << "elapsed: " << t.since() << " err: " << RED << (err / db_adv.count("root")) << DEFAULT << " correct: " << BLUE << n_correct << DEFAULT << "/" << db_adv.count("root") << endl;
+		cout << "test err: " << RED << (test_err / db_test.count("root")) << DEFAULT << " correct: " << BLUE << test_n_correct << DEFAULT << "/" << db_test.count("root") << endl;
 	}
 }
 

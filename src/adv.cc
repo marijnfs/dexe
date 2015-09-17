@@ -5,7 +5,7 @@
 using namespace std;
 
 
-void MakeAdvDatabase(Database<caffe::Datum> &in, Database<caffe::Datum> &out, Network<float> &network, float step) {
+void MakeAdvDatabase(Database &in, Database &out, Network<float> &network, float step) {
 	Timer t;
 	cout << "Making adv database" << endl;
 
@@ -17,8 +17,8 @@ void MakeAdvDatabase(Database<caffe::Datum> &in, Database<caffe::Datum> &out, Ne
 	Tensor<float> g3(network.shapes[0]);
 	Tensor<float> g4(network.shapes[0]);
 
-	for (size_t i(0); i < in.N; ++i) {
-		caffe::Datum datum = in.get_image(i);
+	for (size_t i(0); i < in.count("root"); ++i) {
+		caffe::Datum datum = in.load<caffe::Datum>("root", i);
 		const float *img_data = datum.float_data().data();
 		network.forward(img_data);
 		network.calculate_loss(datum.label());
@@ -82,12 +82,12 @@ void MakeAdvDatabase(Database<caffe::Datum> &in, Database<caffe::Datum> &out, Ne
 			datum.add_float_data(adv_img[i]);
 		string output;
 		datum.SerializeToString(&output);
-		out.db->Put(leveldb::WriteOptions(), out.get_key(i), output);
+		out.db->Put(leveldb::WriteOptions(), out.get_key("root", i), output);
 	}
 	cout << "took: " << t.since() << endl;
 }
 
-void AddNAdv(Database<caffe::Datum> &in, Database<caffe::Datum> &out, Network<float> &network, int n, float step, int n_step) {
+void AddNAdv(Database &in, Database &out, Network<float> &network, int n, float step, int n_step) {
 	Timer t;
 	float target_loss = -log(1.0 / network.output().c);
 	cout << "Adding " << n << " random adv to database" << endl;
@@ -101,12 +101,12 @@ void AddNAdv(Database<caffe::Datum> &in, Database<caffe::Datum> &out, Network<fl
 	Tensor<float> g4(network.shapes[0]);
 
 	//step *= -1;
-	Indices indices(in.N);
+	Indices indices(in.count("root"));
 	indices.shuffle();
 
 	size_t i(0);
 	for (size_t i(0); i < n; ++i) {
-		caffe::Datum datum = in.get_image(indices[i]);
+		caffe::Datum datum = in.load<caffe::Datum>("root", indices[i]);
 		const float *img_data = datum.float_data().data();
 		x.from_ptr(img_data);
 		
@@ -199,8 +199,8 @@ void AddNAdv(Database<caffe::Datum> &in, Database<caffe::Datum> &out, Network<fl
 		for (size_t i(0); i < adv_img.size(); ++i)
 			datum.add_float_data(adv_img[i]);
 
-		out.add(datum);
-		i = (i + 1) % in.N;
+		out.add("root", datum);
+		i = (i + 1) % in.count("root");
 	}
 	cout << "took: " << t.since() << endl;
 }
