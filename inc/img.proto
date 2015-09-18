@@ -4,5 +4,6 @@ message Img {
 		required uint32 c = 3;
 		required float time = 4;
 		repeated float data = 5 [packed=true];
-		
+		repeated float state = 6 [packed=true];
+		repeated float action = 7 [packed=true];	
 }
