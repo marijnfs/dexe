@@ -257,6 +257,7 @@ inline void normalize(std::vector<T> *v) {
 	float std(0);
 	for (size_t i(0); i < v->size(); ++i) std += (*v)[i] * (*v)[i];
 	std = sqrt(std / (v->size() - 1));
+	std::cout << "std: " << std << std::endl;
 	for (size_t i(0); i < v->size(); ++i) (*v)[i] /= std;
 }
 
@@ -280,6 +281,7 @@ inline void normalize(std::vector<float>::iterator v_it, std::vector<float>::ite
 	it = v_it;
 	end = v_end;	
 	std = sqrt(std / (size - 1));
+	std::cout << "std: " << std << std::endl;
 	for (; it != end; ++it) *it /= std;
 }
 

@@ -132,6 +132,7 @@ string Database::get_key(string name, int index) {
 	return oss.str();	
 }
 
+/*
 template <typename T>
 T Database::load(string name, int index) {
 	string data;
@@ -167,7 +168,7 @@ void Database::store(string name, int index, T &datum) {
 //template struct Database<Img>;
 
 template <>
-void Database::add<>(string name, caffe::Datum &datum);
+void Database::add<caffe::Datum>(string name, caffe::Datum &datum);
 
 template <>
 void Database::add<>(string name, Img &datum);
@@ -183,3 +184,4 @@ caffe::Datum Database::load<caffe::Datum>(string name, int index);
 
 template <>
 Img Database::load<Img>(string name, int index);
+*/
