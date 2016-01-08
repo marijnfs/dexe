@@ -13,7 +13,7 @@ struct TensorShape {
 
 template <typename F>
 struct Tensor {
-	Tensor(int n, int c, int w, int h);
+	Tensor(int n = 0, int c = 0, int w = 0, int h = 0);
 	Tensor(int n, int c, int w, int h, F *data);
 	Tensor(TensorShape shape);
 	Tensor(TensorShape shape, F *data);
@@ -30,6 +30,9 @@ struct Tensor {
 	void from_tensor(Tensor &in);
 	void fill(F val);
 	void write_img(std::string filename);
+
+	void reshape(TensorShape shape);
+	void reshape(int n, int c, int w, int h);
 
 	F sum();
 	F norm();

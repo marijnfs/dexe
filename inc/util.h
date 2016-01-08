@@ -348,5 +348,9 @@ __global__ void rand_init_kernel(int seed, curandStatePhilox4_32_10_t *states, i
 __global__ void rand_zero_kernel(float *data, int n, float p, curandStatePhilox4_32_10_t *states);
 void rand_zero(float *data, int n, float p);
 
+__global__ void shift_kernel(int X, int Y, int C, float const *in, float *out, int dx, int dy);
+__global__ void unshift_kernel(int X, int Y, int C, float const *in, float *out, int dx, int dy);
+void shift(float const *in, float *out, int X, int Y, int C, int dx, int dy);
+void unshift(float const *in, float *out, int X, int Y, int C, int dx, int dy);
 
 #endif

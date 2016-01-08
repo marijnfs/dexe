@@ -4,6 +4,15 @@
 #include <curand_kernel.h>
 #include <math.h>
 
+__device__ __forceinline__ int get_index(int X, int Y, int Z, int C, int x, int y, int z) {
+	return z * (C * X * Y) + x * Y + y; //CWH, as cudnn
+}
+
+__device__ __forceinline__ void add_c(float const *in, float *out, int slicesizein, int slicesizeout, int C) {
+	for (size_t c(0); c < C; ++c)
+		out[c * slicesizeout] += in[c * slicesizein];
+}
+
 __global__ void normal_kernel(int seed, float *data, int n, float mean, float std) {
   if (threadIdx.x != 0) return;
   curandState state;
@@ -64,8 +73,8 @@ void rand_zero(float *data, int n, float p) {
   dim3 dimGrid( (n_threads + BLOCKSIZE - 1) / BLOCKSIZE );
 
   if (n_threads > n_rand_states) {
-    if (rand_states) cudaFree(rand_states);
-    handle_error(cudaMalloc(&rand_states, sizeof(curandStatePhilox4_32_10_t) * n_threads));
+	  if (rand_states) cudaFree(rand_states);
+	  handle_error(cudaMalloc(&rand_states, sizeof(curandStatePhilox4_32_10_t) * n_threads));
 
     rand_init_kernel<<<dimGrid, dimBlock>>>(rand(), rand_states, n_threads);
     n_rand_states = n_threads;
@@ -75,4 +84,50 @@ void rand_zero(float *data, int n, float p) {
   rand_zero_kernel<<<dimGrid, dimBlock>>>(data, n, p, rand_states);
   handle_error( cudaGetLastError() );
   handle_error( cudaDeviceSynchronize());
+}
+
+__global__ void shift_kernel(float const *in, float *out, int X, int Y, int C, int dx, int dy) {
+	int x(threadIdx.x + blockDim.x * blockIdx.x);
+	int y(threadIdx.y + blockDim.y * blockIdx.y);
+
+	int x_to(threadIdx.x + blockDim.x * blockIdx.x + dx);
+	int y_to(threadIdx.y + blockDim.y * blockIdx.y + dy);
+
+	if (x_to >= X || y_to >= Y || x < 0 || y < 0)
+		return;
+
+	add_c(in + get_index(X, Y, 0, C, x, y, 0), out + get_index(X, Y, 0, C, x_to, y_to, 0), X * Y, X * Y, C);
+}
+
+__global__ void unshift_kernel(float const *in, float *out, int X, int Y, int C, int dx, int dy) {
+	int x(threadIdx.x + blockDim.x * blockIdx.x);
+	int y(threadIdx.y + blockDim.y * blockIdx.y);
+
+	int x_to(threadIdx.x + blockDim.x * blockIdx.x + dx);
+	int y_to(threadIdx.y + blockDim.y * blockIdx.y + dy);
+
+	if (x_to >= X || y_to >= Y || x < 0 || y < 0)
+		return;
+
+	add_c(in + get_index(X, Y, 0, C, x_to, y_to, 0), out + get_index(X, Y, 0, C, x, y, 0), X * Y, X * Y, C);
+}
+
+void shift(float const *in, float *out, int X, int Y, int C, int dx, int dy) {
+	int s = X * Y * C;
+	int const BLOCKSIZE(1024);
+
+	int dimBlock( BLOCKSIZE );
+	int dimGrid( (s  + BLOCKSIZE - 1) / BLOCKSIZE);
+
+	shift_kernel<<<dimGrid, dimBlock>>>(in, out, X, Y, C, dx, dy);
+}
+
+void unshift(float const *in, float *out, int X, int Y, int C, int dx, int dy) {
+	int s = X * Y * C;
+	int const BLOCKSIZE(1024);
+
+	int dimBlock( BLOCKSIZE );
+	int dimGrid( (s  + BLOCKSIZE - 1) / BLOCKSIZE);
+
+	unshift_kernel<<<dimGrid, dimBlock>>>(in, out, X, Y, C, dx, dy);
 }

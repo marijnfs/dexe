@@ -67,6 +67,22 @@ Tensor<double>::Tensor(int n_, int c_, int w_, int h_):
 }
 
 template <>
+void Tensor<float>::reshape(int n, int c, int w, int h) {
+	handle_error( cudnnDestroyTensorDescriptor(td));
+	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
+	
+	if (allocated) {
+		cudaFree(data);
+		handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
+		if (ZERO_ON_INIT)
+			zero();
+	}
+}
+
+
+
+
+template <>
 Tensor<double>::Tensor(int n_, int c_, int w_, int h_, double *data_):
   n(n_), w(w_), h(h_), c(c_), allocated(false), data(data_)
 {
@@ -88,6 +104,19 @@ Tensor<double>::Tensor(TensorShape s):
 }
 
 template <>
+void Tensor<double>::reshape(int n, int c, int w, int h) {
+	handle_error( cudnnDestroyTensorDescriptor(td));
+	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
+	
+	if (allocated) {
+		cudaFree(data);
+		handle_error( cudaMalloc( (void**)&data, sizeof(double) * size()));
+		if (ZERO_ON_INIT)
+			zero();
+	}
+}
+
+template <>
 Tensor<double>::Tensor(TensorShape s, double *data_):
   n(s.n), w(s.w), h(s.h), c(s.c), allocated(false), data(data_)
 {
@@ -101,6 +130,12 @@ Tensor<F>::~Tensor() {
 	if (allocated)
 	  cudaFree(data);
 }
+
+template <typename F>
+void Tensor<F>::reshape(TensorShape shape) {
+	reshape(shape.n, shape.c, shape.w, shape.h);
+}
+
 
 template <typename F>
 void Tensor<F>::zero() {

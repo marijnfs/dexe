@@ -87,6 +87,22 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 };
 
 template <typename F>
+struct ConvolutionShiftOperation : public ConvolutionOperation<F> {
+	ConvolutionShiftOperation(int in_map, int out_map, int kw, int kh, int shift_x, int shift_y, bool keep = true, size_t workspace_limit = 0);
+	~ConvolutionShiftOperation();
+
+	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
+	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+
+	void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0);
+	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
+	void zero_grad();
+
+	int dx, dy;
+	Tensor<F> slate, slate_grad;
+};
+
+template <typename F>
 struct SquashOperation : ConvolutionOperation<F> {
 	SquashOperation(TensorShape s, int c);
 	TensorShape output_shape(TensorShape input);
