@@ -1,8 +1,8 @@
 #include "database.h"
-#include "util.h"
+// #include "util.h"
 
 #include "img.pb.h" //Img protobuf
-#include "caffe.pb.h"
+// #include "caffe.pb.h"
 
 #include <iostream>
 #include <sstream>
@@ -10,7 +10,7 @@
 
 using namespace std;
 using namespace leveldb;
-using namespace caffe;
+// using namespace caffe;
 
 Database::Database(string path) {
 	options.create_if_missing = true;
@@ -49,7 +49,7 @@ void Database::normalize_chw() {
 	{
 		//cout << "|" << it->key().ToString() << "|" <<endl; //" : " << it->value().ToString() << endl;
 		Datum datum;
-		
+
 		if (!datum.ParseFromString(it->value().ToString())) {
 			cerr << "failed reading datum" << endl;
 			return;
@@ -89,7 +89,7 @@ void Database::normalize_chw() {
 		int c = datum.channels();
 		int h = datum.height();
 		int w = datum.width();
-		
+
 		datum.clear_float_data();
 		for (size_t i(0); i < data.size(); ++i) {
 			//datum.add_float_data(data[(i * c) % (h * w * c) + (i / (w * h))]); // hwc to chw
@@ -129,7 +129,7 @@ size_t Database::count(string name) {
 string Database::get_key(string name, int index) {
 	ostringstream oss;
 	oss << name << "/" << setw(5) << setfill('0') << index;
-	return oss.str();	
+	return oss.str();
 }
 
 /*
@@ -145,7 +145,7 @@ T Database::load(string name, int index) {
 	T datum;
 	if (!datum.ParseFromString(data)) {
 		cerr << "couldn't parse data" << endl;
-		exit(1);	
+		exit(1);
 	}
 	return datum;
 }

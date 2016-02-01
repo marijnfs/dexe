@@ -3,7 +3,19 @@ message Img {
 		required uint32 h = 2;
 		required uint32 c = 3;
 		required float time = 4;
-		repeated float data = 5 [packed=true];
-		repeated float state = 6 [packed=true];
-		repeated float action = 7 [packed=true];	
+		required float clocktime = 5;
+		repeated float data = 6 [packed=true];
+}
+
+message Action {
+		required float time = 1;
+		repeated float x = 2 [packed=true];
+    	repeated float q = 3 [packed=true];
+		repeated float a = 4 [packed=true];	
+}
+
+message Experiment {
+		required string name = 1;
+		required string description = 2;
+		required string map_file = 3;	
 }
