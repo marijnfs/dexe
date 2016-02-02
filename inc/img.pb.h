@@ -32,6 +32,8 @@ void protobuf_AssignDesc_img_2eproto();
 void protobuf_ShutdownFile_img_2eproto();
 
 class Img;
+class Action;
+class Experiment;
 
 // ===================================================================
 
@@ -117,10 +119,17 @@ class Img : public ::google::protobuf::Message {
   inline float time() const;
   inline void set_time(float value);
 
-  // repeated float data = 5 [packed = true];
+  // required float clocktime = 5;
+  inline bool has_clocktime() const;
+  inline void clear_clocktime();
+  static const int kClocktimeFieldNumber = 5;
+  inline float clocktime() const;
+  inline void set_clocktime(float value);
+
+  // repeated float data = 6 [packed = true];
   inline int data_size() const;
   inline void clear_data();
-  static const int kDataFieldNumber = 5;
+  static const int kDataFieldNumber = 6;
   inline float data(int index) const;
   inline void set_data(int index, float value);
   inline void add_data(float value);
@@ -128,30 +137,6 @@ class Img : public ::google::protobuf::Message {
       data() const;
   inline ::google::protobuf::RepeatedField< float >*
       mutable_data();
-
-  // repeated float state = 6 [packed = true];
-  inline int state_size() const;
-  inline void clear_state();
-  static const int kStateFieldNumber = 6;
-  inline float state(int index) const;
-  inline void set_state(int index, float value);
-  inline void add_state(float value);
-  inline const ::google::protobuf::RepeatedField< float >&
-      state() const;
-  inline ::google::protobuf::RepeatedField< float >*
-      mutable_state();
-
-  // repeated float action = 7 [packed = true];
-  inline int action_size() const;
-  inline void clear_action();
-  static const int kActionFieldNumber = 7;
-  inline float action(int index) const;
-  inline void set_action(int index, float value);
-  inline void add_action(float value);
-  inline const ::google::protobuf::RepeatedField< float >&
-      action() const;
-  inline ::google::protobuf::RepeatedField< float >*
-      mutable_action();
 
   // @@protoc_insertion_point(class_scope:Img)
  private:
@@ -163,6 +148,8 @@ class Img : public ::google::protobuf::Message {
   inline void clear_has_c();
   inline void set_has_time();
   inline void clear_has_time();
+  inline void set_has_clocktime();
+  inline void clear_has_clocktime();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -172,13 +159,10 @@ class Img : public ::google::protobuf::Message {
   float time_;
   ::google::protobuf::RepeatedField< float > data_;
   mutable int _data_cached_byte_size_;
-  ::google::protobuf::RepeatedField< float > state_;
-  mutable int _state_cached_byte_size_;
-  ::google::protobuf::RepeatedField< float > action_;
-  mutable int _action_cached_byte_size_;
+  float clocktime_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(7 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
 
   friend void  protobuf_AddDesc_img_2eproto();
   friend void protobuf_AssignDesc_img_2eproto();
@@ -186,6 +170,247 @@ class Img : public ::google::protobuf::Message {
 
   void InitAsDefaultInstance();
   static Img* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class Action : public ::google::protobuf::Message {
+ public:
+  Action();
+  virtual ~Action();
+
+  Action(const Action& from);
+
+  inline Action& operator=(const Action& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Action& default_instance();
+
+  void Swap(Action* other);
+
+  // implements Message ----------------------------------------------
+
+  Action* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const Action& from);
+  void MergeFrom(const Action& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required float time = 1;
+  inline bool has_time() const;
+  inline void clear_time();
+  static const int kTimeFieldNumber = 1;
+  inline float time() const;
+  inline void set_time(float value);
+
+  // repeated float x = 2 [packed = true];
+  inline int x_size() const;
+  inline void clear_x();
+  static const int kXFieldNumber = 2;
+  inline float x(int index) const;
+  inline void set_x(int index, float value);
+  inline void add_x(float value);
+  inline const ::google::protobuf::RepeatedField< float >&
+      x() const;
+  inline ::google::protobuf::RepeatedField< float >*
+      mutable_x();
+
+  // repeated float q = 3 [packed = true];
+  inline int q_size() const;
+  inline void clear_q();
+  static const int kQFieldNumber = 3;
+  inline float q(int index) const;
+  inline void set_q(int index, float value);
+  inline void add_q(float value);
+  inline const ::google::protobuf::RepeatedField< float >&
+      q() const;
+  inline ::google::protobuf::RepeatedField< float >*
+      mutable_q();
+
+  // repeated float a = 4 [packed = true];
+  inline int a_size() const;
+  inline void clear_a();
+  static const int kAFieldNumber = 4;
+  inline float a(int index) const;
+  inline void set_a(int index, float value);
+  inline void add_a(float value);
+  inline const ::google::protobuf::RepeatedField< float >&
+      a() const;
+  inline ::google::protobuf::RepeatedField< float >*
+      mutable_a();
+
+  // @@protoc_insertion_point(class_scope:Action)
+ private:
+  inline void set_has_time();
+  inline void clear_has_time();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::google::protobuf::RepeatedField< float > x_;
+  mutable int _x_cached_byte_size_;
+  ::google::protobuf::RepeatedField< float > q_;
+  mutable int _q_cached_byte_size_;
+  ::google::protobuf::RepeatedField< float > a_;
+  mutable int _a_cached_byte_size_;
+  float time_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+
+  friend void  protobuf_AddDesc_img_2eproto();
+  friend void protobuf_AssignDesc_img_2eproto();
+  friend void protobuf_ShutdownFile_img_2eproto();
+
+  void InitAsDefaultInstance();
+  static Action* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class Experiment : public ::google::protobuf::Message {
+ public:
+  Experiment();
+  virtual ~Experiment();
+
+  Experiment(const Experiment& from);
+
+  inline Experiment& operator=(const Experiment& from) {
+    CopyFrom(from);
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Experiment& default_instance();
+
+  void Swap(Experiment* other);
+
+  // implements Message ----------------------------------------------
+
+  Experiment* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const Experiment& from);
+  void MergeFrom(const Experiment& from);
+  void Clear();
+  bool IsInitialized() const;
+
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // required string name = 1;
+  inline bool has_name() const;
+  inline void clear_name();
+  static const int kNameFieldNumber = 1;
+  inline const ::std::string& name() const;
+  inline void set_name(const ::std::string& value);
+  inline void set_name(const char* value);
+  inline void set_name(const char* value, size_t size);
+  inline ::std::string* mutable_name();
+  inline ::std::string* release_name();
+  inline void set_allocated_name(::std::string* name);
+
+  // required string description = 2;
+  inline bool has_description() const;
+  inline void clear_description();
+  static const int kDescriptionFieldNumber = 2;
+  inline const ::std::string& description() const;
+  inline void set_description(const ::std::string& value);
+  inline void set_description(const char* value);
+  inline void set_description(const char* value, size_t size);
+  inline ::std::string* mutable_description();
+  inline ::std::string* release_description();
+  inline void set_allocated_description(::std::string* description);
+
+  // required string map_file = 3;
+  inline bool has_map_file() const;
+  inline void clear_map_file();
+  static const int kMapFileFieldNumber = 3;
+  inline const ::std::string& map_file() const;
+  inline void set_map_file(const ::std::string& value);
+  inline void set_map_file(const char* value);
+  inline void set_map_file(const char* value, size_t size);
+  inline ::std::string* mutable_map_file();
+  inline ::std::string* release_map_file();
+  inline void set_allocated_map_file(::std::string* map_file);
+
+  // @@protoc_insertion_point(class_scope:Experiment)
+ private:
+  inline void set_has_name();
+  inline void clear_has_name();
+  inline void set_has_description();
+  inline void clear_has_description();
+  inline void set_has_map_file();
+  inline void clear_has_map_file();
+
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+
+  ::std::string* name_;
+  ::std::string* description_;
+  ::std::string* map_file_;
+
+  mutable int _cached_size_;
+  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+
+  friend void  protobuf_AddDesc_img_2eproto();
+  friend void protobuf_AssignDesc_img_2eproto();
+  friend void protobuf_ShutdownFile_img_2eproto();
+
+  void InitAsDefaultInstance();
+  static Experiment* default_instance_;
 };
 // ===================================================================
 
@@ -282,7 +507,29 @@ inline void Img::set_time(float value) {
   time_ = value;
 }
 
-// repeated float data = 5 [packed = true];
+// required float clocktime = 5;
+inline bool Img::has_clocktime() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void Img::set_has_clocktime() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void Img::clear_has_clocktime() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void Img::clear_clocktime() {
+  clocktime_ = 0;
+  clear_has_clocktime();
+}
+inline float Img::clocktime() const {
+  return clocktime_;
+}
+inline void Img::set_clocktime(float value) {
+  set_has_clocktime();
+  clocktime_ = value;
+}
+
+// repeated float data = 6 [packed = true];
 inline int Img::data_size() const {
   return data_.size();
 }
@@ -307,54 +554,319 @@ Img::mutable_data() {
   return &data_;
 }
 
-// repeated float state = 6 [packed = true];
-inline int Img::state_size() const {
-  return state_.size();
+// -------------------------------------------------------------------
+
+// Action
+
+// required float time = 1;
+inline bool Action::has_time() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void Img::clear_state() {
-  state_.Clear();
+inline void Action::set_has_time() {
+  _has_bits_[0] |= 0x00000001u;
 }
-inline float Img::state(int index) const {
-  return state_.Get(index);
+inline void Action::clear_has_time() {
+  _has_bits_[0] &= ~0x00000001u;
 }
-inline void Img::set_state(int index, float value) {
-  state_.Set(index, value);
+inline void Action::clear_time() {
+  time_ = 0;
+  clear_has_time();
 }
-inline void Img::add_state(float value) {
-  state_.Add(value);
+inline float Action::time() const {
+  return time_;
 }
-inline const ::google::protobuf::RepeatedField< float >&
-Img::state() const {
-  return state_;
-}
-inline ::google::protobuf::RepeatedField< float >*
-Img::mutable_state() {
-  return &state_;
+inline void Action::set_time(float value) {
+  set_has_time();
+  time_ = value;
 }
 
-// repeated float action = 7 [packed = true];
-inline int Img::action_size() const {
-  return action_.size();
+// repeated float x = 2 [packed = true];
+inline int Action::x_size() const {
+  return x_.size();
 }
-inline void Img::clear_action() {
-  action_.Clear();
+inline void Action::clear_x() {
+  x_.Clear();
 }
-inline float Img::action(int index) const {
-  return action_.Get(index);
+inline float Action::x(int index) const {
+  return x_.Get(index);
 }
-inline void Img::set_action(int index, float value) {
-  action_.Set(index, value);
+inline void Action::set_x(int index, float value) {
+  x_.Set(index, value);
 }
-inline void Img::add_action(float value) {
-  action_.Add(value);
+inline void Action::add_x(float value) {
+  x_.Add(value);
 }
 inline const ::google::protobuf::RepeatedField< float >&
-Img::action() const {
-  return action_;
+Action::x() const {
+  return x_;
 }
 inline ::google::protobuf::RepeatedField< float >*
-Img::mutable_action() {
-  return &action_;
+Action::mutable_x() {
+  return &x_;
+}
+
+// repeated float q = 3 [packed = true];
+inline int Action::q_size() const {
+  return q_.size();
+}
+inline void Action::clear_q() {
+  q_.Clear();
+}
+inline float Action::q(int index) const {
+  return q_.Get(index);
+}
+inline void Action::set_q(int index, float value) {
+  q_.Set(index, value);
+}
+inline void Action::add_q(float value) {
+  q_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< float >&
+Action::q() const {
+  return q_;
+}
+inline ::google::protobuf::RepeatedField< float >*
+Action::mutable_q() {
+  return &q_;
+}
+
+// repeated float a = 4 [packed = true];
+inline int Action::a_size() const {
+  return a_.size();
+}
+inline void Action::clear_a() {
+  a_.Clear();
+}
+inline float Action::a(int index) const {
+  return a_.Get(index);
+}
+inline void Action::set_a(int index, float value) {
+  a_.Set(index, value);
+}
+inline void Action::add_a(float value) {
+  a_.Add(value);
+}
+inline const ::google::protobuf::RepeatedField< float >&
+Action::a() const {
+  return a_;
+}
+inline ::google::protobuf::RepeatedField< float >*
+Action::mutable_a() {
+  return &a_;
+}
+
+// -------------------------------------------------------------------
+
+// Experiment
+
+// required string name = 1;
+inline bool Experiment::has_name() const {
+  return (_has_bits_[0] & 0x00000001u) != 0;
+}
+inline void Experiment::set_has_name() {
+  _has_bits_[0] |= 0x00000001u;
+}
+inline void Experiment::clear_has_name() {
+  _has_bits_[0] &= ~0x00000001u;
+}
+inline void Experiment::clear_name() {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
+    name_->clear();
+  }
+  clear_has_name();
+}
+inline const ::std::string& Experiment::name() const {
+  return *name_;
+}
+inline void Experiment::set_name(const ::std::string& value) {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
+  }
+  name_->assign(value);
+}
+inline void Experiment::set_name(const char* value) {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
+  }
+  name_->assign(value);
+}
+inline void Experiment::set_name(const char* value, size_t size) {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
+  }
+  name_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* Experiment::mutable_name() {
+  set_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    name_ = new ::std::string;
+  }
+  return name_;
+}
+inline ::std::string* Experiment::release_name() {
+  clear_has_name();
+  if (name_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = name_;
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void Experiment::set_allocated_name(::std::string* name) {
+  if (name_ != &::google::protobuf::internal::kEmptyString) {
+    delete name_;
+  }
+  if (name) {
+    set_has_name();
+    name_ = name;
+  } else {
+    clear_has_name();
+    name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// required string description = 2;
+inline bool Experiment::has_description() const {
+  return (_has_bits_[0] & 0x00000002u) != 0;
+}
+inline void Experiment::set_has_description() {
+  _has_bits_[0] |= 0x00000002u;
+}
+inline void Experiment::clear_has_description() {
+  _has_bits_[0] &= ~0x00000002u;
+}
+inline void Experiment::clear_description() {
+  if (description_ != &::google::protobuf::internal::kEmptyString) {
+    description_->clear();
+  }
+  clear_has_description();
+}
+inline const ::std::string& Experiment::description() const {
+  return *description_;
+}
+inline void Experiment::set_description(const ::std::string& value) {
+  set_has_description();
+  if (description_ == &::google::protobuf::internal::kEmptyString) {
+    description_ = new ::std::string;
+  }
+  description_->assign(value);
+}
+inline void Experiment::set_description(const char* value) {
+  set_has_description();
+  if (description_ == &::google::protobuf::internal::kEmptyString) {
+    description_ = new ::std::string;
+  }
+  description_->assign(value);
+}
+inline void Experiment::set_description(const char* value, size_t size) {
+  set_has_description();
+  if (description_ == &::google::protobuf::internal::kEmptyString) {
+    description_ = new ::std::string;
+  }
+  description_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* Experiment::mutable_description() {
+  set_has_description();
+  if (description_ == &::google::protobuf::internal::kEmptyString) {
+    description_ = new ::std::string;
+  }
+  return description_;
+}
+inline ::std::string* Experiment::release_description() {
+  clear_has_description();
+  if (description_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = description_;
+    description_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void Experiment::set_allocated_description(::std::string* description) {
+  if (description_ != &::google::protobuf::internal::kEmptyString) {
+    delete description_;
+  }
+  if (description) {
+    set_has_description();
+    description_ = description;
+  } else {
+    clear_has_description();
+    description_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// required string map_file = 3;
+inline bool Experiment::has_map_file() const {
+  return (_has_bits_[0] & 0x00000004u) != 0;
+}
+inline void Experiment::set_has_map_file() {
+  _has_bits_[0] |= 0x00000004u;
+}
+inline void Experiment::clear_has_map_file() {
+  _has_bits_[0] &= ~0x00000004u;
+}
+inline void Experiment::clear_map_file() {
+  if (map_file_ != &::google::protobuf::internal::kEmptyString) {
+    map_file_->clear();
+  }
+  clear_has_map_file();
+}
+inline const ::std::string& Experiment::map_file() const {
+  return *map_file_;
+}
+inline void Experiment::set_map_file(const ::std::string& value) {
+  set_has_map_file();
+  if (map_file_ == &::google::protobuf::internal::kEmptyString) {
+    map_file_ = new ::std::string;
+  }
+  map_file_->assign(value);
+}
+inline void Experiment::set_map_file(const char* value) {
+  set_has_map_file();
+  if (map_file_ == &::google::protobuf::internal::kEmptyString) {
+    map_file_ = new ::std::string;
+  }
+  map_file_->assign(value);
+}
+inline void Experiment::set_map_file(const char* value, size_t size) {
+  set_has_map_file();
+  if (map_file_ == &::google::protobuf::internal::kEmptyString) {
+    map_file_ = new ::std::string;
+  }
+  map_file_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* Experiment::mutable_map_file() {
+  set_has_map_file();
+  if (map_file_ == &::google::protobuf::internal::kEmptyString) {
+    map_file_ = new ::std::string;
+  }
+  return map_file_;
+}
+inline ::std::string* Experiment::release_map_file() {
+  clear_has_map_file();
+  if (map_file_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = map_file_;
+    map_file_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void Experiment::set_allocated_map_file(::std::string* map_file) {
+  if (map_file_ != &::google::protobuf::internal::kEmptyString) {
+    delete map_file_;
+  }
+  if (map_file) {
+    set_has_map_file();
+    map_file_ = map_file;
+  } else {
+    clear_has_map_file();
+    map_file_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
 }
 
 
