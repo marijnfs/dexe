@@ -17,5 +17,5 @@ message Action {
 message Experiment {
 		required string name = 1;
 		required string description = 2;
-		required string map_file = 3;	
+		required string config_path = 3;	
 }
