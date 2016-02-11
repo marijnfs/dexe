@@ -107,10 +107,17 @@ void Database::normalize_chw() {
 
 void Database::index() {
 	Iterator* it = db->NewIterator(leveldb::ReadOptions());
-
+	cout << "reading database" << endl;
 	size_t N(0);
 	for (it->SeekToFirst(); it->Valid(); it->Next()) {
 		string key = it->key().ToString();
+		////hack
+ 	// 	std::string data;
+  //   	db->Get(leveldb::ReadOptions(), key, &data);
+		// db->Put(leveldb::WriteOptions(), key.substr(1), data);
+		// db->Delete(leveldb::WriteOptions(), key);
+
+		cout << "k: " << key << endl;
 		int slash = key.find("/");
 		if (slash < 0) continue;
 		string name = key.substr(0, slash);

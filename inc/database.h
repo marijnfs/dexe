@@ -14,11 +14,11 @@ struct Database {
 
 	Database(std::string path);
 	~Database();
-	
+
 	//caffe::Datum get_image(int index);
 	//T get_image(int index);
 	//void add(caffe::Datum &datum);
-  
+
   template <typename T>
   T load(std::string name, int index) {
     std::string data;
@@ -31,7 +31,24 @@ struct Database {
     T datum;
     if (!datum.ParseFromString(data)) {
       std::cerr << "couldn't parse data" << std::endl;
-      exit(1);	
+      exit(1);
+    }
+    return datum;
+  }
+
+
+  template <typename T>
+  T load(std::string key) {
+    std::string data;
+    if (!db->Get(leveldb::ReadOptions(), key, &data).ok()) {
+      std::cerr << "couldn't load key " << std::endl;
+      exit(1);
+    }
+
+    T datum;
+    if (!datum.ParseFromString(data)) {
+      std::cerr << "couldn't parse data" << std::endl;
+      exit(1);
     }
     return datum;
   }
@@ -41,7 +58,7 @@ struct Database {
     int n = count(name);
     store(name, n, datum);
   }
-  
+
   template <typename T>
   void store(std::string name, int index, T &datum) {
     std::string output;
@@ -49,7 +66,25 @@ struct Database {
     db->Put(leveldb::WriteOptions(), get_key(name, index), output);
     counts[name]++;
   }
-  
+
+  template <typename T>
+  void store(std::string key, T &datum) {
+    std::string output;
+    datum.SerializeToString(&output);
+    db->Put(leveldb::WriteOptions(), key, output);
+  }
+
+  template <typename T>
+  void del(std::string name, int index) {
+    db->Delete(leveldb::WriteOptions(), get_key(name, index));
+    counts[name]++;
+  }
+
+  template <typename T>
+  void del(std::string key) {
+    db->Delete(leveldb::WriteOptions(), key);
+  }
+
   /*	template <typename T>
 	void add(std::string, T &datum);
 
@@ -73,7 +108,7 @@ struct Database {
 //struct DatabaseRaw {
 //	DatabaseRaw(std::string path);
 //
-//	
+//
 //};
 
 #endif

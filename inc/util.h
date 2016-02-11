@@ -268,18 +268,18 @@ inline void normalize(std::vector<float>::iterator v_it, std::vector<float>::ite
 	float mean(0);
 	for (; it != end; ++it) mean += *it;
 	mean /= size;
-	
+
 	it = v_it;
-	end = v_end;	
+	end = v_end;
 	for (; it != end; ++it) *it -= mean;
-	
+
 	it = v_it;
-	end = v_end;	
+	end = v_end;
 	float std(0);
 	for (; it != end; ++it) std += (*it) * (*it);
-	
+
 	it = v_it;
-	end = v_end;	
+	end = v_end;
 	std = sqrt(std / (size - 1));
 	std::cout << "std: " << std << std::endl;
 	for (; it != end; ++it) *it /= std;
@@ -336,6 +336,14 @@ inline std::vector<T> byte_read_vec(std::ifstream &in) {
 		v.push_back(byte_read<T>(in));
 	return v;
 }
+
+
+template <typename T>
+void copy_to_gpu(T const *it, T const *end, T *it_to) {
+	handle_error( cudaMemcpy(it_to, it, (end - it) * sizeof(T), cudaMemcpyHostToDevice));
+}
+
+
 
 template <typename T>
 void init_uniform(T *data, int n, T std);
