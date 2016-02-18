@@ -19,6 +19,8 @@ struct Operation {
 	virtual TensorShape output_shape(TensorShape input) { return TensorShape{0, 0, 0, 0}; }
 
 	virtual void forward_dry_run(Tensor<F> &in, Tensor<F> &out){}
+	virtual void describe(std::ostream &out){}
+
 };
 
 template <typename F>
@@ -30,6 +32,8 @@ struct Operation2 {
 	virtual TensorShape output_shape(TensorShape input) { return TensorShape{0, 0, 0, 0}; }
 
 	virtual void forward_dry_run(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out){}
+	virtual void describe(std::ostream &out){}
+
 };
 
 template <typename F>
@@ -75,6 +79,9 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	int size();
 
 	TensorShape output_shape(TensorShape input);
+	void describe(std::ostream &out) { out << "conv " << kw << "x" << kh << " " << in_map << "->" << out_map; }
+
+	int kw, kh, in_map, out_map;
 
 	cudnnConvolutionDescriptor_t conv;
 	FilterBank<F> filter_bank, filter_bank_grad;
@@ -108,6 +115,7 @@ struct SquashOperation : ConvolutionOperation<F> {
 	TensorShape output_shape(TensorShape input);
 
 	int c;
+	void describe(std::ostream &out) { out << "squash"; }
 };
 
 template <typename F>
@@ -117,6 +125,8 @@ struct GateOperation : public Operation2<F> {
 
 	virtual void forward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, F beta = 0.0);
 	virtual void backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad, F beta = 0.0);
+	void describe(std::ostream &out) { out << "gate"; }
+
 };
 
 template <typename F>
@@ -124,6 +134,7 @@ struct PoolingOperation : public Operation<F> {
 	PoolingOperation(int kw, int kh);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+	void describe(std::ostream &out) { out << "pool " << kw << "x" << kh; }
 
 	TensorShape output_shape(TensorShape input);
 
@@ -136,6 +147,7 @@ struct TanhOperation : public Operation<F> {
   TanhOperation(F scale = 1.0);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+	void describe(std::ostream &out) { out << "tanh"; }
 
 	TensorShape output_shape(TensorShape input);
 
@@ -147,6 +159,7 @@ struct SigmoidOperation : public Operation<F> {
   SigmoidOperation(F scale = 1.0);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+	void describe(std::ostream &out) { out << "sigmoid"; }
 
 	TensorShape output_shape(TensorShape input);
 
@@ -158,6 +171,7 @@ struct STanhOperation : public Operation<F> {
 	STanhOperation(TensorShape s);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+	void describe(std::ostream &out) { out << "stanh"; }
 
 	TensorShape output_shape(TensorShape input);
 	TensorSet<F> tmp;
@@ -167,6 +181,7 @@ template <typename F>
 struct ReluOperation : public Operation<F> {
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+	void describe(std::ostream &out) { out << "relu"; }
 
 	TensorShape output_shape(TensorShape input);
 };
@@ -176,6 +191,7 @@ struct SoftmaxOperation : public Operation<F> {
 	SoftmaxOperation(bool matched = false);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+	void describe(std::ostream &out) { out << "softmax"; }
 
 	TensorShape output_shape(TensorShape input);
 	bool matched;

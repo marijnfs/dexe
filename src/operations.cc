@@ -7,11 +7,15 @@
 using namespace std;
 
 template <typename F>
-ConvolutionOperation<F>::ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep_, size_t workspace_limit_):
-	filter_bank(in_map, out_map, kw, kh),
-	filter_bank_grad(in_map, out_map, kw, kh),
-	bias(1, out_map, 1, 1),
-	bias_grad(1, out_map, 1, 1),
+ConvolutionOperation<F>::ConvolutionOperation(int in_map_, int out_map_, int kw_, int kh_, bool keep_, size_t workspace_limit_):
+	in_map(in_map_),
+	out_map(out_map_),
+	kw(kw_),
+	kh(kh_),
+	filter_bank(in_map_, out_map_, kw_, kh_),
+	filter_bank_grad(in_map_, out_map_, kw_, kh_),
+	bias(1, out_map_, 1, 1),
+	bias_grad(1, out_map_, 1, 1),
 	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
 	workspace(0),
 	workspace_size(workspace_limit_),
@@ -213,7 +217,7 @@ void ConvolutionShiftOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, 
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, this->filter_bank.fd, this->filter_bank.weights, this->conv, this->algo, this->workspace, this->workspace_size, &beta, slate.td, slate.data));
 	// handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_FEATURE_MAP, &alpha_bias, bias.td, bias.data, &beta_bias, slate.td, slate.data));
 	handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_SAME_C, &alpha_bias, this->bias.td, this->bias.data, &beta_bias, slate.td, slate.data));
-	
+
 	shift(slate.data, output.data, slate.w, slate.h, slate.c, dx, dy);
 
 }

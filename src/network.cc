@@ -75,7 +75,7 @@ template <typename F>
 void Network<F>::forward(F const *cpu_data) {
 	assert_finished();
 	first(tensors)->x.from_ptr(cpu_data);
-	
+
 	forward();
 }
 
@@ -114,7 +114,7 @@ template <typename F>
 void Network<F>::backward(F const * cpu_data) {
 	assert_finished();
 	last(tensors)->grad.from_ptr(cpu_data);
-	
+
 	backward();
 }
 
@@ -212,7 +212,7 @@ vector<F> Network<F>::fd_gradient(F const *cpu_data, int label, F e) {
 			forward(cpu_data);
 			calculate_loss(label);
 			F plus_loss = loss();
-			
+
 			delta_vec[n] = vec[n] - e;
 			params[i]->from_vector(delta_vec);
 
@@ -221,7 +221,7 @@ vector<F> Network<F>::fd_gradient(F const *cpu_data, int label, F e) {
 			calculate_loss(label);
 			F min_loss = loss();
 			//cout << "+" << plus_loss << " " << min_loss << endl;
-			
+
 			full_grad.push_back((plus_loss - min_loss) / (2 * e));
 			delta_vec[n] = vec[n];
 		}
@@ -262,6 +262,15 @@ template <typename F>
 F Network<F>::n_correct() {
 	assert_finished();
 	return loss_ptr->n_correct();
+}
+
+template <typename F>
+void Network<F>::describe(ostream &out) {
+	for (auto &o : operations) {
+		o->describe(out);
+		out << endl;
+	}
+	out.flush();
 }
 
 template <typename F>

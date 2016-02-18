@@ -2,6 +2,7 @@
 #define __NETWORK_H__
 
 
+#include <iostream>
 #include "util.h"
 #include "tensor.h"
 #include "operations.h"
@@ -40,6 +41,8 @@ struct Network {
 
 	void save(std::string path);
 	void load(std::string path);
+
+	void describe(std::ostream &out);
 
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &vec);
