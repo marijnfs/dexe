@@ -79,7 +79,7 @@ void protobuf_AssignDesc_img_2eproto() {
   static const int Experiment_offsets_[3] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Experiment, name_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Experiment, description_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Experiment, map_file_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Experiment, config_path_),
   };
   Experiment_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -134,8 +134,9 @@ void protobuf_AddDesc_img_2eproto() {
     "\022\t\n\001c\030\003 \002(\r\022\014\n\004time\030\004 \002(\002\022\021\n\tclocktime\030\005"
     " \002(\002\022\020\n\004data\030\006 \003(\002B\002\020\001\"C\n\006Action\022\014\n\004time"
     "\030\001 \002(\002\022\r\n\001x\030\002 \003(\002B\002\020\001\022\r\n\001q\030\003 \003(\002B\002\020\001\022\r\n\001"
-    "a\030\004 \003(\002B\002\020\001\"A\n\nExperiment\022\014\n\004name\030\001 \002(\t\022"
-    "\023\n\013description\030\002 \002(\t\022\020\n\010map_file\030\003 \002(\t", 238);
+    "a\030\004 \003(\002B\002\020\001\"D\n\nExperiment\022\014\n\004name\030\001 \002(\t\022"
+    "\023\n\013description\030\002 \002(\t\022\023\n\013config_path\030\003 \002("
+    "\t", 241);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "img.proto", &protobuf_RegisterTypes);
   Img::default_instance_ = new Img();
@@ -983,7 +984,7 @@ void Action::Swap(Action* other) {
 #ifndef _MSC_VER
 const int Experiment::kNameFieldNumber;
 const int Experiment::kDescriptionFieldNumber;
-const int Experiment::kMapFileFieldNumber;
+const int Experiment::kConfigPathFieldNumber;
 #endif  // !_MSC_VER
 
 Experiment::Experiment()
@@ -1004,7 +1005,7 @@ void Experiment::SharedCtor() {
   _cached_size_ = 0;
   name_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   description_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-  map_file_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  config_path_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -1019,8 +1020,8 @@ void Experiment::SharedDtor() {
   if (description_ != &::google::protobuf::internal::kEmptyString) {
     delete description_;
   }
-  if (map_file_ != &::google::protobuf::internal::kEmptyString) {
-    delete map_file_;
+  if (config_path_ != &::google::protobuf::internal::kEmptyString) {
+    delete config_path_;
   }
   if (this != default_instance_) {
   }
@@ -1059,9 +1060,9 @@ void Experiment::Clear() {
         description_->clear();
       }
     }
-    if (has_map_file()) {
-      if (map_file_ != &::google::protobuf::internal::kEmptyString) {
-        map_file_->clear();
+    if (has_config_path()) {
+      if (config_path_ != &::google::protobuf::internal::kEmptyString) {
+        config_path_->clear();
       }
     }
   }
@@ -1104,19 +1105,19 @@ bool Experiment::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(26)) goto parse_map_file;
+        if (input->ExpectTag(26)) goto parse_config_path;
         break;
       }
 
-      // required string map_file = 3;
+      // required string config_path = 3;
       case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_map_file:
+         parse_config_path:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_map_file()));
+                input, this->mutable_config_path()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-            this->map_file().data(), this->map_file().length(),
+            this->config_path().data(), this->config_path().length(),
             ::google::protobuf::internal::WireFormat::PARSE);
         } else {
           goto handle_uninterpreted;
@@ -1161,13 +1162,13 @@ void Experiment::SerializeWithCachedSizes(
       2, this->description(), output);
   }
 
-  // required string map_file = 3;
-  if (has_map_file()) {
+  // required string config_path = 3;
+  if (has_config_path()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->map_file().data(), this->map_file().length(),
+      this->config_path().data(), this->config_path().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      3, this->map_file(), output);
+      3, this->config_path(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -1198,14 +1199,14 @@ void Experiment::SerializeWithCachedSizes(
         2, this->description(), target);
   }
 
-  // required string map_file = 3;
-  if (has_map_file()) {
+  // required string config_path = 3;
+  if (has_config_path()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->map_file().data(), this->map_file().length(),
+      this->config_path().data(), this->config_path().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        3, this->map_file(), target);
+        3, this->config_path(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -1233,11 +1234,11 @@ int Experiment::ByteSize() const {
           this->description());
     }
 
-    // required string map_file = 3;
-    if (has_map_file()) {
+    // required string config_path = 3;
+    if (has_config_path()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->map_file());
+          this->config_path());
     }
 
   }
@@ -1273,8 +1274,8 @@ void Experiment::MergeFrom(const Experiment& from) {
     if (from.has_description()) {
       set_description(from.description());
     }
-    if (from.has_map_file()) {
-      set_map_file(from.map_file());
+    if (from.has_config_path()) {
+      set_config_path(from.config_path());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -1302,7 +1303,7 @@ void Experiment::Swap(Experiment* other) {
   if (other != this) {
     std::swap(name_, other->name_);
     std::swap(description_, other->description_);
-    std::swap(map_file_, other->map_file_);
+    std::swap(config_path_, other->config_path_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

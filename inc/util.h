@@ -339,8 +339,8 @@ inline std::vector<T> byte_read_vec(std::ifstream &in) {
 
 
 template <typename T>
-void copy_to_gpu(T const *it, T const *end, T *it_to) {
-	handle_error( cudaMemcpy(it_to, it, (end - it) * sizeof(T), cudaMemcpyHostToDevice));
+void copy_to_gpu(T const *it_from, T *it_to, int n) {
+	handle_error( cudaMemcpy(it_to, it_from, n * sizeof(T), cudaMemcpyHostToDevice));
 }
 
 

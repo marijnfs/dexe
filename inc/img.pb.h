@@ -375,17 +375,17 @@ class Experiment : public ::google::protobuf::Message {
   inline ::std::string* release_description();
   inline void set_allocated_description(::std::string* description);
 
-  // required string map_file = 3;
-  inline bool has_map_file() const;
-  inline void clear_map_file();
-  static const int kMapFileFieldNumber = 3;
-  inline const ::std::string& map_file() const;
-  inline void set_map_file(const ::std::string& value);
-  inline void set_map_file(const char* value);
-  inline void set_map_file(const char* value, size_t size);
-  inline ::std::string* mutable_map_file();
-  inline ::std::string* release_map_file();
-  inline void set_allocated_map_file(::std::string* map_file);
+  // required string config_path = 3;
+  inline bool has_config_path() const;
+  inline void clear_config_path();
+  static const int kConfigPathFieldNumber = 3;
+  inline const ::std::string& config_path() const;
+  inline void set_config_path(const ::std::string& value);
+  inline void set_config_path(const char* value);
+  inline void set_config_path(const char* value, size_t size);
+  inline ::std::string* mutable_config_path();
+  inline ::std::string* release_config_path();
+  inline void set_allocated_config_path(::std::string* config_path);
 
   // @@protoc_insertion_point(class_scope:Experiment)
  private:
@@ -393,14 +393,14 @@ class Experiment : public ::google::protobuf::Message {
   inline void clear_has_name();
   inline void set_has_description();
   inline void clear_has_description();
-  inline void set_has_map_file();
-  inline void clear_has_map_file();
+  inline void set_has_config_path();
+  inline void clear_has_config_path();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::std::string* name_;
   ::std::string* description_;
-  ::std::string* map_file_;
+  ::std::string* config_path_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
@@ -799,73 +799,73 @@ inline void Experiment::set_allocated_description(::std::string* description) {
   }
 }
 
-// required string map_file = 3;
-inline bool Experiment::has_map_file() const {
+// required string config_path = 3;
+inline bool Experiment::has_config_path() const {
   return (_has_bits_[0] & 0x00000004u) != 0;
 }
-inline void Experiment::set_has_map_file() {
+inline void Experiment::set_has_config_path() {
   _has_bits_[0] |= 0x00000004u;
 }
-inline void Experiment::clear_has_map_file() {
+inline void Experiment::clear_has_config_path() {
   _has_bits_[0] &= ~0x00000004u;
 }
-inline void Experiment::clear_map_file() {
-  if (map_file_ != &::google::protobuf::internal::kEmptyString) {
-    map_file_->clear();
+inline void Experiment::clear_config_path() {
+  if (config_path_ != &::google::protobuf::internal::kEmptyString) {
+    config_path_->clear();
   }
-  clear_has_map_file();
+  clear_has_config_path();
 }
-inline const ::std::string& Experiment::map_file() const {
-  return *map_file_;
+inline const ::std::string& Experiment::config_path() const {
+  return *config_path_;
 }
-inline void Experiment::set_map_file(const ::std::string& value) {
-  set_has_map_file();
-  if (map_file_ == &::google::protobuf::internal::kEmptyString) {
-    map_file_ = new ::std::string;
+inline void Experiment::set_config_path(const ::std::string& value) {
+  set_has_config_path();
+  if (config_path_ == &::google::protobuf::internal::kEmptyString) {
+    config_path_ = new ::std::string;
   }
-  map_file_->assign(value);
+  config_path_->assign(value);
 }
-inline void Experiment::set_map_file(const char* value) {
-  set_has_map_file();
-  if (map_file_ == &::google::protobuf::internal::kEmptyString) {
-    map_file_ = new ::std::string;
+inline void Experiment::set_config_path(const char* value) {
+  set_has_config_path();
+  if (config_path_ == &::google::protobuf::internal::kEmptyString) {
+    config_path_ = new ::std::string;
   }
-  map_file_->assign(value);
+  config_path_->assign(value);
 }
-inline void Experiment::set_map_file(const char* value, size_t size) {
-  set_has_map_file();
-  if (map_file_ == &::google::protobuf::internal::kEmptyString) {
-    map_file_ = new ::std::string;
+inline void Experiment::set_config_path(const char* value, size_t size) {
+  set_has_config_path();
+  if (config_path_ == &::google::protobuf::internal::kEmptyString) {
+    config_path_ = new ::std::string;
   }
-  map_file_->assign(reinterpret_cast<const char*>(value), size);
+  config_path_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string* Experiment::mutable_map_file() {
-  set_has_map_file();
-  if (map_file_ == &::google::protobuf::internal::kEmptyString) {
-    map_file_ = new ::std::string;
+inline ::std::string* Experiment::mutable_config_path() {
+  set_has_config_path();
+  if (config_path_ == &::google::protobuf::internal::kEmptyString) {
+    config_path_ = new ::std::string;
   }
-  return map_file_;
+  return config_path_;
 }
-inline ::std::string* Experiment::release_map_file() {
-  clear_has_map_file();
-  if (map_file_ == &::google::protobuf::internal::kEmptyString) {
+inline ::std::string* Experiment::release_config_path() {
+  clear_has_config_path();
+  if (config_path_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string* temp = map_file_;
-    map_file_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = config_path_;
+    config_path_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void Experiment::set_allocated_map_file(::std::string* map_file) {
-  if (map_file_ != &::google::protobuf::internal::kEmptyString) {
-    delete map_file_;
+inline void Experiment::set_allocated_config_path(::std::string* config_path) {
+  if (config_path_ != &::google::protobuf::internal::kEmptyString) {
+    delete config_path_;
   }
-  if (map_file) {
-    set_has_map_file();
-    map_file_ = map_file;
+  if (config_path) {
+    set_has_config_path();
+    config_path_ = config_path;
   } else {
-    clear_has_map_file();
-    map_file_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    clear_has_config_path();
+    config_path_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
