@@ -281,18 +281,19 @@ FilterBank<float>::FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T
 {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
 	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_FLOAT, out_map, in_map, kh, kw));
-	handle_error( cudaMalloc( (void**)&weights, sizeof(float) * out_map * in_map * kw * kh));
+	handle_error( cudaMalloc( (void**)&weights, sizeof(float) * T * N));
 	if (ZERO_ON_INIT)
 	  zero();
 }
 
 template <>
 FilterBank<double>::FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T_):
-  in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_)
+  in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_),
+  T(T_), N(in_map * out_map * kw * kh)
 {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
 	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_DOUBLE, out_map, in_map, kh, kw));
-	handle_error( cudaMalloc( (void**)&weights, sizeof(double) * out_map * in_map * kw * kh));
+	handle_error( cudaMalloc( (void**)&weights, sizeof(double) * T * N));
 	if (ZERO_ON_INIT)
 	  zero();
 }

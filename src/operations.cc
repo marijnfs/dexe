@@ -178,6 +178,36 @@ void ConvolutionOperation<F>::share(ConvolutionOperation<F> &other){
 
 }
 
+///Timed Operations
+
+template <typename F>
+void ConvolutionOperation<F>::forward_timed(Tensor<F> &input, Tensor<F> &output, int t, F beta) {
+	F alpha(1.0);
+
+	F alpha_bias(1), beta_bias(1);
+
+	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.ptr(t), conv, algo, workspace, workspace_size, &beta, output.td, output.data));
+	// handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_FEATURE_MAP, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
+	handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_SAME_C, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
+}
+
+
+template <typename F>
+void ConvolutionOperation<F>::backward_weights_timed(Tensor<F> &input, Tensor<F> &output_grad, int t, F beta) {
+	F alpha_bias(1.0), beta_bias(beta);
+	handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, output_grad.td, output_grad.data, &beta_bias, bias_grad.td, bias_grad.data) );
+
+	F alpha(1.0);
+	handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, output_grad.td, output_grad.data, conv, &beta, filter_bank_grad.fd, filter_bank_grad.ptr(t)) );
+}
+
+template <typename F>
+void ConvolutionOperation<F>::backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &output_grad, Tensor<F> &input_grad, int t, F beta) {
+	F alpha(1.0);
+	handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, filter_bank.fd, filter_bank.ptr(t), output_grad.td, output_grad.data, conv, &beta, input_grad.td, input_grad.data) );
+}
+
+
 template <typename F>
 ConvolutionOperation<F>::~ConvolutionOperation() {
 	cudnnDestroyConvolutionDescriptor(conv);

@@ -21,6 +21,10 @@ struct Operation {
 	virtual void forward_dry_run(Tensor<F> &in, Tensor<F> &out){}
 	virtual void describe(std::ostream &out){}
 
+
+	virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){}
+	virtual void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0){}
+	virtual void backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, int t, F beta = 0.0){}
 };
 
 template <typename F>
@@ -29,6 +33,7 @@ struct Operation2 {
 
 	virtual void backward_weights(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out_grad){}
 	virtual void backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad, F beta = 0.0){}
+
 	virtual TensorShape output_shape(TensorShape input) { return TensorShape{0, 0, 0, 0}; }
 
 	virtual void forward_dry_run(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out){}
@@ -72,6 +77,11 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	void share(ConvolutionOperation<F> &other);
 
 	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
+
+	void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0);
+	void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0);
+	void backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, int t, F beta = 0.0);
+
 
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &v);
