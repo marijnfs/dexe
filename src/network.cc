@@ -82,6 +82,7 @@ void Network<F>::forward(F const *cpu_data) {
 template <typename F>
 void Network<F>::forward() {
 	assert_finished();
+
 	for (size_t i(0); i < operations.size(); ++i)
 		operations[i]->forward(tensors[i]->x, tensors[i+1]->x);
 }

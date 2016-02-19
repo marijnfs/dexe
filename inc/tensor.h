@@ -22,7 +22,7 @@ struct Tensor {
 	void init_normal(F mean, F std);
 	void init_uniform(F var);
 	void zero();
-	
+
 	std::vector<F> to_vector();
 	void to_ptr(F *ptr);
 	void from_vector(std::vector<F> &in);
@@ -41,7 +41,7 @@ struct Tensor {
 	TensorShape shape() const;
 
 	F *ptr() { return data; }
-  
+
 
 	int n, c, w, h;
 	bool allocated;
@@ -65,15 +65,16 @@ struct TensorSet {
 
 template <typename F>
 struct FilterBank {
-	FilterBank(int in_map_, int out_map_, int kw_, int kh_);
+	FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T = 1); //T is for rolledout filter bank
 	~FilterBank();
 	int in_map, out_map;
 	int kw, kh;
+	int N, T;
 	cudnnFilterDescriptor_t fd;
 
 	F *weights;
 
-	int n_weights() { return in_map * out_map * kw * kh; }
+	int n_weights() { return N * T; }
 	void init_normal(F mean, F std);
 	void init_uniform(F var);
 
@@ -82,11 +83,11 @@ struct FilterBank {
 	void fill(F val);
 	void zero();
 
-	F *ptr() { return weights; }
+	F *ptr(int n = 0) { return weights + n * N; }
 
 };
 
-inline std::ostream &operator<<(std::ostream &o, TensorShape s) {	
+inline std::ostream &operator<<(std::ostream &o, TensorShape s) {
 	return o << "[" << s.n << "," << s.c << "," << s.w << "," << s.h << "]";
 }
 

@@ -70,7 +70,7 @@ template <>
 void Tensor<float>::reshape(int n, int c, int w, int h) {
 	handle_error( cudnnDestroyTensorDescriptor(td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
-	
+
 	if (allocated) {
 		cudaFree(data);
 		handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
@@ -107,7 +107,7 @@ template <>
 void Tensor<double>::reshape(int n, int c, int w, int h) {
 	handle_error( cudnnDestroyTensorDescriptor(td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
-	
+
 	if (allocated) {
 		cudaFree(data);
 		handle_error( cudaMalloc( (void**)&data, sizeof(double) * size()));
@@ -275,8 +275,9 @@ TensorShape TensorSet<F>::shape() const {
 }
 
 template <>
-FilterBank<float>::FilterBank(int in_map_, int out_map_, int kw_, int kh_):
-  in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_)
+FilterBank<float>::FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T_):
+  in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_),
+  T(T_), N(in_map * out_map * kw * kh)
 {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
 	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_FLOAT, out_map, in_map, kh, kw));
@@ -286,7 +287,7 @@ FilterBank<float>::FilterBank(int in_map_, int out_map_, int kw_, int kh_):
 }
 
 template <>
-FilterBank<double>::FilterBank(int in_map_, int out_map_, int kw_, int kh_):
+FilterBank<double>::FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T_):
   in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_)
 {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
