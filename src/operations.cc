@@ -35,6 +35,35 @@ ConvolutionOperation<F>::ConvolutionOperation(int in_map_, int out_map_, int kw_
 }
 
 
+template <typename F>
+ConvolutionOperation<F>::ConvolutionOperation(int in_map_, int out_map_, int kw_, int kh_, int z, bool keep_, size_t workspace_limit_):
+	in_map(in_map_),
+	out_map(out_map_),
+	kw(kw_),
+	kh(kh_),
+	filter_bank(in_map_, out_map_, kw_, kh_, z),
+	filter_bank_grad(in_map_, out_map_, kw_, kh_, z),
+	bias(1, out_map_, 1, 1),
+	bias_grad(1, out_map_, 1, 1),
+	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
+	workspace(0),
+	workspace_size(workspace_limit_),
+	keep(keep_)
+{
+	int pad_h(0), pad_w(0), stride_w(1), stride_h(1), upscalex(1), upscaley(1);
+	if (keep) {
+		pad_w = kw / 2;
+		pad_h = kh / 2;
+	}
+	// cout << "weight buffer: " << filter_bank.n_weights() << endl;
+	// cout << "bias buffer: " << bias.size() << endl;
+	//todo: calculate padding
+	handle_error( cudnnCreateConvolutionDescriptor(&conv));
+	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION));
+	//handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
+}
+
+
 
 template <typename F>
 void ConvolutionOperation<F>::update(F lr) {
@@ -489,5 +518,3 @@ template struct SigmoidOperation<double>;
 template struct ReluOperation<double>;
 template struct SoftmaxOperation<double>;
 template struct GateOperation<double>;
-
-

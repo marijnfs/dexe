@@ -22,7 +22,7 @@ struct Operation {
 	virtual void describe(std::ostream &out){}
 
 
-	virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){}
+	virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){ forward(in, out, beta); }
 	virtual void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0){}
 	virtual void backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, int t, F beta = 0.0){}
 };
@@ -60,6 +60,8 @@ struct Parametrised {
 template <typename F>
 struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep = true, size_t workspace_limit = 0);
+	ConvolutionOperation(int in_map, int out_map, int kw, int kh, int z, bool keep = true, size_t workspace_limit = 0);
+
 	~ConvolutionOperation();
 
 	void init_normal(F mean, F std);
