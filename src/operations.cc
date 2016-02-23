@@ -89,7 +89,7 @@ void ConvolutionOperation<F>::init_normal(F mean, F std) {
 template <typename F>
 void ConvolutionOperation<F>::init_uniform(F var) {
 	filter_bank.init_uniform(var);
-	//bias.init_uniform(var);
+//bias.init_uniform(var);
 }
 
 template <typename F>
@@ -265,6 +265,11 @@ ConvolutionShiftOperation<F>::ConvolutionShiftOperation(int in_map, int out_map,
 	handle_error( cudnnCreateConvolutionDescriptor(&(this->conv)));
 	handle_error( cudnnSetConvolution2dDescriptor(this->conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION));
 	//handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
+}
+
+template <typename F>
+ConvolutionShiftOperation<F>::~ConvolutionShiftOperation() {
+	ConvolutionOperation<F>::~ConvolutionOperation();
 }
 
 template <typename F>
