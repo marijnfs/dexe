@@ -49,7 +49,7 @@ struct Parametrised {
 	virtual void l2(F l) {}
 	virtual void zero_grad() {}
 	virtual void scale_grad(float val) {}
-	virtual void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &grads) {}
+	virtual void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F>> &grads) {}
 
 	virtual std::vector<F> to_vector() { return std::vector<F>(); }
 	virtual void from_vector(std::vector<F> &v) { }
@@ -75,7 +75,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	void l2(F l);
 	void zero_grad();
 	void scale_grad(F val);
-	void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &grads);
+	void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F>> &grads);
 	void share(ConvolutionOperation<F> &other);
 
 	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
@@ -102,7 +102,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	cudnnConvolutionFwdAlgo_t algo;
 	char *workspace;
 	size_t workspace_size;
-	bool keep;
+	bool keep, rollout;
 };
 
 template <typename F>

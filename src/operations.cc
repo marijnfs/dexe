@@ -19,7 +19,8 @@ ConvolutionOperation<F>::ConvolutionOperation(int in_map_, int out_map_, int kw_
 	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
 	workspace(0),
 	workspace_size(workspace_limit_),
-	keep(keep_)
+	keep(keep_),
+	rollout(false)
 {
 	int pad_h(0), pad_w(0), stride_w(1), stride_h(1), upscalex(1), upscaley(1);
 	if (keep) {
@@ -48,7 +49,8 @@ ConvolutionOperation<F>::ConvolutionOperation(int in_map_, int out_map_, int kw_
 	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
 	workspace(0),
 	workspace_size(workspace_limit_),
-	keep(keep_)
+	keep(keep_),
+	rollout(true)
 {
 	int pad_h(0), pad_w(0), stride_w(1), stride_h(1), upscalex(1), upscaley(1);
 	if (keep) {
@@ -185,10 +187,15 @@ void ConvolutionOperation<F>::scale_grad(F val) {
 
 
 template <typename F>
-void ConvolutionOperation<F>::register_params(std::vector<CudaPtr<F> > &params, std::vector<CudaPtr<F> > &grads) {
-	params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()});
-	params.push_back(CudaPtr<F>{&bias.data, bias.size()});
-
+void ConvolutionOperation<F>::register_params(std::vector<CudaPtr<F> > &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F> > &grads) {
+	cout << "registering " << (rollout?"rollout":"no rollout") << endl;
+	if (!rollout) {
+		params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()});
+		params.push_back(CudaPtr<F>{&bias.data, bias.size()});
+	} else {
+		fast_params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()});
+		params.push_back(CudaPtr<F>{&bias.data, bias.size()});
+	}
 	grads.push_back(CudaPtr<F>{&filter_bank_grad.weights, filter_bank_grad.n_weights()});
 	grads.push_back(CudaPtr<F>{&bias_grad.data, bias_grad.size()});
 }

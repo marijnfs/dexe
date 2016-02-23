@@ -14,14 +14,16 @@ Tensor<float>::Tensor(int n_, int c_, int w_, int h_):
   n(n_), w(w_), h(h_), c(c_), allocated(true)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
-	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
 
 	//size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
 	// size_t even_size(size());
 	// handle_error( cudaMalloc( (void**)&data, sizeof(float) * even_size));
-	handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
-	if (ZERO_ON_INIT)
-	  zero();
+	if (n * w * h * c != 0) {
+		handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
+		handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
+		if (ZERO_ON_INIT)
+		  zero();
+	}
 }
 
 template <>
@@ -29,7 +31,9 @@ Tensor<float>::Tensor(int n_, int c_, int w_, int h_, float *data_):
   n(n_), w(w_), h(h_), c(c_), allocated(false), data(data_)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
-	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
+	if (n * w * h * c != 0) {
+		handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
+	}
 }
 
 template <>
@@ -37,12 +41,16 @@ Tensor<float>::Tensor(TensorShape s):
   n(s.n), w(s.w), h(s.h), c(s.c), allocated(true)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
-	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
-	//size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
-	size_t even_size(size());
-	handle_error( cudaMalloc( (void**)&data, sizeof(float) * even_size));
-	if (ZERO_ON_INIT)
-	  zero();
+
+	////size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
+	//size_t even_size(size());
+
+	if (n * w * h * c != 0) {
+		handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
+		handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
+		if (ZERO_ON_INIT)
+		  zero();
+	}
 }
 
 template <>
@@ -50,7 +58,9 @@ Tensor<float>::Tensor(TensorShape s, float *data_):
   n(s.n), w(s.w), h(s.h), c(s.c), allocated(false), data(data_)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
-	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
+	if (n * w * h * c != 0) {
+		handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
+	}
 }
 
 template <>
@@ -58,21 +68,32 @@ Tensor<double>::Tensor(int n_, int c_, int w_, int h_):
   n(n_), w(w_), h(h_), c(c_), allocated(true)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
-	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
-	//size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
-	size_t even_size(size());
-	handle_error( cudaMalloc( (void**)&data, sizeof(double) * even_size));
-	if (ZERO_ON_INIT)
-	  zero();
+
+	if (n * w * h * c != 0) {
+		handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
+		//size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
+		// size_t even_size(size());
+		handle_error( cudaMalloc( (void**)&data, sizeof(double) * size()));
+		if (ZERO_ON_INIT)
+		  zero();
+	}
 }
 
 template <>
-void Tensor<float>::reshape(int n, int c, int w, int h) {
-	handle_error( cudnnDestroyTensorDescriptor(td));
+void Tensor<float>::reshape(int n_, int c_, int w_, int h_) {
+	if (allocated)
+		if (n * c * w * h != 0)
+			cudaFree(data);
+
+	n = n_;
+	c = c_;
+	w = w_;
+	h = h_;
+
+	// handle_error( cudnnDestroyTensorDescriptor(td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
 
 	if (allocated) {
-		cudaFree(data);
 		handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
 		if (ZERO_ON_INIT)
 			zero();
@@ -104,13 +125,21 @@ Tensor<double>::Tensor(TensorShape s):
 }
 
 template <>
-void Tensor<double>::reshape(int n, int c, int w, int h) {
-	handle_error( cudnnDestroyTensorDescriptor(td));
+void Tensor<double>::reshape(int n_, int c_, int w_, int h_) {
+	if (allocated)
+		if (n * c * w * h != 0)
+			cudaFree(data);
+
+	n = n_;
+	c = c_;
+	w = w_;
+	h = h_;
+
+	// handle_error( cudnnDestroyTensorDescriptor(td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, n, c, h, w)); //CUDNN_TENSOR_NHWC not supported for some reason
 
 	if (allocated) {
-		cudaFree(data);
-		handle_error( cudaMalloc( (void**)&data, sizeof(double) * size()));
+		handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
 		if (ZERO_ON_INIT)
 			zero();
 	}

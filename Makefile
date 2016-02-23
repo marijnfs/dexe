@@ -9,6 +9,9 @@ lib:
 	#cp libmcdnn.so ../selfgo/
 	#cp inc/*.h ../selfgo/
 
+debuglib:
+	nvcc -std=c++11 -g -Iinc -shared --compiler-options '-fPIC' -arch compute_30 src/*.cc src/*.cu -o libmcdnn.so
+
 install:
 	sudo cp libmcdnn.so /usr/local/lib
 
