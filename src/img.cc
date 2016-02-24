@@ -14,15 +14,15 @@ void write_img(std::string filename, int c, int w, int h, float const *values) {
 		if (bla[i] > max) max = bla[i];
 		if (bla[i] < min) min = bla[i];
 	}
-	
+
 	for (size_t i(0); i < bla.size(); ++i) {
 	 	bla[i] = (bla[i] - min) / (max - min);
 	//bla[i] *= 255.;
 		//cout << bla[i] << " ";
 	}
 	///	cout << endl;
- 
-	Mat mat(w, h, CV_32FC3, reinterpret_cast<void*>(&bla[0]));
+
+	Mat mat(h, w, CV_32FC3, reinterpret_cast<void*>(&bla[0]));
 	mat *= 255.;
 	mat.convertTo(mat, CV_8UC3);
 	cvtColor(mat, mat, CV_RGB2BGR);
@@ -41,15 +41,15 @@ void write_img1c(std::string filename, int w, int h, float const *values) {
 		if (bla[i] > max) max = bla[i];
 		if (bla[i] < min) min = bla[i];
 	}
-	
+
 	for (size_t i(0); i < bla.size(); ++i) {
 	 	bla[i] = (bla[i] - min) / (max - min);
 	//bla[i] *= 255.;
 		//cout << bla[i] << " ";
 	}
 	///	cout << endl;
- 
-	Mat mat(w, h, CV_32F, reinterpret_cast<void*>(&bla[0]));
+
+	Mat mat(h, w, CV_32F, reinterpret_cast<void*>(&bla[0]));
 	mat *= 255.;
 	mat.convertTo(mat, CV_8UC3);
 	//cvtColor(mat, mat, CV_RGB2BGR);
