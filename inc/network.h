@@ -61,6 +61,7 @@ struct Network {
 	std::vector<TensorShape> shapes;
 
 	Loss<F> *loss_ptr;
+	int n_params;
 	bool finished;
 };
 

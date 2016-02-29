@@ -8,7 +8,7 @@
 using namespace std;
 
 template <typename F>
-Network<F>::Network(TensorShape in) : loss_ptr(0), finished(false) {
+Network<F>::Network(TensorShape in) : loss_ptr(0), n_params(0), finished(false) {
 	shapes.push_back(in);
 	tensors.push_back(new TensorSet<F>(in));
 }
@@ -61,6 +61,10 @@ void Network<F>::finish() {
 
 	for (size_t i(0); i < operations.size(); ++i)
 		operations[i]->forward_dry_run(tensors[i]->x, tensors[i+1]->x);
+
+	n_params = 0;
+	for(auto &param : params)
+		n_params += param->size();
 
 	finished = true;
 }
