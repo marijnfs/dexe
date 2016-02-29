@@ -51,7 +51,11 @@ struct Network {
 
 
 	Tensor<F> &output();
+	Tensor<F> &output_grad();
+
 	Tensor<F> &input();
+	Tensor<F> &input_grad();
+
 	F loss();
 	F n_correct();
 

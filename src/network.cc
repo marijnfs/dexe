@@ -252,9 +252,21 @@ Tensor<F> &Network<F>::output() {
 }
 
 template <typename F>
+Tensor<F> &Network<F>::output_grad() {
+	assert_finished();
+	return last(tensors)->grad;
+}
+
+template <typename F>
 Tensor<F> &Network<F>::input() {
 	assert_finished();
 	return tensors[0]->x;
+}
+
+template <typename F>
+Tensor<F> &Network<F>::input_grad() {
+	assert_finished();
+	return tensors[0]->grad;
 }
 
 template <typename F>
