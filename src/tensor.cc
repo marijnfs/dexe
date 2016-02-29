@@ -358,6 +358,7 @@ void FilterBank<F>::init_uniform(F var) {
 
 template <typename F>
 void FilterBank<F>::zero() {
+	// cout << "zero: " << in_map << " " << out_map << " " << kw << " " << kh << " " << N << " " << T  << " " << n_weights() << " " << weights << endl;
 	handle_error( cudaMemset(weights, 0, sizeof(F) * n_weights()));
 }
 

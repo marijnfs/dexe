@@ -187,16 +187,18 @@ void ConvolutionOperation<F>::scale_grad(F val) {
 
 
 template <typename F>
-void ConvolutionOperation<F>::register_params(std::vector<CudaPtr<F> > &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F> > &grads) {
+void ConvolutionOperation<F>::register_params(std::vector<CudaPtr<F> > &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F> > &grads, std::vector<CudaPtr<F> > &fast_grads) {
 	cout << "registering " << (rollout?"rollout":"no rollout") << endl;
 	if (!rollout) {
 		params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()});
-		params.push_back(CudaPtr<F>{&bias.data, bias.size()});
+		grads.push_back(CudaPtr<F>{&filter_bank_grad.weights, filter_bank_grad.n_weights()});
 	} else {
 		fast_params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()});
-		params.push_back(CudaPtr<F>{&bias.data, bias.size()});
+		cout << "adding to fastweights " << filter_bank_grad.weights << " " << filter_bank_grad.n_weights() << " n=" << fast_grads.size() << endl;
+
+		fast_grads.push_back(CudaPtr<F>{&filter_bank_grad.weights, filter_bank_grad.n_weights()});
 	}
-	grads.push_back(CudaPtr<F>{&filter_bank_grad.weights, filter_bank_grad.n_weights()});
+	params.push_back(CudaPtr<F>{&bias.data, bias.size()});
 	grads.push_back(CudaPtr<F>{&bias_grad.data, bias_grad.size()});
 }
 
