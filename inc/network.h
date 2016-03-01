@@ -3,10 +3,12 @@
 
 
 #include <iostream>
+#include <vector>
 #include "util.h"
 #include "tensor.h"
 #include "operations.h"
 #include "loss.h"
+#include "cudavec.h"
 
 template <typename F>
 struct Network {
@@ -44,6 +46,10 @@ struct Network {
 
 	void describe(std::ostream &out);
 
+	void register_params();
+	void align_params();
+	void position_params(float *pos_param, float *pos_grad);
+
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &vec);
 	std::vector<F> fd_gradient(F const *cpu_data, int label, F e);
@@ -63,6 +69,10 @@ struct Network {
 	std::vector<Operation<F>*> operations;
 	std::vector<TensorSet<F>*> tensors;
 	std::vector<TensorShape> shapes;
+
+	CudaVec param_vec, grad_vec;
+	std::vector<CudaPtr<F>> param_ptrs, grad_ptrs;
+	std::vector<CudaPtr<F>> fast_param_ptrs, fast_grad_ptrs;
 
 	Loss<F> *loss_ptr;
 	int n_params;

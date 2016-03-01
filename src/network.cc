@@ -62,11 +62,9 @@ void Network<F>::finish() {
 	for (size_t i(0); i < operations.size(); ++i)
 		operations[i]->forward_dry_run(tensors[i]->x, tensors[i+1]->x);
 
-	n_params = 0;
-	for(auto &param : params)
-		n_params += param->size();
-
 	finished = true;
+
+	align_params();
 }
 
 template <typename F>
@@ -291,6 +289,61 @@ void Network<F>::describe(ostream &out) {
 }
 
 template <typename F>
+void Network<F>::align_params() {
+	register_params();
+	param_vec.resize(n_params);
+	grad_vec.resize(n_params);
+
+	for (auto &p : param_ptrs)
+		cudaFree(*(p.ptr));
+
+	for (auto &g : grad_ptrs)
+		cudaFree(*(g.ptr));
+
+	position_params(param_vec.data, grad_vec.data);
+	cout << "n params: " << n_params << endl;
+	//throw "";
+}
+
+template <typename F>
+void Network<F>::register_params() {
+	for (auto &o : params)
+		o->register_params(param_ptrs, fast_param_ptrs, grad_ptrs, fast_grad_ptrs);
+
+ 	n_params = 0;
+	for (auto &p : param_ptrs)
+		n_params += p.n;
+}
+
+template <typename F>
+void Network<F>::position_params(float *pos_param, float *pos_grad) {
+	float *ptr = pos_param;
+	for (auto &p : param_ptrs) {
+		*(p.ptr) = ptr;
+		ptr += p.n;
+	}
+
+	// ptr = pos_fast_param;
+	// for (auto &p : fast_params) {
+	// 	*(p.ptr) = ptr;
+	// 	ptr += p.n;
+	// }
+
+	ptr = pos_grad;
+	for (auto &g : grad_ptrs) {
+		*(g.ptr) = ptr;
+		ptr += g.n;
+	}
+
+	// ptr = pos_fast_grad;
+	// for (auto &g : fast_grads) {
+	// 	*(g.ptr) = ptr;
+	// 	ptr += g.n;
+	// }
+}
+
+
+template <typename F>
 Network<F>::~Network() {
 	del_vec(operations);
 	del_vec(tensors);
@@ -298,4 +351,4 @@ Network<F>::~Network() {
 }
 
 template struct Network<float>;
-template struct Network<double>;
+// template struct Network<double>;
