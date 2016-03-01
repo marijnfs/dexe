@@ -100,8 +100,12 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	Tensor<F> bias, bias_grad;
 
 	cudnnConvolutionFwdAlgo_t algo;
-	char *workspace;
-	size_t workspace_size;
+	cudnnConvolutionBwdDataAlgo_t algo_bwd;
+	cudnnConvolutionBwdFilterAlgo_t algo_bwd_filter;
+
+	char *workspace, *workspace_bwd, *workspace_bwd_filter;
+	size_t workspace_size, workspace_size_bwd, workspace_size_bwd_filter;
+
 	bool keep, rollout;
 };
 
