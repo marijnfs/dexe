@@ -73,7 +73,7 @@ void write_img(std::string filename, int c, int w, int h, char *values) {
 			}
 	//cout << endl;
 
-	Mat mat(w, h, CV_8UC3, reinterpret_cast<void*>(reinterpret_cast<unsigned char*>(&data[0])));
+	Mat mat(h, w, CV_8UC3, reinterpret_cast<void*>(reinterpret_cast<unsigned char*>(&data[0])));
 
 	cout << mat.at<Vec3b>(Point(4, 4)) << endl;
 	mat.convertTo(mat, CV_8UC3);
