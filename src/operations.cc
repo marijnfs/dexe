@@ -216,9 +216,8 @@ void ConvolutionOperation<F>::register_params(std::vector<CudaPtr<F> > &params, 
 		params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()});
 		grads.push_back(CudaPtr<F>{&filter_bank_grad.weights, filter_bank_grad.n_weights()});
 	} else {
-		fast_params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()});
 		cout << "adding to fastweights " << filter_bank_grad.weights << " " << filter_bank_grad.n_weights() << " n=" << fast_grads.size() << endl;
-
+		fast_params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()});
 		fast_grads.push_back(CudaPtr<F>{&filter_bank_grad.weights, filter_bank_grad.n_weights()});
 	}
 	params.push_back(CudaPtr<F>{&bias.data, bias.size()});
@@ -325,20 +324,23 @@ void ConvolutionShiftOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, 
 template <typename F>
 void ConvolutionShiftOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &output_grad, Tensor<F> &input_grad, F beta) {
 	F alpha(1.0);
-	unshift(output_grad.data, slate_grad.data, slate.w, slate.h, slate.c, dx, dy, 0);
+	// slate_grad.zero();
+	unshift(output_grad.data, slate_grad.data, slate_grad.w, slate_grad.h, slate_grad.c, dx, dy, 0);
 	// handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, this->filter_bank.fd, this->filter_bank.weights, output_grad.td, output_grad.data, this->conv, this->algo_bwd, this->workspace_bwd, this->workspace_size_bwd, &beta, input_grad.td, input_grad.data) ); //TESTING
-	handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, this->filter_bank.fd, this->filter_bank.weights, slate.td, slate.data, this->conv, this->algo_bwd, this->workspace_bwd, this->workspace_size_bwd, &beta, input_grad.td, input_grad.data) );
+	handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, this->filter_bank.fd, this->filter_bank.weights, slate_grad.td, slate_grad.data, this->conv, this->algo_bwd, this->workspace_bwd, this->workspace_size_bwd, &beta, input_grad.td, input_grad.data) );
 
 }
 
 template <typename F>
 void ConvolutionShiftOperation<F>::backward_weights(Tensor<F> &input, Tensor<F> &output_grad, F beta) {
-	//Assuming backward_weights comes after backward
+	//Assuming backward_weights comes after backward, so no unshift
+	//unshift(output_grad.data, slate_grad.data, slate_grad.w, slate_grad.h, slate_grad.c, dx, dy, 0);
+
 	F alpha_bias(1.0), beta_bias(beta);
 	handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, slate_grad.td, slate_grad.data, &beta_bias, this->bias_grad.td, this->bias_grad.data) );
 
 	F alpha(1.0);
-	handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, output_grad.td, output_grad.data, this->conv, this->algo_bwd_filter, this->workspace_bwd_filter, this->workspace_size_bwd_filter, &beta, this->filter_bank_grad.fd, this->filter_bank_grad.weights) ); //TESTING
+	handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, slate_grad.td, slate_grad.data, this->conv, this->algo_bwd_filter, this->workspace_bwd_filter, this->workspace_size_bwd_filter, &beta, this->filter_bank_grad.fd, this->filter_bank_grad.weights) ); //TESTING
 }
 
 

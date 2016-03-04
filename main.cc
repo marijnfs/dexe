@@ -18,7 +18,7 @@ using namespace std;
 
 void test1() {
 	Network<float> network(TensorShape{1, 3, 640, 480});
-	
+
 	network.add_conv(32, 3, 3);
 	network.add_pool(2, 2);
 	network.add_relu();
@@ -39,7 +39,7 @@ void test1() {
 	network.add_conv(640, 3, 3);
 	network.add_relu();
 	network.add_pool(2, 2);
-	
+
 	network.add_softmax();
 	network.finish();
 
@@ -61,10 +61,10 @@ void test2() {
 
 	//Network network(TensorShape{1, 10, 1, 1});
 	//network.add_conv(10, 1, 1);
-	
+
 	Network<float> network(TensorShape{1, 3, 32, 32});
 	Tensor<float> data(TensorShape{1, 3, 32, 32});
-	
+
 	data.init_normal(1.0, 1.0);
 	vector<float> bla = data.to_vector();
 
@@ -72,7 +72,7 @@ void test2() {
 	network.add_pool(4, 4);
 	//network.add_conv(100, 1, 1);
 	network.add_tanh();
-	
+
 	//network.add_conv(10, 2, 2);
 	//network.add_pool(2, 2);
 	//network.add_conv(200, 1, 1);
@@ -98,7 +98,7 @@ void test2() {
 
 	vector<float> fd_grad = network.fd_gradient(img_data, label, .01);
 	cout << fd_grad.size() << endl;
-	
+
 	for (size_t i(0); i < grad.size(); ++i)
 		if (abs<float>(grad[i] + fd_grad[i]) > .001)
 			cout << i << "\t" << grad[i] << "\t" << fd_grad[i] << "\t" << abs<float>(grad[i] + fd_grad[i]) << "\t" << (abs<float>(grad[i] + fd_grad[i]) / abs<float>(grad[i]))  << endl;
@@ -124,7 +124,7 @@ int main() {
 
 	int n(1), c(3), h(32), w(32);
 	int outc(10);
-	Network<float> network(TensorShape{n, c, w, h});	
+	Network<float> network(TensorShape{n, c, w, h});
 
 	/*
 	network.add_conv(128, 8, 8);
@@ -141,11 +141,11 @@ int main() {
 	network.add_conv(100, 3, 3);
 	network.add_pool(2, 2);
 	network.add_tanh();
-	
+
 	network.add_conv(200, 3, 3);
 	network.add_pool(2, 2);
 	network.add_tanh();
-	
+
 	network.add_conv(300, 3, 3);
 	network.add_pool(2, 2);
 	//network.add_conv(300, 1, 1);
@@ -198,7 +198,7 @@ int main() {
 	for (size_t e(0); e < 50000; ++e) {
 		//if ((e % 4 == 0))
 		//MakeAdvDatabase(db, db_adv, network, 15.);
-		
+
 		//MakeAdvDatabase(db, db_adv, network, 15.);
 		//if (e > 6 && (e % 2 == 0)) {
 
@@ -216,7 +216,7 @@ int main() {
 		Timer t;
 		float err(0);
 		int n_correct(0);
-		
+
 		Indices indices(db_adv.count("root"));
 		indices.shuffle();
 
@@ -231,7 +231,7 @@ int main() {
 			//cout << endl;
 
 			//cout << "float data size: " << datum.float_data_size() << endl;
-			
+
 			//caffe::Datum datum = db.get_image(indices[i]);
 			caffe::Datum datum = db_adv.load<caffe::Datum>("root", indices[i]);
 			const float *img_data = datum.float_data().data();
@@ -293,7 +293,7 @@ int main() {
 			network.calculate_loss(datum.label());
 			network.backward();
 			network.update(lr);
-			*/			
+			*/
 			// ========================
 
 
@@ -302,7 +302,7 @@ int main() {
 
 			err += network.loss();
 			n_correct += network.n_correct();
-			
+
 			if (i % 5000 == 0) {
 				vector<float> ov = network.output().to_vector();
 				cout << i << " (" << indices[i] << ") " << datum.label() << " " << ov << " " << ov[datum.label()] << endl;
@@ -314,14 +314,14 @@ int main() {
 
 		float test_err(0);
 		int test_n_correct(0);
-		
+
 		for (size_t i(0); i < db_test.count("root"); ++i) {
 			caffe::Datum datum = db_test.load<caffe::Datum>("root", i);
 			const float *img_data = datum.float_data().data();
 
 			network.forward(img_data);
 			network.calculate_loss(datum.label());
-				
+
 			test_err += network.loss();
 			test_n_correct += network.n_correct();
 		}
