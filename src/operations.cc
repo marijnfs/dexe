@@ -145,6 +145,12 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
 
 
 template <typename F>
+void ConvolutionOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &output_grad, Tensor<F> &input_grad, F beta) {
+	F alpha(1.0);
+	handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, filter_bank.fd, filter_bank.weights, output_grad.td, output_grad.data, conv, algo_bwd, workspace_bwd, workspace_size_bwd, &beta, input_grad.td, input_grad.data) );
+}
+
+template <typename F>
 void ConvolutionOperation<F>::backward_weights(Tensor<F> &input, Tensor<F> &output_grad, F beta) {
 	F alpha_bias(1.0), beta_bias(beta);
 	handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, output_grad.td, output_grad.data, &beta_bias, bias_grad.td, bias_grad.data) );
@@ -152,13 +158,6 @@ void ConvolutionOperation<F>::backward_weights(Tensor<F> &input, Tensor<F> &outp
 	F alpha(1.0);
 	handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, output_grad.td, output_grad.data, conv, algo_bwd_filter, workspace_bwd_filter, workspace_size_bwd_filter, &beta, filter_bank_grad.fd, filter_bank_grad.weights) );
 }
-
-template <typename F>
-void ConvolutionOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &output_grad, Tensor<F> &input_grad, F beta) {
-	F alpha(1.0);
-	handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, filter_bank.fd, filter_bank.weights, output_grad.td, output_grad.data, conv, algo_bwd, workspace_bwd, workspace_size_bwd, &beta, input_grad.td, input_grad.data) );
-}
-
 
 template <typename F>
 void ConvolutionOperation<F>::zero_grad() {
@@ -311,7 +310,7 @@ void ConvolutionShiftOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, 
 	F alpha_bias(1), beta_bias(1);
 	F slate_beta(0);
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, this->filter_bank.fd, this->filter_bank.weights, this->conv, this->algo, this->workspace, this->workspace_size, &slate_beta, slate.td, slate.data));
-	// handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, this->filter_bank.fd, this->filter_bank.weights, this->conv, this->algo, this->workspace, this->workspace_size, &beta, output.td, output.data));
+	// handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, this->filter_bank.fd, this->filter_bank.weights, this->conv, this->algo, this->workspace, this->workspace_size, &beta, output.td, output.data));//TESTING
 
 	handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, this->bias.td, this->bias.data, &beta_bias, slate.td, slate.data));
 	// handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, this->bias.td, this->bias.data, &beta_bias, output.td, output.data)); //TESTING
@@ -338,9 +337,11 @@ void ConvolutionShiftOperation<F>::backward_weights(Tensor<F> &input, Tensor<F> 
 
 	F alpha_bias(1.0), beta_bias(beta);
 	handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, slate_grad.td, slate_grad.data, &beta_bias, this->bias_grad.td, this->bias_grad.data) );
+	// handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, output_grad.td, output_grad.data, &beta_bias, this->bias_grad.td, this->bias_grad.data) );//TESTING
 
 	F alpha(1.0);
-	handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, slate_grad.td, slate_grad.data, this->conv, this->algo_bwd_filter, this->workspace_bwd_filter, this->workspace_size_bwd_filter, &beta, this->filter_bank_grad.fd, this->filter_bank_grad.weights) ); //TESTING
+	handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, slate_grad.td, slate_grad.data, this->conv, this->algo_bwd_filter, this->workspace_bwd_filter, this->workspace_size_bwd_filter, &beta, this->filter_bank_grad.fd, this->filter_bank_grad.weights) );
+	// handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, output_grad.td, output_grad.data, this->conv, this->algo_bwd_filter, this->workspace_bwd_filter, this->workspace_size_bwd_filter, &beta, this->filter_bank_grad.fd, this->filter_bank_grad.weights) ); //TESTING
 }
 
 

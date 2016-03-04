@@ -3,6 +3,7 @@
 
 cmake_minimum_required (VERSION 2.8.11)
 project (MCDNN)
+SET(CMAKE_BUILD_TYPE CACHE RELEASE STRING "Build Type")
 
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
 	message(FATAL_ERROR "In-source builds are not permitted. Make a separate folder for building:\nmkdir build; cd build; cmake ..\nBefore that, remove the files already created:\nrm -rf CMakeCache.txt CMakeFiles")
@@ -11,13 +12,14 @@ endif()
 find_package(CUDA QUIET REQUIRED)
 
 #list(APPEND CUDA_NVCC_FLAGS "-arch=sm_30;-std=c++11;-O2;-DVERBOSE")
-SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
-set(CUDA_NVCC_FLAGS "-std=c++11;-O3")
 
-#set(CMAKE_CXX_FLAGS "-std=c++11 -O3")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11 -g")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -O3")
-set(CMAKE_CXX_COMPILER "nvcc")
+set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11")
+
+set(CMAKE_CXX_FLAGS "-std=c++11")
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11")
+#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11")
+#set(CMAKE_CXX_COMPILER "nvcc")
 
 # Specify include directories
 include_directories(
