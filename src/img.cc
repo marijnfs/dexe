@@ -36,14 +36,32 @@ void write_img1c(std::string filename, int w, int h, float const *values) {
 	vector<float> bla(values, values + c*w*h);
 	//Mat mat(w, h, CV_32FC3, reinterpret_cast<void*>(const_cast<float*>(values)));
 
-	float min(99999), max(-99999);
+	// float min(99999), max(-99999);
+	// for (size_t i(0); i < bla.size(); ++i) {
+	// 	if (bla[i] > max) max = bla[i];
+	// 	if (bla[i] < min) min = bla[i];
+	// }
+
+	float mean(0), std(0);
 	for (size_t i(0); i < bla.size(); ++i) {
-		if (bla[i] > max) max = bla[i];
-		if (bla[i] < min) min = bla[i];
+		mean += bla[i];
 	}
+	mean /= bla.size();
 
 	for (size_t i(0); i < bla.size(); ++i) {
-	 	bla[i] = (bla[i] - min) / (max - min);
+		std += (bla[i] - mean) * (bla[i] - mean);
+	}
+
+	std = sqrt(std / bla.size());
+	float const eps(.0000001);
+	float min = (mean - std*2);
+	float max = (mean + std*2);
+
+	for (size_t i(0); i < bla.size(); ++i) {
+	 	float val = bla[i] = (bla[i] - min) / (max - min);
+	 	val = val < 0. ? 0. : val;
+	 	val = val > 1. ? 1. : val;
+
 	//bla[i] *= 255.;
 		//cout << bla[i] << " ";
 	}

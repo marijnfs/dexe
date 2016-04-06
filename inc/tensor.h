@@ -4,6 +4,7 @@
 #include <cudnn.h>
 #include <vector>
 #include <iostream>
+#include "util.h"
 
 const bool ZERO_ON_INIT(true);
 
@@ -53,6 +54,12 @@ template <typename F>
 Tensor<F> &operator-=(Tensor<F> &in, Tensor<F> const &other);
 
 template <typename F>
+inline Tensor<F> &operator*=(Tensor<F> &in, float const other) {
+	scale_cuda<F>(in.data, in.n, other);
+	return in;
+}
+
+template <typename F>
 struct TensorSet {
 	Tensor<F> x, grad;
 
@@ -82,6 +89,7 @@ struct FilterBank {
 	void from_vector(std::vector<F> &in);
 	void fill(F val);
 	void zero();
+	void draw_filterbank(std::string filename);
 
 	F *ptr(int n = 0) { return weights + n * N; }
 

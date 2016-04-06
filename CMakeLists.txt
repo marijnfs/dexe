@@ -3,7 +3,7 @@
 
 cmake_minimum_required (VERSION 2.8.11)
 project (MCDNN)
-SET(CMAKE_BUILD_TYPE CACHE RELEASE STRING "Build Type")
+#SET(CMAKE_BUILD_TYPE CACHE RELEASE STRING "Build Type")
 
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
 	message(FATAL_ERROR "In-source builds are not permitted. Make a separate folder for building:\nmkdir build; cd build; cmake ..\nBefore that, remove the files already created:\nrm -rf CMakeCache.txt CMakeFiles")

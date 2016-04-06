@@ -306,10 +306,10 @@ TensorShape TensorSet<F>::shape() const {
 template <>
 FilterBank<float>::FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T_):
   in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_),
-  T(T_), N(in_map * out_map * kw * kh)
+  T(T_), N(in_map_ * out_map_ * kw_ * kh_)
 {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
-	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_FLOAT, out_map, in_map, kh, kw));
+	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, out_map, in_map, kh, kw));
 	handle_error( cudaMalloc( (void**)&weights, sizeof(float) * T * N));
 	if (ZERO_ON_INIT)
 	  zero();
@@ -318,10 +318,10 @@ FilterBank<float>::FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T
 template <>
 FilterBank<double>::FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T_):
   in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_),
-  T(T_), N(in_map * out_map * kw * kh)
+  T(T_), N(in_map_ * out_map_ * kw_ * kh_)
 {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
-	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_DOUBLE, out_map, in_map, kh, kw));
+	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_DOUBLE, CUDNN_TENSOR_NCHW, out_map, in_map, kh, kw));
 	handle_error( cudaMalloc( (void**)&weights, sizeof(double) * T * N));
 	if (ZERO_ON_INIT)
 	  zero();
@@ -383,6 +383,33 @@ void FilterBank<F>::fill(F val) {
 	from_vector(vals);
 }
 
+template <>
+void FilterBank<double>::draw_filterbank(string filename) {
+}
+
+template <>
+void FilterBank<float>::draw_filterbank(string filename) {
+	vector<float> filters(n_weights());
+	copy_gpu_to_cpu(weights, &filters[0], n_weights());
+
+	int n_filters(in_map * out_map * T);
+	int sqrt_n_filters(sqrt(n_filters) + 1);
+	vector<float> values(sqrt_n_filters * sqrt_n_filters * kw * kh);
+	cout << filters.size() << " " << values.size() << " " << sqrt_n_filters << " " << n_filters << endl;
+
+		for (size_t y(0); y < sqrt_n_filters; ++y)
+			for (size_t x(0); x < sqrt_n_filters; ++x) {
+				int filter_index(y * sqrt_n_filters + x);
+				if (filter_index < n_filters)
+					for (size_t fy(0); fy < kh; ++fy)
+						for (size_t fx(0); fx < kw; ++fx)
+							values[((y * kh) + fy) * sqrt_n_filters * kw + (x * kw) + fx] = filters[filter_index * kw * kh + fy * kw + fx];
+			}
+
+
+	write_img1c(filename, sqrt_n_filters * kw, sqrt_n_filters * kh, &values[0]);
+}
+
 template <typename F>
 Tensor<F> &operator-=(Tensor<F> &in, Tensor<F> const &other) {
 	assert(in.size() == other.size());
@@ -390,12 +417,15 @@ Tensor<F> &operator-=(Tensor<F> &in, Tensor<F> const &other) {
 	return in;
 }
 
+
 template struct Tensor<float>;
 template struct TensorSet<float>;
 template struct FilterBank<float>;
 template Tensor<float> &operator-=<float>(Tensor<float> &in, Tensor<float> const &other);
+// template Tensor<float> &operator*=<float>(Tensor<float> &in, float const other);
 
 template struct Tensor<double>;
 template struct TensorSet<double>;
 template struct FilterBank<double>;
 template Tensor<double> &operator-=<double>(Tensor<double> &in, Tensor<double> const &other);
+// template Tensor<double> &operator*=<double>(Tensor<double> &in, double const other);

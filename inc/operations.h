@@ -5,6 +5,7 @@
 #include <curand.h>
 #include <cublas_v2.h>
 #include <iostream>
+#include <string>
 
 #include "tensor.h"
 #include "util.h"
@@ -59,8 +60,8 @@ struct Parametrised {
 
 template <typename F>
 struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
-	ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep = true, size_t workspace_limit = 0);
-	ConvolutionOperation(int in_map, int out_map, int kw, int kh, int z, bool keep = true, size_t workspace_limit = 0);
+	ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep = true, size_t workspace_limit = 0);//128*1024*1024);
+	ConvolutionOperation(std::string tmp, int in_map, int out_map, int kw, int kh, int z, bool keep = true, size_t workspace_limit = 0);//128*1024*1024);
 
 	~ConvolutionOperation();
 
@@ -167,6 +168,8 @@ struct TanhOperation : public Operation<F> {
 
 	TensorShape output_shape(TensorShape input);
 
+	cudnnActivationDescriptor_t desc;
+
 	F scale;
 };
 
@@ -178,6 +181,7 @@ struct SigmoidOperation : public Operation<F> {
 	void describe(std::ostream &out) { out << "sigmoid"; }
 
 	TensorShape output_shape(TensorShape input);
+	cudnnActivationDescriptor_t desc;
 
 	F scale;
 };
@@ -195,12 +199,17 @@ struct STanhOperation : public Operation<F> {
 
 template <typename F>
 struct ReluOperation : public Operation<F> {
+		ReluOperation();
+
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
 	void describe(std::ostream &out) { out << "relu"; }
 
 	TensorShape output_shape(TensorShape input);
+	cudnnActivationDescriptor_t desc;
+
 };
+
 
 template <typename F>
 struct SoftmaxOperation : public Operation<F> {
