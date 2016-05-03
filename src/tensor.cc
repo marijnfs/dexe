@@ -259,6 +259,21 @@ double Tensor<double>::norm() {
 }
 
 template <>
+float Tensor<float>::norm2() {
+	float result(0);
+	handle_error( cublasSdot(Handler::cublas(), size(), data, 1, data, 1, &result) );
+	return result;
+}
+
+template <>
+double Tensor<double>::norm2() {
+	double result(0);
+	handle_error( cublasDdot(Handler::cublas(), size(), data, 1, data, 1, &result) );
+	return result;
+}
+
+
+template <>
 float Tensor<float>::sum() {
 	float result(0);
 	handle_error( cublasSasum(Handler::cublas(), size(), data, 1, &result) );

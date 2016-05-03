@@ -37,6 +37,7 @@ struct Tensor {
 
 	F sum();
 	F norm();
+	F norm2();
 
   	int size() const;
 	TensorShape shape() const;

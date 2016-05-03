@@ -11,6 +11,10 @@
 #include "util.h"
 #include "cudaptr.h"
 
+int const CONV_MAX_MEM = 0;
+// int const CONV_MAX_MEM = 128 * 1024 * 1024;
+
+
 template <typename F>
 struct Operation {
 	virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0){}
@@ -60,8 +64,8 @@ struct Parametrised {
 
 template <typename F>
 struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
-	ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep = true, size_t workspace_limit = 0);//128*1024*1024);
-	ConvolutionOperation(std::string tmp, int in_map, int out_map, int kw, int kh, int z, bool keep = true, size_t workspace_limit = 0);//128*1024*1024);
+	ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);// 64*1024*1024);
+	ConvolutionOperation(std::string tmp, int in_map, int out_map, int kw, int kh, int z, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);//32*1024*1024);
 
 	~ConvolutionOperation();
 

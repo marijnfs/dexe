@@ -6,6 +6,7 @@
 
 using namespace std;
 
+
 template <typename F>
 ConvolutionOperation<F>::ConvolutionOperation(int in_map_, int out_map_, int kw_, int kh_, bool keep_, size_t workspace_limit_):
 	in_map(in_map_),
@@ -420,15 +421,15 @@ TanhOperation<F>::TanhOperation(F scale_) : scale(scale_) {
 template <typename F>
 void TanhOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
   F alpha(1);
-  //handle_error( cudnnActivationForward(Handler::cudnn(), CUDNN_ACTIVATION_TANH, &alpha, in.td, in.data, &beta, out.td, out.data));
-  tanh_forward<F>(in.data, out.data, out.size(), beta, scale);
+  handle_error( cudnnActivationForward(Handler::cudnn(), desc, &alpha, in.td, in.data, &beta, out.td, out.data));
+  // tanh_forward<F>(in.data, out.data, out.size(), beta, scale);
 }
 
 template <typename F>
 void TanhOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta) {
   F alpha(1);
-  //handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_TANH, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data));
-  tanh_deriv<F>(out_grad.data, out.data, in_grad.data, out.size(), beta, scale);
+  handle_error( cudnnActivationBackward(Handler::cudnn(), desc, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data));
+  // tanh_deriv<F>(out_grad.data, out.data, in_grad.data, out.size(), beta, scale);
 }
 
 template <typename F>
