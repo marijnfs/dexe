@@ -12,7 +12,7 @@ message Layer {
 			 SOFTMAX = 6;
 		}
 		required Type type = 1;
-		required bytes data;
+		required bytes data = 2;
 		
 }
 

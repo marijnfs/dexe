@@ -10,6 +10,11 @@ if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
 endif()
 
 find_package(CUDA QUIET REQUIRED)
+find_package(Protobuf QUIET REQUIRED)
+find_package( OpenCV REQUIRED )
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS inc/img.proto inc/sample.proto)
 
 #list(APPEND CUDA_NVCC_FLAGS "-arch=sm_30;-std=c++11;-O2;-DVERBOSE")
 
@@ -37,9 +42,9 @@ file(GLOB CPP_HEADERS inc/*.h)
 #set_property(SOURCE ${CU_SOURCE} PROPERTY COMPILE_FLAGS -O3)
 #set_property(SOURCE ${CPP_HEADERS} PROPERTY COMPILE_FLAGS -O3)
 
-cuda_add_library(mcdnn ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
+cuda_add_library(mcdnn ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE} ${PROTO_SRCS} ${PROTO_HDRS})
 target_link_libraries( mcdnn
-	-lcudnn -lcurand -lcublas -lleveldb -lprotobuf -lopencv_core -lopencv_highgui -lopencv_imgproc -lboost_program_options
+	-lcudnn ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES} -lleveldb ${PROTOBUF_LIBRARIES} ${OpenCV_LIBS}
 )
 
 install(TARGETS mcdnn
