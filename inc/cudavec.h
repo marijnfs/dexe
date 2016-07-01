@@ -40,6 +40,10 @@ struct CudaVec {
 		::init_normal<float>(data, n, mean, std);
 	}
 
+  	void add_normal(float mean, float std) {
+		::add_normal<float>(data, n, mean, std);
+	}
+
 	std::vector<float> to_vector() {
 		std::vector<float> vec(n);
 		handle_error( cudaMemcpy(&vec[0], data, n * sizeof(float), cudaMemcpyDeviceToHost));

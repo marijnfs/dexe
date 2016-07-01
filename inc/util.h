@@ -248,6 +248,7 @@ inline T l1_norm(std::vector<T> &v) {
 }
 
 
+//normalize to mean 0, std 1
 template <typename T>
 inline void normalize(std::vector<T> *v) {
 	float mean(0);
@@ -283,6 +284,25 @@ inline void normalize(std::vector<float>::iterator v_it, std::vector<float>::ite
 	std = sqrt(std / (size - 1));
 	std::cout << "std: " << std << std::endl;
 	for (; it != end; ++it) *it /= std;
+}
+
+//normalize to mean 0, std 1
+template <typename T>
+inline void normalize_masked(std::vector<T> *v, std::vector<bool> &mask) {
+	float mean(0);
+	int N(0);
+	for (size_t i(0); i < v->size(); ++i)
+	  if (mask[i]) {
+	    mean += (*v)[i];
+	    ++N;
+	  }
+	mean /= N;
+	for (size_t i(0); i < v->size(); ++i) if (mask[i]) (*v)[i] -= mean;
+	float std(0);
+	for (size_t i(0); i < v->size(); ++i) if (mask[i]) std += (*v)[i] * (*v)[i];
+	std = sqrt(std / (N - 1));
+	std::cout << "std: " << std << std::endl;
+	for (size_t i(0); i < v->size(); ++i) if (mask[i]) (*v)[i] /= std;
 }
 
 
@@ -359,9 +379,13 @@ void init_uniform(T *data, int n, T std);
 
 __global__ void normal_kernel(int seed, float *data, int n, float mean, float std);
 __global__ void normal_kerneld(int seed, double *data, int n, double mean, double std);
-
 template <typename T>
 void init_normal(T *data, int n, T mean, T std);
+
+__global__ void add_normal_kernel(int seed, float *data, int n, float mean, float std);
+__global__ void add_normal_kerneld(int seed, double *data, int n, double mean, double std);
+template <typename T>
+void add_normal(T *data, int n, T mean, T std);
 
 __global__ void rand_init_kernel(int seed, curandStatePhilox4_32_10_t *states, int n);
 __global__ void rand_zero_kernel(float *data, int n, float p, curandStatePhilox4_32_10_t *states);

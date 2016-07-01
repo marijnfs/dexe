@@ -37,6 +37,23 @@ __global__ void normal_kerneld(int seed, double *data, int n, double mean, doubl
     data[i] = curand_normal_double(&state) * std + mean;
 }
 
+__global__ void add_normal_kernel(int seed, float *data, int n, float mean, float std) {
+  if (threadIdx.x != 0) return;
+  curandState state;
+
+  curand_init(seed, 0, 0, &state);
+  for (size_t i(0); i < n; ++i)
+    data[i] += curand_normal(&state) * std + mean;
+}
+
+__global__ void add_normal_kerneld(int seed, double *data, int n, double mean, double std) {
+  if (threadIdx.x != 0) return;
+  curandState state;
+  curand_init(seed, 0, 0, &state);
+  for (size_t i(0); i < n; ++i)
+    data[i] += curand_normal_double(&state) * std + mean;
+}
+
 template <>
 void init_normal<float>(float *a, int N, float mean, float std) {
      normal_kernel<<<1, 32>>>(rand(), a, N, mean, std);
@@ -45,6 +62,16 @@ void init_normal<float>(float *a, int N, float mean, float std) {
 template <>
 void init_normal<double>(double *a, int N, double mean, double std) {
      normal_kerneld<<<1, 32>>>(rand(), a, N, mean, std);
+}
+
+template <>
+void add_normal<float>(float *a, int N, float mean, float std) {
+     add_normal_kernel<<<1, 32>>>(rand(), a, N, mean, std);
+}
+
+template <>
+void add_normal<double>(double *a, int N, double mean, double std) {
+     add_normal_kerneld<<<1, 32>>>(rand(), a, N, mean, std);
 }
 
 __global__ void rand_init_kernel(int seed, curandStatePhilox4_32_10_t *states, int n) {
