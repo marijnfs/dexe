@@ -7,6 +7,11 @@ Handler::Handler():
   h_cudnn(0), h_cublas(0), h_curand(0)
 {}
 
+Handler::~Handler() {
+  //todo: delete stuff
+  cudaDeviceSynchronize();
+}
+
 void Handler::init_handler() {
   handle_error( cudnnCreate(&h_cudnn));
 

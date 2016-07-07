@@ -329,12 +329,12 @@ struct Indices {
 };
 
 template <typename T>
-inline void byte_write(std::ofstream &out, T &t) {
+inline void byte_write(std::ostream &out, T &t) {
 	out.write(reinterpret_cast<char*>(&t), sizeof(T));
 }
 
 template <typename T>
-inline void byte_write_vec(std::ofstream &out, std::vector<T> &v) {
+inline void byte_write_vec(std::ostream &out, std::vector<T> &v) {
 	uint64_t s(v.size());
 	byte_write(out, s);
 	for (size_t i(0); i < v.size(); ++i)

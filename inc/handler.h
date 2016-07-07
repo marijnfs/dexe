@@ -7,6 +7,7 @@
 
 struct Handler {
   Handler();
+  ~Handler();
   void init_handler();
 
   static cudnnHandle_t &cudnn();
