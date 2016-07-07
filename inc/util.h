@@ -255,11 +255,11 @@ inline void normalize(std::vector<T> *v) {
 	for (size_t i(0); i < v->size(); ++i) mean += (*v)[i];
 	mean /= v->size();
 	for (size_t i(0); i < v->size(); ++i) (*v)[i] -= mean;
-	float std(0);
-	for (size_t i(0); i < v->size(); ++i) std += (*v)[i] * (*v)[i];
-	std = sqrt(std / (v->size() - 1));
-	std::cout << "std: " << std << std::endl;
-	for (size_t i(0); i < v->size(); ++i) (*v)[i] /= std;
+	float var(0);
+	for (size_t i(0); i < v->size(); ++i) var += (*v)[i] * (*v)[i];
+	var = sqrt(var / (v->size() - 1));
+	std::cout << "std: " << var << std::endl;
+	for (size_t i(0); i < v->size(); ++i) (*v)[i] /= var;
 }
 
 // template <typename T>
@@ -276,14 +276,14 @@ inline void normalize(std::vector<float>::iterator v_it, std::vector<float>::ite
 
 	it = v_it;
 	end = v_end;
-	float std(0);
-	for (; it != end; ++it) std += (*it) * (*it);
+	float var(0);
+	for (; it != end; ++it) var += (*it) * (*it);
 
 	it = v_it;
 	end = v_end;
-	std = sqrt(std / (size - 1));
-	std::cout << "std: " << std << std::endl;
-	for (; it != end; ++it) *it /= std;
+	var = sqrt(var / (size - 1));
+	std::cout << "std: " << var << std::endl;
+	for (; it != end; ++it) *it /= var;
 }
 
 //normalize to mean 0, std 1
@@ -298,11 +298,16 @@ inline void normalize_masked(std::vector<T> *v, std::vector<bool> &mask) {
 	  }
 	mean /= N;
 	for (size_t i(0); i < v->size(); ++i) if (mask[i]) (*v)[i] -= mean;
-	float std(0);
-	for (size_t i(0); i < v->size(); ++i) if (mask[i]) std += (*v)[i] * (*v)[i];
-	std = sqrt(std / (N - 1));
-	std::cout << "std: " << std << std::endl;
-	for (size_t i(0); i < v->size(); ++i) if (mask[i]) (*v)[i] /= std;
+	float var(0.0000001);
+	for (size_t i(0); i < v->size(); ++i)
+	  if (mask[i]) {
+	    std::cout << (*v)[i] << " ";
+	    var += (*v)[i] * (*v)[i];
+	  }
+	std::cout << "N: " << N << " std: " << var << std::endl;
+	var = sqrt(var / (N - 1));
+
+	for (size_t i(0); i < v->size(); ++i) if (mask[i]) (*v)[i] /= var;
 }
 
 
