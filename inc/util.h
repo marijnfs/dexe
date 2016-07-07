@@ -342,14 +342,14 @@ inline void byte_write_vec(std::ostream &out, std::vector<T> &v) {
 }
 
 template <typename T>
-inline T byte_read(std::ifstream &in) {
+inline T byte_read(std::istream &in) {
 	T t;
 	in.read(reinterpret_cast<char*>(&t), sizeof(T));
 	return t;
 }
 
 template <typename T>
-inline std::vector<T> byte_read_vec(std::ifstream &in) {
+inline std::vector<T> byte_read_vec(std::istream &in) {
 	size_t s = byte_read<uint64_t>(in);
 	std::vector<T> v;
 	for (size_t i(0); i < s; ++i)
