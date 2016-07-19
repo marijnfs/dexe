@@ -93,7 +93,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &v);
 	std::vector<F> grad_to_vector();
-	int size();
+	virtual int size();
 
 	TensorShape output_shape(TensorShape input);
 	void describe(std::ostream &out) { out << "conv " << kw << "x" << kh << " " << in_map << "->" << out_map; }

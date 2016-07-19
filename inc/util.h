@@ -301,10 +301,10 @@ inline void normalize_masked(std::vector<T> *v, std::vector<bool> &mask) {
 	float var(0.0000001);
 	for (size_t i(0); i < v->size(); ++i)
 	  if (mask[i]) {
-	    std::cout << (*v)[i] << " ";
+	    //std::cout << (*v)[i] << " ";
 	    var += (*v)[i] * (*v)[i];
 	  }
-	std::cout << "N: " << N << " std: " << var << std::endl;
+	//std::cout << "N: " << N << " std: " << var << std::endl;
 	var = sqrt(var / (N - 1));
 
 	for (size_t i(0); i < v->size(); ++i) if (mask[i]) (*v)[i] /= var;

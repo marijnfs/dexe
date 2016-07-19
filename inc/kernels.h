@@ -8,6 +8,12 @@ __global__ void gate_kerneld(int N, double const *a, double const *b, double *ou
 template <typename F>
 void gate(Tensor<F> &a, Tensor<F> &b, Tensor<F> &out);
 
+__global__ void gateinv_kernelf(int N, float const *a, float const *b, float *out);
+__global__ void gateinv_kerneld(int N, double const *a, double const *b, double *out);
+
+template <typename F>
+void gateinv(Tensor<F> &a, Tensor<F> &b, Tensor<F> &out);
+
 __global__ void range_kernelf(float *a, int N, float const min, float const max);
 __global__ void range_kerneld(double *a, int N, double const min, double const max);
 

@@ -11,23 +11,30 @@ struct CudaVec {
 
 	CudaVec() : data(0), n(0) { }
 	CudaVec(int n_) : data(0), n(0) { resize(n_); }
-	~CudaVec() {if (n) cudaFree(data);}
+	~CudaVec() {
+	  if (n) {
+	    std::cout <<"deallocating " << n << std::endl;
+	    cudaFree(data);
+	  }
+	}	  
 	void resize(int n2) {
-		if (n) {
+		if (n != n2) {
 			std::cout << "freeing " << n << std::endl;
 			cudaFree(data);
+			std::cout <<"allocating " << n2 << std::endl;
+			handle_error( cudaMalloc( (void**)&data, sizeof(float) * n2));
+			n = n2;
 		}
-		std::cout <<"allocating " << n2 << std::endl;
-		handle_error( cudaMalloc( (void**)&data, sizeof(float) * n2));
-		n = n2;
 		zero();
 	}
 
-	CudaVec &operator=(CudaVec &other) {
-		if (n != other.n)
-			resize(other.n);
-		handle_error( cudaMemcpy(data, other.data, n * sizeof(float), cudaMemcpyDeviceToDevice));
-		return *this;
+	CudaVec(CudaVec &other) {
+	  //CudaVec &operator=(CudaVec &other) {
+	  if (n != other.n) {
+	    resize(other.n);
+	  }
+	  n = other.n;
+	  copy_gpu_to_gpu(other.data, data, n);
 	}
 
 	void rand_zero(float p);

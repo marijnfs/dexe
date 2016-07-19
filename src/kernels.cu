@@ -36,6 +36,45 @@ void gate<float>(Tensor<float> &a, Tensor<float> &b, Tensor<float> &out) {
 	gate_kernelf<<<dimGrid, dimBlock>>>(s, a.data, b.data, out.data);
 }
 
+
+////Inverse Gate
+__global__ void gateinv_kerneld(int N, double const *a, double const *b, double *out) {
+	int const i = threadIdx.x + blockIdx.x * blockDim.x;
+	if (i >= N)
+		return;
+	out[i] += a[i] * (1.0 - b[i]);
+}
+
+__global__ void gateinv_kernelf(int N, float const *a, float const *b, float *out) {
+	int const i = threadIdx.x + blockIdx.x * blockDim.x;
+	if (i >= N)
+		return;
+	out[i] += a[i] * (1.0 - b[i]);
+}
+
+template <>
+void gateinv<double>(Tensor<double> &a, Tensor<double> &b, Tensor<double> &out) {
+	int s = a.size();
+	int const BLOCKSIZE(1024);
+
+	int dimBlock( BLOCKSIZE );
+	int dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
+
+	gate_kerneld<<<dimGrid, dimBlock>>>(s, a.data, b.data, out.data);
+}
+
+template <>
+void gateinv<float>(Tensor<float> &a, Tensor<float> &b, Tensor<float> &out) {
+	int s = a.size();
+	int const BLOCKSIZE(1024);
+
+	int dimBlock( BLOCKSIZE );
+	int dimGrid( (s  + BLOCKSIZE - 1) / BLOCKSIZE);
+
+	gate_kernelf<<<dimGrid, dimBlock>>>(s, a.data, b.data, out.data);
+}
+
+
 ///range
 
 __global__ void range_kerneld(double *a, int N, double const min, double const max) {
