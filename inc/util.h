@@ -13,6 +13,7 @@
 #include <time.h>
 #include <stdint.h>
 #include <algorithm>
+#include <numeric>
 #include <stdint.h>
 
 #include "handler.h"

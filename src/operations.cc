@@ -32,7 +32,7 @@ ConvolutionOperation<F>::ConvolutionOperation(int in_map_, int out_map_, int kw_
 	// cout << "bias buffer: " << bias.size() << endl;
 	//todo: calculate padding
 	handle_error( cudnnCreateConvolutionDescriptor(&conv));
-	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION));
+	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
 	//handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
 }
 
@@ -68,7 +68,7 @@ ConvolutionOperation<F>::ConvolutionOperation(string dummy, int in_map_, int out
 	// cout << "bias buffer: " << bias.size() << endl;
 	//todo: calculate padding
 	handle_error( cudnnCreateConvolutionDescriptor(&conv));
-	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION));
+	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
 	//handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
 }
 

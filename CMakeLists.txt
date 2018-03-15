@@ -19,7 +19,7 @@ PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS inc/img.proto inc/sample.proto)
 #list(APPEND CUDA_NVCC_FLAGS "-arch=sm_30;-std=c++11;-O2;-DVERBOSE")
 
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11")
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_60 -std=c++11")
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
 #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11")

@@ -1,3 +1,5 @@
+syntax = "proto2";
+
 message Img {
 		required uint32 w = 1;
 		required uint32 h = 2;
