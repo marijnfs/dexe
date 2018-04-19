@@ -56,6 +56,10 @@ Timer(float interval_) : interval(interval_) {
   double elapsed() {
     return std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - timepoint).count();
   }
+
+  double since() {
+    return elapsed();
+  }
 };
 
 inline void handle_error(cublasStatus_t status) {
