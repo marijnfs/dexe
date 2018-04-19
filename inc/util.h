@@ -38,8 +38,9 @@ struct StringException : public std::exception {
 
 struct Timer {
   std::chrono::high_resolution_clock::time_point timepoint;
-  double interval;
+  double interval = 0;
 
+  Timer() {start();}
 Timer(float interval_) : interval(interval_) {
     start();
   }
