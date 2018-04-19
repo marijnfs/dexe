@@ -1,6 +1,7 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
+#include <sstream>
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
@@ -15,22 +16,45 @@
 #include <algorithm>
 #include <numeric>
 #include <stdint.h>
+#include <chrono>
+#include <thread>
 
 #include "handler.h"
 
+
 struct StringException : public std::exception {
 	StringException(std::string msg_): msg(msg_){}
+
+  template <typename T>
+  	StringException(std::string msg_, T t)  {
+    std::ostringstream oss;
+    oss << msg_ << " " << t << std::endl;
+    msg = oss.str();
+  }
 	char const* what() const throw() {return msg.c_str();}
 	~StringException() throw() {}
 	std::string msg;
-};
+    };
 
 struct Timer {
-	Timer() {start();}
-	void start() {t = clock();}
-	double since() {return double(clock() - t) / double(CLOCKS_PER_SEC);}
+  std::chrono::high_resolution_clock::time_point timepoint;
+  double interval;
 
-	clock_t t;
+Timer(float interval_) : interval(interval_) {
+    start();
+  }
+
+  void start() { timepoint = std::chrono::high_resolution_clock::now(); }
+
+  void wait() {
+    while (std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - timepoint) < std::chrono::duration<double>(interval))
+      std::this_thread::sleep_for(std::chrono::duration<int, std::micro>(1));
+    start();
+  }
+
+  double elapsed() {
+    return std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - timepoint).count();
+  }
 };
 
 inline void handle_error(cublasStatus_t status) {
