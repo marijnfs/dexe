@@ -19,11 +19,12 @@ struct CudaVec {
 	}	  
 	void resize(int n2) {
 		if (n != n2) {
-			std::cout << "freeing " << n << std::endl;
-			cudaFree(data);
-			std::cout <<"allocating " << n2 << std::endl;
-			handle_error( cudaMalloc( (void**)&data, sizeof(float) * n2));
-			n = n2;
+          if (n)
+            std::cout << "freeing " << n << std::endl;
+          cudaFree(data);
+          std::cout <<"allocating " << n2 << std::endl;
+          handle_error( cudaMalloc( (void**)&data, sizeof(float) * n2));
+          n = n2;
 		}
 		zero();
 	}

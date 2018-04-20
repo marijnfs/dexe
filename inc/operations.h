@@ -136,6 +136,7 @@ struct SquashOperation : ConvolutionOperation<F> {
 	TensorShape output_shape(TensorShape input);
 
 	int c;
+    
 	void describe(std::ostream &out) { out << "squash"; }
 };
 
