@@ -1,6 +1,8 @@
 #include "handler.h"
 #include "util.h"
 
+using namespace std;
+
 Handler *Handler::s_handler = 0;
 
 Handler::Handler():
@@ -24,6 +26,11 @@ void Handler::init_handler() {
 
 void Handler::set_device(int n) {
   handle_error( cudaSetDevice(n) );
+  cudaDeviceProp prop;
+  handle_error(cudaGetDeviceProperties(&prop, n));
+  cout << "CuDNN Device Number: " << n << endl;
+  cout << "Device name: " << prop.name;
+  
 }
 
 void Handler::s_init() {
