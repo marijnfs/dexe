@@ -10,6 +10,8 @@ const bool ZERO_ON_INIT(true);
 
 struct TensorShape {
 	int n, c, w, h;
+
+  int offset(int n, int c, int y, int x);
 };
 
 template <typename F>
@@ -34,7 +36,6 @@ struct Tensor {
 
 	void reshape(TensorShape shape);
 	void reshape(int n, int c, int w, int h);
-  int offset(int n, int c, int y, int x);
   
 	F sum();
 	F norm();
@@ -43,7 +44,9 @@ struct Tensor {
   	int size() const;
 	TensorShape shape() const;
 
-	F *ptr() { return data; }
+  	F *ptr() { return data; }
+    F *ptr(int n_, int c_ = 0, int y_ = 0, int x_ = 0) {return data + n_ * (c * w * h) + c_ * (w * h) + y_ * w + x_; }
+   
 
 	int n, c, w, h;
 	bool allocated;

@@ -8,6 +8,9 @@
 
 using namespace std;
 
+int TensorShape::offset(int n_, int c_, int y_, int x_) {
+  return n_ * (c * w * h) + c_ * (w * h) + y_ * w + x_;
+}
 
 template <>
 Tensor<float>::Tensor(int n_, int c_, int w_, int h_):
@@ -307,11 +310,6 @@ void Tensor<F>::write_img(string filename) {
 template <typename F>
 TensorShape Tensor<F>::shape() const {
 	return TensorShape{n, c, w, h};
-}
-
-template <typename F>
-int Tensor<F>::offset(int n_, int c_, int y_, int x_) {
-  return n_ * (c * w * h) + c_ * (w * h) + y_ * w + x_;
 }
 
 template <typename F>
