@@ -34,7 +34,8 @@ struct Tensor {
 
 	void reshape(TensorShape shape);
 	void reshape(int n, int c, int w, int h);
-
+  int offset(int n, int c, int y, int x);
+  
 	F sum();
 	F norm();
 	F norm2();
@@ -43,7 +44,6 @@ struct Tensor {
 	TensorShape shape() const;
 
 	F *ptr() { return data; }
-
 
 	int n, c, w, h;
 	bool allocated;

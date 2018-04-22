@@ -310,6 +310,11 @@ TensorShape Tensor<F>::shape() const {
 }
 
 template <typename F>
+int Tensor<F>::offset(int n_, int c_, int y_, int x_) {
+  return n_ * (c * w * h) + c_ * (w * h) + y_ * w + x_;
+}
+
+template <typename F>
 TensorSet<F>::TensorSet(int n_, int c_, int w_, int h_) :
 	n(n_), c(c_), w(w_), h(h_), x(n_, c_, w_, h_), grad(n_, c_, w_, h_)
 {
@@ -324,6 +329,8 @@ template <typename F>
 TensorShape TensorSet<F>::shape() const {
 	return x.shape();
 }
+
+
 
 template <>
 FilterBank<float>::FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T_):
