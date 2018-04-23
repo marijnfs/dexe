@@ -146,29 +146,33 @@ inline void handle_error(cudaError_t err) {
 
 
 inline void handle_error(cudnnStatus_t status) {
-	switch(status) {
-	    case CUDNN_STATUS_SUCCESS:
-			break;
-		case CUDNN_STATUS_NOT_INITIALIZED:
-			throw StringException("CUDNN_STATUS_NOT_INITIALIZED");
-		case CUDNN_STATUS_ALLOC_FAILED:
-			throw StringException("CUDNN_STATUS_ALLOC_FAILED");
-		case CUDNN_STATUS_ARCH_MISMATCH:
-			throw StringException("CUDNN_STATUS_ARCH_MISMATCH");
-		case CUDNN_STATUS_MAPPING_ERROR:
-			throw StringException("CUDNN_STATUS_MAPPING_ERROR");
-		case CUDNN_STATUS_EXECUTION_FAILED:
-			throw StringException("CUDNN_STATUS_EXECUTION_FAILED");
-		case CUDNN_STATUS_INTERNAL_ERROR:
-			throw StringException("CUDNN_STATUS_INTERNAL_ERROR");
-		case CUDNN_STATUS_NOT_SUPPORTED:
-			throw StringException("CUDNN_STATUS_NOT_SUPPORTED");
-		case CUDNN_STATUS_LICENSE_ERROR:
-			throw StringException("CUDNN_STATUS_LICENSE_ERROR");
-     	default:
-     		std::cerr << "err: " << status << std::endl;
-	     	throw StringException("SOME CUDNN ERROR");
-	}
+  switch(status) {
+  case CUDNN_STATUS_SUCCESS:
+    break;
+  case CUDNN_STATUS_NOT_INITIALIZED:
+    throw StringException("CUDNN_STATUS_NOT_INITIALIZED");
+  case CUDNN_STATUS_ALLOC_FAILED:
+    throw StringException("CUDNN_STATUS_ALLOC_FAILED");
+  case CUDNN_STATUS_BAD_PARAM:
+    throw StringException("CUDNN_STATUS_BAD_PARAM");
+  case CUDNN_STATUS_INTERNAL_ERROR:
+    throw StringException("CUDNN_STATUS_INTERNAL_ERROR");
+  case CUDNN_STATUS_INVALID_VALUE:
+    throw StringException("CUDNN_STATUS_INVALID_VALUE");
+  case CUDNN_STATUS_ARCH_MISMATCH:
+    throw StringException("CUDNN_STATUS_ARCH_MISMATCH");
+  case CUDNN_STATUS_MAPPING_ERROR:
+    throw StringException("CUDNN_STATUS_MAPPING_ERROR");
+  case CUDNN_STATUS_EXECUTION_FAILED:
+    throw StringException("CUDNN_STATUS_EXECUTION_FAILED");
+  case CUDNN_STATUS_NOT_SUPPORTED:
+    throw StringException("CUDNN_STATUS_NOT_SUPPORTED");
+  case CUDNN_STATUS_LICENSE_ERROR:
+    throw StringException("CUDNN_STATUS_LICENSE_ERROR");
+  default:
+    std::cerr << "err: " << status << std::endl;
+    throw StringException("SOME CUDNN ERROR");
+  }
 }
 
 template <typename F>
@@ -395,7 +399,7 @@ inline std::vector<T> byte_read_vec(std::istream &in) {
 
 template <typename T>
 void copy_cpu_to_gpu(T const *it_from, T *it_to, int n) {
-	handle_error( cudaMemcpy(it_to, it_from, n * sizeof(T), cudaMemcpyHostToDevice));
+  	handle_error( cudaMemcpy(it_to, it_from, n * sizeof(T), cudaMemcpyHostToDevice));
 }
 
 template <typename T>
