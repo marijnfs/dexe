@@ -103,5 +103,10 @@ inline std::ostream &operator<<(std::ostream &o, TensorShape s) {
 	return o << "[" << s.n << "," << s.c << "," << s.w << "," << s.h << "]";
 }
 
+template <typename F>
+inline std::ostream &operator<<(std::ostream &o, FilterBank<F> &f) {
+  return o << "[" << f.in_map << ">" << f.out_map << " " << f.kw << "x" << f.kh << " " << f.N << " " << f.T;
+}
+
 
 #endif

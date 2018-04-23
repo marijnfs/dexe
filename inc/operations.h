@@ -11,8 +11,8 @@
 #include "util.h"
 #include "cudaptr.h"
 
-//int const CONV_MAX_MEM = 0;
-int const CONV_MAX_MEM = 64 * 1024 * 1024;
+int const CONV_MAX_MEM = 0;
+//int const CONV_MAX_MEM = 64 * 1024 * 1024;
 
 
 template <typename F>

@@ -285,15 +285,15 @@ inline T l1_norm(std::vector<T> &v) {
 //normalize to mean 0, std 1
 template <typename T>
 inline void normalize(std::vector<T> *v) {
-	float mean(0);
-	for (size_t i(0); i < v->size(); ++i) mean += (*v)[i];
-	mean /= v->size();
-	for (size_t i(0); i < v->size(); ++i) (*v)[i] -= mean;
-	float var(0);
-	for (size_t i(0); i < v->size(); ++i) var += (*v)[i] * (*v)[i];
-	var = sqrt(var / (v->size() - 1));
-	std::cout << "std: " << var << std::endl;
-	for (size_t i(0); i < v->size(); ++i) (*v)[i] /= var;
+  auto it_b(v->begin()), it_e(v->end());
+  
+  float mean(0);
+  for (; it_b != it_e; ++it_b) mean += *it_b;
+  mean /= v->size();
+  float var(0);
+  for (it_b = v->begin(); it_b != it_e; ++it_b) var += *it_b * *it_b;
+  var = sqrt(var / (v->size() - 1));
+  for (it_b = v->begin(); it_b != it_e; ++it_b) *it_b /= var;
 }
 
 // template <typename T>
