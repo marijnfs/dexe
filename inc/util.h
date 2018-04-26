@@ -19,8 +19,8 @@
 #include <chrono>
 #include <thread>
 
-#include "handler.h"
-
+#include "handler.h"    
+#include "normalise.h"
 
 struct StringException : public std::exception {
 	StringException(std::string msg_): msg(msg_){}
@@ -31,10 +31,12 @@ struct StringException : public std::exception {
     oss << msg_ << " " << t << std::endl;
     msg = oss.str();
   }
-	char const* what() const throw() {return msg.c_str();}
-	~StringException() throw() {}
-	std::string msg;
-    };
+
+  char const* what() const throw() {return msg.c_str();}
+  ~StringException() throw() {}
+
+  std::string msg;
+};
 
 struct Timer {
   std::chrono::high_resolution_clock::time_point timepoint;
@@ -286,14 +288,58 @@ inline T l1_norm(std::vector<T> &v) {
 template <typename T>
 inline void normalize(std::vector<T> *v) {
   auto it_b(v->begin()), it_e(v->end());
-  
+
   float mean(0);
   for (; it_b != it_e; ++it_b) mean += *it_b;
   mean /= v->size();
+  for (it_b = v->begin(); it_b != it_e; ++it_b) *it_b -= mean;
   float var(0);
   for (it_b = v->begin(); it_b != it_e; ++it_b) var += *it_b * *it_b;
   var = sqrt(var / (v->size() - 1));
   for (it_b = v->begin(); it_b != it_e; ++it_b) *it_b /= var;
+}
+
+//normalize to mean 0, std 1
+template <typename T>
+inline void normalize_mt(std::vector<T> *v) {
+  auto it_b(v->begin()), it_e(v->end());
+
+  int n_core(8);
+  std::vector<T> m(n_core);
+  
+  float mean(0);
+  for (; it_b != it_e; ++it_b) mean += *it_b;
+  mean /= v->size();
+
+  {
+    std::vector<std::thread> workers;
+    for (int i = 0; i < n_core; i++) {
+      workers.push_back(std::thread([i, mean, &m, &v, n_core]() {
+            float var(0);
+            auto it_b(v->begin() + v->size() / n_core * i), it_e(i == (n_core - 1) ? v->end() : v->begin() + v->size() / n_core * (i+1));
+            for (; it_b != it_e; ++it_b) {
+              *it_b -= mean;
+              var += *it_b * *it_b;
+            }
+            m[i] = var;
+          }));
+    }
+    for (auto &w : workers) w.join();
+  }
+  float var = std::accumulate(m.begin(), m.end(), float(0));
+  var = sqrt(var / (v->size() - 1));
+
+  {
+    std::vector<std::thread> workers;
+    for (int i = 0; i < n_core; i++) {
+      workers.push_back(std::thread([i, var, &v, n_core]() {
+            float var(0);
+            auto it_b(v->begin() + v->size() / n_core * i), it_e(i == (n_core - 1) ? v->end() : v->begin() + v->size() / n_core * (i+1));
+            for (; it_b != it_e; ++it_b) *it_b /= var;
+          }));
+    }
+    for (auto &w : workers) w.join();
+  }
 }
 
 // template <typename T>

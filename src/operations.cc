@@ -136,7 +136,7 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
 	F alpha(1.0);
 
 	F alpha_bias(1), beta_bias(1);
-
+    //cout << input.shape() << " " << output.shape() << " " << filter_bank << endl;
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, algo, workspace, workspace_size, &beta, output.td, output.data));
 	// handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_FEATURE_MAP, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 	handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
@@ -403,6 +403,8 @@ void PoolingOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
 template <typename F>
 void PoolingOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta) {
 	F alpha(1.0);
+    //cout << in.shape() << " " << out.shape() << " " << in_grad.shape() << " " << out_grad.shape() << endl;
+    //cout << in.data << " " << out.data << " " << out_grad.data << " " << in_grad.data << endl;
 	handle_error( cudnnPoolingBackward(Handler::cudnn(), pool, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data) );
 }
 

@@ -84,12 +84,13 @@ void SoftmaxLoss<F>::calculate_loss(Tensor<F> &in, Tensor<F> &target, Tensor<F> 
     this->last_correct = 0;
 
 	//err.zero();
+    
 	err.from_tensor(target);
-	err -= in;
-	vector<F> errs = err.to_vector();
+    err -= in;
+    vector<F> errs = err.to_vector();
 	//cout << "calculate loss bla";
 	for (auto v : errs) {
-		//cout << "vv:" << (v * v) << " ";
+      //cout << "vv:" << (v * v) << " " << v << " ";
 		this->last_loss += v * v;
 	}
 	//cout << "err: " << err.to_vector() << endl;

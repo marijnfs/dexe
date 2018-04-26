@@ -56,8 +56,8 @@ void Network<F>::add_operation(Operation<F> *op) {
 
 template <typename F>
 void Network<F>::finish() {
-	loss_ptr = new SoftmaxLoss<F>(last(shapes).n, last(shapes).c);
-	//loss_ptr = new SquaredLoss<F>(last(shapes).n, last(shapes).c);
+  loss_ptr = new SoftmaxLoss<F>(last(shapes).n, last(shapes).c);
+  //loss_ptr = new SquaredLoss<F>(last(shapes).n, last(shapes).c);
 
 	for (size_t i(0); i < operations.size(); ++i)
 		operations[i]->forward_dry_run(tensors[i]->x, tensors[i+1]->x);
@@ -109,8 +109,8 @@ void Network<F>::calculate_average_loss() {
 
 template <typename F>
 void Network<F>::calculate_loss(Tensor<F> &target) {
-	assert_finished();
-	loss_ptr->calculate_loss(last(tensors)->x, target, last(tensors)->grad);
+  assert_finished();
+  loss_ptr->calculate_loss(last(tensors)->x, target, last(tensors)->grad);
 }
 
 template <typename F>

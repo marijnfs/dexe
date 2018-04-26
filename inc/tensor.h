@@ -5,6 +5,7 @@
 #include <vector>
 #include <iostream>
 #include "util.h"
+#include "normalise.h"
 
 const bool ZERO_ON_INIT(true);
 
@@ -33,7 +34,7 @@ struct Tensor {
 	void from_tensor(Tensor &in);
 	void fill(F val);
 	void write_img(std::string filename);
-
+   
 	void reshape(TensorShape shape);
 	void reshape(int n, int c, int w, int h);
   
@@ -105,7 +106,7 @@ inline std::ostream &operator<<(std::ostream &o, TensorShape s) {
 
 template <typename F>
 inline std::ostream &operator<<(std::ostream &o, FilterBank<F> &f) {
-  return o << "[" << f.in_map << ">" << f.out_map << " " << f.kw << "x" << f.kh << " " << f.N << " " << f.T;
+  return o << "[" << f.in_map << ">" << f.out_map << " " << f.kw << "x" << f.kh << " " << f.N << " " << f.T << "]";
 }
 
 

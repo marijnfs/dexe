@@ -9,7 +9,7 @@ template <typename F>
 struct Loss {
 	Loss(int n, int c);
 	
-	virtual void calculate_loss(Tensor<F> &in, std::vector<int> answers, Tensor<F> &err) = 0;
+  virtual void calculate_loss(Tensor<F> &in, std::vector<int> answers, Tensor<F> &err){};
 	virtual void calculate_loss(Tensor<F> &in, int answer, Tensor<F> &err);
 	virtual void calculate_loss(Tensor<F> &in, Tensor<F> &target, Tensor<F> &err) = 0;
 	virtual void calculate_average_loss(Tensor<F> &in, Tensor<F> &err) { throw StringException("not implemented"); }
