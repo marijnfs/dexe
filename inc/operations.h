@@ -69,8 +69,8 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 
 	~ConvolutionOperation();
 
-	void init_normal(F mean, F std);
-	void init_uniform(F var);
+	virtual void init_normal(F mean, F std);
+	virtual void init_uniform(F var);
 
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 
@@ -131,13 +131,16 @@ struct ConvolutionShiftOperation : public ConvolutionOperation<F> {
 };
 
 template <typename F>
-struct SquashOperation : ConvolutionOperation<F> {
+struct SquashOperation : public ConvolutionOperation<F> {
 	SquashOperation(TensorShape s, int c);
 	TensorShape output_shape(TensorShape input);
 
 	int c;
     
 	void describe(std::ostream &out) { out << "squash"; }
+    void init_normal(F mean, F std);
+    void init_uniform(F var);
+
 };
 
 template <typename F>

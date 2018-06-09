@@ -388,6 +388,20 @@ TensorShape SquashOperation<F>::output_shape(TensorShape in) {
 }
 
 template <typename F>
+void SquashOperation<F>::init_normal(F mean, F std) {
+  this->filter_bank.init_normal(mean, std / (this->kw * this->kh));
+	//bias.init_normal(mean, std);
+}
+
+template <typename F>
+void SquashOperation<F>::init_uniform(F var) {
+  this->filter_bank.init_uniform(var * (this->kw * this->kh));
+//bias.init_uniform(var);
+}
+
+
+
+template <typename F>
 PoolingOperation<F>::PoolingOperation(int kw_, int kh_) : kw(kw_), kh(kh_) {
 	handle_error( cudnnCreatePoolingDescriptor(&pool) );
 
