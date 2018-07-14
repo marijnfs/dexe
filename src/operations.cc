@@ -395,17 +395,18 @@ void SquashOperation<F>::init_normal(F mean, F std) {
 
 template <typename F>
 void SquashOperation<F>::init_uniform(F var) {
-  this->filter_bank.init_uniform(var * (this->kw * this->kh));
-//bias.init_uniform(var);
+  //this->filter_bank.init_uniform(var * (this->kw * this->kh));
+  this->filter_bank.init_uniform(var);
+  //bias.init_uniform(var);
 }
 
 
 
 template <typename F>
-PoolingOperation<F>::PoolingOperation(int kw_, int kh_) : kw(kw_), kh(kh_) {
+PoolingOperation<F>::PoolingOperation(int kw_, int kh_, cudnnPoolingMode_t mode) : kw(kw_), kh(kh_) {
 	handle_error( cudnnCreatePoolingDescriptor(&pool) );
 
-	cudnnSetPooling2dDescriptor(pool, CUDNN_POOLING_MAX, CUDNN_NOT_PROPAGATE_NAN, kw, kh, 0, 0, kw, kh);
+	cudnnSetPooling2dDescriptor(pool, mode, CUDNN_NOT_PROPAGATE_NAN, kw, kh, 0, 0, kw, kh);
 }
 
 template <typename F>

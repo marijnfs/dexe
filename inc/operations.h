@@ -80,7 +80,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	void l2(F l);
 	void zero_grad();
 	void scale_grad(F val);
-	void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F>> &grads, std::vector<CudaPtr<F> > &fast_grads);
+	void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F>> &grads, std::vector<CudaPtr<F> > &fast_grads) override;
 	void share(ConvolutionOperation<F> &other);
 
 	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
@@ -156,7 +156,7 @@ struct GateOperation : public Operation2<F> {
 
 template <typename F>
 struct PoolingOperation : public Operation<F> {
-	PoolingOperation(int kw, int kh);
+  PoolingOperation(int kw, int kh, cudnnPoolingMode_t mode = CUDNN_POOLING_MAX);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
 	void describe(std::ostream &out) { out << "pool " << kw << "x" << kh; }

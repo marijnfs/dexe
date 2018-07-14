@@ -6,8 +6,8 @@
 #include "util.h"
 
 struct CudaVec {
-	float *data;
-	int n;
+	float *data = 0;
+	int n = 0;
 
 	CudaVec() : data(0), n(0) { }
 	CudaVec(int n_) : data(0), n(0) { resize(n_); }
@@ -19,9 +19,10 @@ struct CudaVec {
 	}	  
 	void resize(int n2) {
 		if (n != n2) {
-          if (n)
+          if (n) {
             std::cout << "freeing " << n << std::endl;
-          cudaFree(data);
+            cudaFree(data);
+          }
           std::cout <<"allocating " << n2 << std::endl;
           handle_error( cudaMalloc( (void**)&data, sizeof(float) * n2));
           n = n2;
@@ -30,14 +31,17 @@ struct CudaVec {
 	}
 
 	CudaVec(CudaVec &other) {
-	  //CudaVec &operator=(CudaVec &other) {
-	  if (n != other.n) {
-	    resize(other.n);
-	  }
-	  n = other.n;
-	  copy_gpu_to_gpu(other.data, data, n);
+      resize(other.n);  
+      copy_gpu_to_gpu(other.data, data, n);
 	}
 
+  CudaVec &operator=(CudaVec &other) {
+    if (n != other.n) {
+      resize(other.n);
+    }
+    copy_gpu_to_gpu(other.data, data, n);
+  }
+    
 	void rand_zero(float p);
 
 	void zero(int offset = 0) {
@@ -64,7 +68,14 @@ struct CudaVec {
 		handle_error( cudaMemcpy(data, &vec[0], n * sizeof(float), cudaMemcpyHostToDevice));
 	}
 
-
+  float sum() {
+    float result(0);
+    handle_error( cublasSasum(Handler::cublas(), n, data, 1, &result) );
+    return result;
+  }
+  
+  
+  
 	CudaVec &sqrt();
 	CudaVec &abs();
 	CudaVec &pow(float e);
@@ -75,7 +86,8 @@ struct CudaVec {
 	CudaVec &operator-=(CudaVec &other);
 	CudaVec &operator+=(CudaVec &other);
 	CudaVec &operator*=(CudaVec &other);
-	CudaVec &operator/=(CudaVec &other);
+  CudaVec &operator/=(CudaVec &other);
+  CudaVec &operator/=(float val);
 
 
 	CudaVec &operator*=(float v);

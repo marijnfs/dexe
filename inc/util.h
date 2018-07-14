@@ -182,6 +182,7 @@ inline void add_cuda(F const *from, F *to, int n, F const alpha);
 
 template <>
 inline void add_cuda(float const *from, float *to, int n, float const alpha) {
+  std::cout << from << " " << to << " " << n << " " << alpha << std::endl;
   handle_error(cublasSaxpy(Handler::cublas(), n, &alpha, from, 1, to, 1));
 }
 
