@@ -40,6 +40,7 @@ struct CudaVec {
       resize(other.n);
     }
     copy_gpu_to_gpu(other.data, data, n);
+    return *this;
   }
     
 	void rand_zero(float p);
