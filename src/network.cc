@@ -48,6 +48,21 @@ void Network<F>::add_softmax() {
 }
 
 template <typename F>
+void Network<F>::add_unsquash(TensorShape shape) {
+  add_operation(new UnsquashOperation<F>(shape));
+}
+
+template <typename F>
+void Network<F>::add_merge() {
+  add_operation(new MergeOperation<F>());
+}
+
+template <typename F>
+void Network<F>::add_split() {
+  add_operation(new SplitOperation<F>());
+}
+
+template <typename F>
 void Network<F>::add_operation(Operation<F> *op) {
 	operations.push_back(op);
 	shapes.push_back(last(operations)->output_shape(last(shapes)));

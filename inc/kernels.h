@@ -2,6 +2,13 @@
 #define __GATE_H__
 
 #include "tensor.h"
+
+__global__ void split_kernelf(int const N, int const C, int const X, int const Y, float const *input, float *out);
+__global__ void merge_kernelf(int const N, int const C, int const X, int const Y, float const *input, float *out);
+
+void split(Tensor<float> &a, Tensor<float> &out);
+void merge(Tensor<float> &a, Tensor<float> &out);
+
 __global__ void gate_kernelf(int N, float const *a, float const *b, float *out);
 __global__ void gate_kerneld(int N, double const *a, double const *b, double *out);
 

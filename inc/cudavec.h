@@ -45,7 +45,7 @@ struct CudaVec {
     
 	void rand_zero(float p);
 
-	void zero(int offset = 0) {
+  void zero(int offset = 0) {
 		handle_error( cudaMemset(data + offset, 0, sizeof(float) * (n - offset) ) );
 	}
 

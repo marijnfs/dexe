@@ -305,7 +305,8 @@ ConvolutionShiftOperation<F>::ConvolutionShiftOperation(int in_map, int out_map,
 
 template <typename F>
 ConvolutionShiftOperation<F>::~ConvolutionShiftOperation() {
-	ConvolutionOperation<F>::~ConvolutionOperation();
+  //ConvolutionOperation<F>::~ConvolutionOperation<F>();
+  throw "todo";
 }
 
 
@@ -400,6 +401,71 @@ void SquashOperation<F>::init_uniform(F var) {
   //bias.init_uniform(var);
 }
 
+////////////////// Unsquash
+
+template <typename F>
+UnsquashOperation<F>::UnsquashOperation(TensorShape s_) : s(s_) {
+
+}
+
+template <typename F>
+TensorShape UnsquashOperation<F>::output_shape(TensorShape in) {
+  return s;
+}
+
+template <typename F>
+void UnsquashOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
+  out.from_tensor(in);
+}
+
+template <typename F>
+void UnsquashOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta) {
+  in_grad.from_tensor(out_grad);
+}
+
+////////////////// Merge
+
+template <typename F>
+MergeOperation<F>::MergeOperation() {
+}
+
+template <typename F>
+TensorShape MergeOperation<F>::output_shape(TensorShape in) {
+  return TensorShape{in.n, in.c / 4, in.w * 2, in.h * 2};
+}
+
+template <typename F>
+void MergeOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
+  merge(in, out);
+}
+
+template <typename F>
+void MergeOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta) {
+  split(out_grad, in_grad);
+}
+
+////////////////// Split
+
+template <typename F>
+SplitOperation<F>::SplitOperation() {
+  
+}
+
+template <typename F>
+TensorShape SplitOperation<F>::output_shape(TensorShape in) {
+  return TensorShape{in.n, in.c * 4, in.w / 2, in.h / 2};
+}
+
+template <typename F>
+void SplitOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
+  split(in, out);
+}
+
+template <typename F>
+void SplitOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta) {
+  merge(out_grad, in_grad);
+}
+
 
 
 template <typename F>
@@ -482,7 +548,7 @@ TensorShape SigmoidOperation<F>::output_shape(TensorShape in) {
 template <typename F>
 ReluOperation<F>::ReluOperation() {
 	cudnnCreateActivationDescriptor(&desc);
-	cudnnSetActivationDescriptor(desc, CUDNN_ACTIVATION_RELU, CUDNN_NOT_PROPAGATE_NAN, 1.);
+	cudnnSetActivationDescriptor(desc, CUDNN_ACTIVATION_RELU, CUDNN_NOT_PROPAGATE_NAN, 0.);
 }
 
 template <typename F>

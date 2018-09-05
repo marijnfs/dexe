@@ -144,6 +144,42 @@ struct SquashOperation : public ConvolutionOperation<F> {
 };
 
 template <typename F>
+struct UnsquashOperation : public Operation<F> {
+  UnsquashOperation(TensorShape s);
+
+  TensorShape output_shape(TensorShape input);
+  void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
+  void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+  
+  void describe(std::ostream &out) { out << "squash"; }
+  
+  TensorShape s;
+};
+
+template <typename F>
+struct MergeOperation : public Operation<F> {
+  MergeOperation();
+
+  TensorShape output_shape(TensorShape input);
+  void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
+  void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+  
+  void describe(std::ostream &out) { out << "squash"; }
+};
+
+template <typename F>
+struct SplitOperation : public Operation<F> {
+  SplitOperation();
+
+  TensorShape output_shape(TensorShape input);
+  void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
+  void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+  
+  void describe(std::ostream &out) { out << "squash"; }
+};
+
+
+template <typename F>
 struct GateOperation : public Operation2<F> {
 	//GateOperation() {}
 	TensorShape output_shape(TensorShape input);

@@ -22,6 +22,10 @@ struct Network {
 	void add_relu();
 	void add_softmax();
 
+  void add_unsquash(TensorShape shape);
+  void add_merge();
+  void add_split();
+  
 	void add_operation(Operation<F> *op);
 	void finish();
 	void assert_finished();
