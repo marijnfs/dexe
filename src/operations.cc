@@ -619,6 +619,10 @@ TensorShape SoftmaxOperation<F>::output_shape(TensorShape in) {
 template struct ConvolutionOperation<float>;
 template struct ConvolutionShiftOperation<float>;
 template struct SquashOperation<float>;
+template struct UnsquashOperation<float>;
+template struct MergeOperation<float>;
+template struct SplitOperation<float>;
+
 template struct PoolingOperation<float>;
 template struct TanhOperation<float>;
 template struct SigmoidOperation<float>;

@@ -8,8 +8,8 @@ __global__ void split_kernelf(int const N, int const C, int const X, int const Y
     int xdiff = i % 2;
     int x = (i % X) / 2;
     int ii = i / X;
-    int ydiff = i % 2;
-    int y = (i % Y) / 2;
+    int ydiff = ii % 2;
+    int y = (ii % Y) / 2;
     ii /= Y;
     
 	out[ii * X * Y + (ydiff * 2 + xdiff) * (X * Y / 4) + y * X / 2 + x] = input[i];
@@ -37,7 +37,7 @@ __global__ void merge_kernelf(int const N, int const C, int const X, int const Y
     int c = i / X / Y;
     int xdiff = c % 2;
     int ydiff = (c / 2) % 2;
-    int cc = (c / 4) * 4;
+    int cc = c / 4;
     out[cc * X * Y * 4 + (y * 2 + ydiff) * X + x * 2 + xdiff] = input[i];
 }
 
