@@ -38,7 +38,7 @@ __global__ void merge_kernelf(int const N, int const C, int const X, int const Y
     int xdiff = c % 2;
     int ydiff = (c / 2) % 2;
     int cc = c / 4;
-    out[cc * X * Y * 4 + (y * 2 + ydiff) * X + x * 2 + xdiff] = input[i];
+    out[cc * X * Y * 4 + (y * 2 + ydiff) * X * 2 + x * 2 + xdiff] = input[i];
 }
 
 void merge(Tensor<float> &a, Tensor<float> &out) {
