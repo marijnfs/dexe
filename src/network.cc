@@ -106,14 +106,16 @@ void Network<F>::forward() {
 
 template <typename F>
 F Network<F>::calculate_loss(int label) {
-	assert_finished();
+  throw "";
+  assert_finished();
 	loss_ptr->calculate_loss(last(tensors)->x, label, last(tensors)->grad);
     return loss();
 }
 
 template <typename F>
 F Network<F>::calculate_loss(std::vector<int> &labels) {
-	assert_finished();
+  throw "";
+  assert_finished();
 	loss_ptr->calculate_loss(last(tensors)->x, labels, last(tensors)->grad);
     return loss();
 }
@@ -127,15 +129,17 @@ void Network<F>::calculate_average_loss() {
 template <typename F>
 F Network<F>::calculate_loss(Tensor<F> &target) {
   assert_finished();
+  //cout << "target: " << target.to_vector() << endl;
   last(tensors)->grad.from_tensor(target);
   last(tensors)->grad -= last(tensors)->x;
+  last(tensors)->grad *= 1.0 / target.size();
   // last(volumes)->diff.from_volume(last(volumes)->x);
   // last(volumes)->diff -= target;
   
   float norm = last(tensors)->grad.norm2() * 0.5;
 	//float norm = last(volumes)->diff.norm();
 	//return norm;
-	return norm / target.size();
+	return norm;
 
     //loss_ptr->calculate_loss(last(tensors)->x, target, last(tensors)->grad);
     //return loss();

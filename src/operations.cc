@@ -151,7 +151,7 @@ void ConvolutionOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> 
 
 template <typename F>
 void ConvolutionOperation<F>::backward_weights(Tensor<F> &input, Tensor<F> &output_grad, F beta) {
-	F alpha_bias(1.0), beta_bias(beta);
+  F alpha_bias(1.0), beta_bias(beta / input.size());
 	handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, output_grad.td, output_grad.data, &beta_bias, bias_grad.td, bias_grad.data) );
 
 	F alpha(1.0);

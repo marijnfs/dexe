@@ -33,7 +33,7 @@ struct Tensor {
 	void from_ptr(F const *in);
 	void from_tensor(Tensor &in);
 	void fill(F val);
-	void write_img(std::string filename);
+  void write_img(std::string filename, int c = 0);
    
 	void reshape(TensorShape shape);
 	void reshape(int n, int c, int w, int h);
@@ -60,7 +60,7 @@ Tensor<F> &operator-=(Tensor<F> &in, Tensor<F> const &other);
 
 template <typename F>
 inline Tensor<F> &operator*=(Tensor<F> &in, float const other) {
-	scale_cuda<F>(in.data, in.n, other);
+  scale_cuda<F>(in.data, in.size(), other);
 	return in;
 }
 

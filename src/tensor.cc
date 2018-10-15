@@ -298,13 +298,12 @@ double Tensor<double>::sum() {
 }
 
 template <typename F>
-void Tensor<F>::write_img(string filename) {
-  int c = 0;
+void Tensor<F>::write_img(string filename, int c) {
 	vector<F> v = to_vector();
 	vector<float> vf(v.size());
 
 	for (size_t i(0); i < w * h; ++i)
-      vf[i] = v[i];
+      vf[i] = v[i + c * w * h];
 	::write_img1c(filename, w, h, &vf[0]);
 }
 
