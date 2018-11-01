@@ -196,13 +196,12 @@ inline void scale_cuda(F *data, int n, F const alpha);
 
 template <>
 inline void scale_cuda(float *data, int n, float const alpha) {
-  std::cout << "is this called? " << n << std::endl;
-	handle_error( cublasSscal(Handler::cublas(), n, &alpha, data, 1) );
+  handle_error( cublasSscal(Handler::cublas(), n, &alpha, data, 1) );
 }
 
 template <>
 inline void scale_cuda(double *data, int n, double const alpha) {
-	handle_error( cublasDscal(Handler::cublas(), n, &alpha, data, 1) );
+  handle_error( cublasDscal(Handler::cublas(), n, &alpha, data, 1) );
 }
 
 /* template <typename T> */
