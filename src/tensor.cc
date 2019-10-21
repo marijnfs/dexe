@@ -304,7 +304,8 @@ void Tensor<F>::write_img(string filename, int c) {
 
 	for (size_t i(0); i < w * h; ++i)
       vf[i] = v[i + c * w * h];
-	::write_img1c(filename, w, h, &vf[0]);
+  throw std::runtime_error("Not implemented");
+	// ::write_img1c(filename, w, h, &vf[0]);
 }
 
 template <typename F>
@@ -436,7 +437,8 @@ void FilterBank<float>::draw_filterbank(string filename) {
 			}
 
 
-	write_img1c(filename, sqrt_n_filters * kw, sqrt_n_filters * kh, &values[0]);
+	// write_img1c(filename, sqrt_n_filters * kw, sqrt_n_filters * kh, &values[0]);
+	throw std::runtime_error("Not implemented");
 }
 
 template <typename F>

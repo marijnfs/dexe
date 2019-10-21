@@ -21,6 +21,7 @@ struct Tensor {
 	Tensor(int n, int c, int w, int h, F *data);
 	Tensor(TensorShape shape);
 	Tensor(TensorShape shape, F *data);
+
 	~Tensor();
 
 	void init_normal(F mean, F std);
