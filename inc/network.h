@@ -4,16 +4,28 @@
 
 #include <iostream>
 #include <vector>
+#include <functional>
+
 #include "util.h"
 #include "tensor.h"
 #include "operations.h"
 #include "loss.h"
 #include "cudavec.h"
 
+
+struct Node {
+		int index = 0;
+
+};
+
 template <typename F>
 struct Network {
+	Network(){}
 	Network(TensorShape in);
 	~Network();
+
+
+	std::function<Node(Node)> convolution(int k);
 
 	void add_conv(int outmap, int kw, int kh);
 	void add_pool(int kw, int kh);
@@ -71,9 +83,11 @@ struct Network {
 	F loss();
 	F n_correct();
 
+	std::vector<std::string> names;
+	std::vector<std::unique_ptr<Operation<F>>> operations;
+	std::vector<std::unique_ptr<TensorSet<F>>> tensors;
+
 	std::vector<Parametrised<F>*> params;
-	std::vector<Operation<F>*> operations;
-	std::vector<TensorSet<F>*> tensors;
 	std::vector<TensorShape> shapes;
 
 	CudaVec param_vec, grad_vec;

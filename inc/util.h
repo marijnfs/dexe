@@ -482,4 +482,6 @@ __global__ void unshift_kernel(int X, int Y, int C, float const *in, float *out,
 void shift(float const *in, float *out, int X, int Y, int C, int dx, int dy, float const beta);
 void unshift(float const *in, float *out, int X, int Y, int C, int dx, int dy, float const beta);
 
+
+
 #endif

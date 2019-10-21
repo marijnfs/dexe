@@ -10,18 +10,14 @@ if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
 endif()
 
 find_package(CUDA QUIET REQUIRED)
+find_library(CUDNN cudnn HINTS /usr/local/cuda/lib64 /usr/local/cuda/lib)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-#list(APPEND CUDA_NVCC_FLAGS "-arch=sm_30;-std=c++11;-O2;-DVERBOSE")
 
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_60 -std=c++11")
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
-#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11")
-#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11")
-#set(CMAKE_CXX_COMPILER "nvcc")
 
 # Specify include directories
 include_directories(
@@ -39,10 +35,17 @@ file(GLOB CPP_HEADERS inc/*.h)
 #set_property(SOURCE ${CU_SOURCE} PROPERTY COMPILE_FLAGS -O3)
 #set_property(SOURCE ${CPP_HEADERS} PROPERTY COMPILE_FLAGS -O3)
 
+
+
 cuda_add_library(mcdnn ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
 target_link_libraries( mcdnn
-	-lcudnn ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES}
+	 ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES}
 )
+
+
+add_executable(main main.cc)
+target_link_libraries(main mcdnn ${CUDNN})
+
 
 install(TARGETS mcdnn
 	LIBRARY DESTINATION /usr/local/lib

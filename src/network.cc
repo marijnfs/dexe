@@ -10,7 +10,7 @@ using namespace std;
 template <typename F>
 Network<F>::Network(TensorShape in) : loss_ptr(0), n_params(0), finished(false) {
 	shapes.push_back(in);
-	tensors.push_back(new TensorSet<F>(in));
+	tensors.emplace_back(new TensorSet<F>(in));
 }
 
 template <typename F>
@@ -64,9 +64,9 @@ void Network<F>::add_split() {
 
 template <typename F>
 void Network<F>::add_operation(Operation<F> *op) {
-	operations.push_back(op);
+	operations.emplace_back(op);
 	shapes.push_back(last(operations)->output_shape(last(shapes)));
-	tensors.push_back(new TensorSet<F>(last(shapes)));
+	tensors.emplace_back(new TensorSet<F>(last(shapes)));
 }
 
 template <typename F>
@@ -377,10 +377,16 @@ void Network<F>::position_params(float *pos_param, float *pos_grad) {
 
 template <typename F>
 Network<F>::~Network() {
-	del_vec(operations);
-	del_vec(tensors);
-	delete loss_ptr;
+}
+
+template <typename F>
+std::function<Node(Node)> Network<F>::convolution(int k) {
+	return [](Node n) {
+		return n;
+	};
 }
 
 template struct Network<float>;
 // template struct Network<double>;
+
+

@@ -98,7 +98,6 @@ struct FilterBank {
 	void draw_filterbank(std::string filename);
 
 	F *ptr(int n = 0) { return weights + n * N; }
-
 };
 
 inline std::ostream &operator<<(std::ostream &o, TensorShape s) {

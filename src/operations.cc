@@ -570,22 +570,6 @@ TensorShape ReluOperation<F>::output_shape(TensorShape in) {
 }
 
 template <typename F>
-void GateOperation<F>::forward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, F beta) {
-	gate(in, in2, out);
-}
-
-template <typename F>
-void GateOperation<F>::backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad, F beta) {
-	gate(out_grad, in2, in_grad);
-	gate(out_grad, in, in2_grad);
-}
-
-template <typename F>
-TensorShape GateOperation<F>::output_shape(TensorShape in) {
-	return in;
-}
-
-template <typename F>
 SoftmaxOperation<F>::SoftmaxOperation(bool matched_) : matched(matched_) {
 }
 
@@ -628,7 +612,6 @@ template struct TanhOperation<float>;
 template struct SigmoidOperation<float>;
 template struct ReluOperation<float>;
 template struct SoftmaxOperation<float>;
-template struct GateOperation<float>;
 
 template struct ConvolutionOperation<double>;
 template struct SquashOperation<double>;
@@ -637,4 +620,3 @@ template struct TanhOperation<double>;
 template struct SigmoidOperation<double>;
 template struct ReluOperation<double>;
 template struct SoftmaxOperation<double>;
-template struct GateOperation<double>;
