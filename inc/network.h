@@ -4,18 +4,20 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
 #include <functional>
 
 #include "util.h"
 #include "tensor.h"
 #include "operations.h"
-#include "loss.h"
 #include "cudavec.h"
 
-
+template <typename F>
 struct Node {
-		int index = 0;
+	Node(int index_, Operation<F> *op_) : index(index_), op(op_) {}
 
+	int index = -1; //-1 means undefined
+	Operation<F> *op;
 };
 
 template <typename F>
@@ -25,7 +27,9 @@ struct Network {
 	~Network();
 
 
-	std::function<Node(Node)> convolution(int k);
+	std::function<Node<F>(Node<F>)> convolution(int k, std::string name = "conv");
+	Node<F> input(std::string name = "input");
+
 
 	void add_conv(int outmap, int kw, int kh);
 	void add_pool(int kw, int kh);
@@ -44,10 +48,7 @@ struct Network {
 
 	void forward();
 	void forward(F const *cpu_data);
-	F calculate_loss(int label);
-	F calculate_loss(std::vector<int> &labels);
-	F calculate_loss(Tensor<F> &target);
-	void calculate_average_loss();
+
 	void backward(F const *cpu_data);
 	void backward();
 	void backward_data();
@@ -64,37 +65,40 @@ struct Network {
 
 	void register_params();
 	void align_params();
-	void position_params(float *pos_param, float *pos_grad);
+	void position_params(F *pos_param, F *pos_grad);
 
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &vec);
-	std::vector<F> fd_gradient(F const *cpu_data, int label, F e);
+	// std::vector<F> fd_gradient(F const *cpu_data, int label, F e);
 	std::vector<F> gradient();
 
 
-	Tensor<F> &output();
-	Tensor<F> &output_grad();
+	Tensor<F> *output();
+	Tensor<F> *output_grad();
   TensorShape output_shape() { return last(shapes); }
 
-  
-	Tensor<F> &input();
-	Tensor<F> &input_grad();
+  void add_operation(Operation<F> *op, std::vector<int> inputs, std::string name);
 
-	F loss();
-	F n_correct();
+	// Tensor<F> &input();
+	Tensor<F> *input_grad();
+
+	std::string get_unique_name(std::string name);
+
 
 	std::vector<std::string> names;
 	std::vector<std::unique_ptr<Operation<F>>> operations;
 	std::vector<std::unique_ptr<TensorSet<F>>> tensors;
+	std::vector<std::vector<int>> input_indices;
 
-	std::vector<Parametrised<F>*> params;
+	std::vector<Parametrised<F>*> parameters;
 	std::vector<TensorShape> shapes;
 
 	CudaVec param_vec, grad_vec;
 	std::vector<CudaPtr<F>> param_ptrs, grad_ptrs;
 	std::vector<CudaPtr<F>> fast_param_ptrs, fast_grad_ptrs;
 
-	Loss<F> *loss_ptr;
+	std::set<std::string> names_set;
+
 	int n_params;
 	bool finished;
 };

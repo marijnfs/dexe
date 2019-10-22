@@ -10,9 +10,13 @@
 const bool ZERO_ON_INIT(true);
 
 struct TensorShape {
-	int n, c, w, h;
+  int n = 0, c = 0, w = 0, h = 0;
+ 
+  TensorShape(){}
+  TensorShape(int n, int c, int w, int h);
 
   int offset(int n, int c, int y, int x);
+  int size();
 };
 
 template <typename F>
@@ -43,14 +47,13 @@ struct Tensor {
 	F norm();
 	F norm2();
 
-  	int size() const;
-	TensorShape shape() const;
+  	int size();
 
   	F *ptr() { return data; }
-    F *ptr(int n_, int c_ = 0, int y_ = 0, int x_ = 0) {return data + n_ * (c * w * h) + c_ * (w * h) + y_ * w + x_; }
+    F *ptr(int n_, int c_ = 0, int y_ = 0, int x_ = 0) {return data + shape.offset(n_, c_, y_, x_); }
    
 
-	int n, c, w, h;
+    TensorShape shape;
 	bool allocated;
 	cudnnTensorDescriptor_t td;
 	F *data;
@@ -67,13 +70,15 @@ inline Tensor<F> &operator*=(Tensor<F> &in, float const other) {
 
 template <typename F>
 struct TensorSet {
-	Tensor<F> x, grad;
+	std::unique_ptr<Tensor<F>> x, grad;
 
-	TensorSet(int n, int c, int w, int h);
 	TensorSet(TensorShape shape);
-	TensorShape shape() const;
+	TensorSet(){}
 
-	int n, c, w, h;
+	void alloc_x();
+	void alloc_grad();
+
+	TensorShape shape;
 };
 
 template <typename F>

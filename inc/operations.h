@@ -49,6 +49,11 @@ struct Parametrised {
 };
 
 template <typename F>
+struct InputOperation : public Operation<F> {
+	
+};
+
+template <typename F>
 struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);// 64*1024*1024);
 	ConvolutionOperation(std::string tmp, int in_map, int out_map, int kw, int kh, int z, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);//32*1024*1024);

@@ -23,7 +23,7 @@ void split(Tensor<float> &a, Tensor<float> &out) {
 	int dimBlock( BLOCKSIZE );
 	int dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
 
-    auto shape = a.shape();
+    auto shape = a.shape;
     split_kernelf<<<dimGrid, dimBlock>>>(s, shape.c, shape.w, shape.h, a.data, out.data);
 }
 
@@ -48,7 +48,7 @@ void merge(Tensor<float> &a, Tensor<float> &out) {
 	int dimBlock( BLOCKSIZE );
 	int dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
 
-    auto shape = a.shape();
+    auto shape = a.shape;
     merge_kernelf<<<dimGrid, dimBlock>>>(s, shape.c, shape.w, shape.h, a.data, out.data);
 }
 
