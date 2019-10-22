@@ -19,8 +19,12 @@ void test3() {
 
 	Network<float> net;
 
-	auto in1 = net.input();
-	auto node2 = net.convolution(3)(in1);
+	int in_c = 1;
+	auto in1 = net.input(in_c);
+	int next_c = 4;
+	int k = 3;
+	auto node2 = net.convolution(next_c, k)(in1);
+	auto added = net.addition()(in1, node2);
 	cout << "Done" << endl;
 }
 

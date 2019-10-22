@@ -96,8 +96,6 @@ inline void handle_error(cublasStatus_t status) {
 		throw StringException("SOME CUBLAS ERROR");
 
     }
-
-  throw StringException("<unknown>");
 }
 
 inline void handle_error(curandStatus_t status) {
@@ -135,8 +133,6 @@ inline void handle_error(curandStatus_t status) {
   default:
 	  throw StringException("SOME CURAND ERROR");
   }
-
-  throw StringException("Unknown error");
 }
 
 inline void handle_error(cudaError_t err) {

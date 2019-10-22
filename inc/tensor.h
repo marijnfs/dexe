@@ -28,6 +28,10 @@ struct Tensor {
 
 	~Tensor();
 
+	//Remove copy and assignment operator to be safe
+	Tensor<F> & operator=(const Tensor<F>&) = delete;
+    Tensor<F>(const Tensor<F>&) = delete;
+
 	void init_normal(F mean, F std);
 	void init_uniform(F var);
 	void zero();

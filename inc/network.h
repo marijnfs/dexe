@@ -13,11 +13,16 @@
 #include "cudavec.h"
 
 template <typename F>
+struct Network;
+
+template <typename F>
 struct Node {
-	Node(int index_, Operation<F> *op_) : index(index_), op(op_) {}
+	Node(int index_, Network<F> *network_) : index(index_), network(network_) {}
+
+	TensorShape shape() { return network->shapes[index]; }
 
 	int index = -1; //-1 means undefined
-	Operation<F> *op;
+	Network<F> *network = nullptr;
 };
 
 template <typename F>
@@ -26,9 +31,14 @@ struct Network {
 	Network(TensorShape in);
 	~Network();
 
+ 	int add_operation(Operation<F> *op, std::vector<int> inputs, std::string name, TensorShape shape);
 
-	std::function<Node<F>(Node<F>)> convolution(int k, std::string name = "conv");
-	Node<F> input(std::string name = "input");
+	std::function<Node<F>(Node<F>)> convolution(int out_c, int k, std::string name = "conv");
+	std::function<Node<F>(Node<F>)> relu(std::string name = "relu");
+	std::function<Node<F>(Node<F>, Node<F>)> addition(std::string name = "addition");
+	// std::function<Node<F>(Node<F>)> pool(std::string name = "pool");
+
+	Node<F> input(int n_channels, std::string name = "input");
 
 
 	void add_conv(int outmap, int kw, int kh);
@@ -77,7 +87,6 @@ struct Network {
 	Tensor<F> *output_grad();
   TensorShape output_shape() { return last(shapes); }
 
-  void add_operation(Operation<F> *op, std::vector<int> inputs, std::string name);
 
 	// Tensor<F> &input();
 	Tensor<F> *input_grad();

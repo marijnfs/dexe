@@ -334,33 +334,52 @@ string Network<F>::get_unique_name(string name) {
 }
 
 template <typename F>
-void Network<F>::add_operation(Operation<F> *op, vector<int> inputs, string name) {
+int Network<F>::add_operation(Operation<F> *op, vector<int> inputs, string name, TensorShape shape) {
+	int index = names.size();
 	auto unique_name = get_unique_name(name);
 	names.emplace_back(unique_name);
 	operations.emplace_back(op);
 	tensors.emplace_back(new TensorSet<F>);
-	shapes.emplace_back(TensorShape());
+	shapes.emplace_back(shape);
 	input_indices.emplace_back(inputs);
 
 	if (auto param = dynamic_cast<Parametrised<F>*>(op))
 		parameters.emplace_back(param);
+	return index;
 }
 
 
 template <typename F>
-std::function<Node<F>(Node<F>)> Network<F>::convolution(int k, string name) {
-	return [](Node<F> n) {
-		return n;
+std::function<Node<F>(Node<F>)> Network<F>::convolution(int out_c, int k, string name) {
+	return [this, out_c, k, name](Node<F> n) {
+		auto in_c = n.shape().c;
+		auto index = add_operation(new ConvolutionOperation<F>(in_c, out_c, k, k), vector<int>{n.index}, name, TensorShape{0, out_c, 0, 0});
+		return Node<F>(index, this);
+	};
+}
+template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::relu(string name) {
+	return [this, name](Node<F> n) {
+		auto in_c = n.shape().c;
+		auto index = add_operation(new ReluOperation<F>(), vector<int>{n.index}, name, TensorShape{0, in_c, 0, 0});
+
+		return Node<F>(index, this);
+	};
+}
+template <typename F>
+std::function<Node<F>(Node<F>, Node<F>)> Network<F>::addition(string name) {
+	return [this](Node<F> n1, Node<F> n2) {
+		return n1;
 	};
 }
 
 template <typename F>
-Node<F> Network<F>::input(string name) {
+Node<F> Network<F>::input(int n_channels, string name) {
 	int n = operations.size();
 	auto op = new InputOperation<F>();
 	operations.emplace_back(op);
 
-	return Node<F>(n, op);
+	return Node<F>(n, this);
 }
 
 template struct Network<float>;

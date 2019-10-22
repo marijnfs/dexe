@@ -305,8 +305,6 @@ ConvolutionShiftOperation<F>::ConvolutionShiftOperation(int in_map, int out_map,
 
 template <typename F>
 ConvolutionShiftOperation<F>::~ConvolutionShiftOperation() {
-  //ConvolutionOperation<F>::~ConvolutionOperation<F>();
-  throw "todo";
 }
 
 
