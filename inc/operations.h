@@ -132,7 +132,7 @@ struct SquashOperation : public ConvolutionOperation<F> {
 	TensorShape output_shape(TensorShape input);
 
 	int c;
-    
+
 	void describe(std::ostream &out) { out << "squash"; }
     void init_normal(F mean, F std);
     void init_uniform(F var);
@@ -196,6 +196,9 @@ struct TanhOperation : public Operation<F> {
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
 	void describe(std::ostream &out) { out << "tanh"; }
 
+	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+
 	TensorShape output_shape(TensorShape input);
 
 	cudnnActivationDescriptor_t desc;
@@ -209,6 +212,23 @@ struct SigmoidOperation : public Operation<F> {
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
 	void describe(std::ostream &out) { out << "sigmoid"; }
+
+	TensorShape output_shape(TensorShape input);
+	cudnnActivationDescriptor_t desc;
+
+	F scale;
+};
+
+template <typename F>
+struct AdditionOperation : public Operation<F> {
+  AdditionOperation();
+
+	void forward(Tensor<F> &in1, Tensor<F> &in2, Tensor<F> &out);
+	void backward(Tensor<F> &out_grad, Tensor<F> &in_grad1, Tensor<F> &in_grad2);
+	void describe(std::ostream &out) { out << "addition"; }
+
+	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
 
 	TensorShape output_shape(TensorShape input);
 	cudnnActivationDescriptor_t desc;

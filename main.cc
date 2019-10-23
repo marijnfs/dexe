@@ -25,6 +25,9 @@ void test3() {
 	int k = 3;
 	auto node2 = net.convolution(next_c, k)(in1);
 	auto added = net.addition()(in1, node2);
+
+
+	net.new_forward(vector<int>{0}, vector<int>{2});
 	cout << "Done" << endl;
 }
 

@@ -80,7 +80,7 @@ void ConvolutionOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<T
 
 template <typename F>
 bool ConvolutionOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
-	
+
 }
 
 template <typename F>
@@ -511,6 +511,16 @@ TanhOperation<F>::TanhOperation(F scale_) : scale(scale_) {
 }
 
 template <typename F>
+void TanhOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	forward(*in[0], *out[0]);
+}
+
+template <typename F>
+bool TanhOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	return false;
+}
+
+template <typename F>
 void TanhOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
   F alpha(1);
   handle_error( cudnnActivationForward(Handler::cudnn(), desc, &alpha, in.td, in.data, &beta, out.td, out.data));
@@ -528,6 +538,44 @@ template <typename F>
 TensorShape TanhOperation<F>::output_shape(TensorShape in) {
 	return in;
 }
+
+
+
+template <typename F>
+AdditionOperation<F>::AdditionOperation() {
+}
+
+template <typename F>
+void AdditionOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	forward(*in[0], *out[0]);
+}
+
+template <typename F>
+bool AdditionOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	return false;
+}
+
+template <typename F>
+void AdditionOperation<F>::forward(Tensor<F> &in1, Tensor<F> &in2, Tensor<F> &out) {
+  F alpha(1);
+
+  add_cuda(in1.ptr(), out.ptr(), in1.size(), 1.0);
+  add_cuda(in2.ptr(), out.ptr(), in2.size(), 1.0);
+}
+
+template <typename F>
+void AdditionOperation<F>::backward(Tensor<F> &out_grad, Tensor<F> &in_grad1, Tensor<F> &in_grad2) {
+  F alpha(1);
+  add_cuda(out_grad.ptr(), in_grad1.ptr(), out_grad.size(), 1.0);
+  add_cuda(out_grad.ptr(), in_grad2.ptr(), out_grad.size(), 1.0);
+}
+
+template <typename F>
+TensorShape AdditionOperation<F>::output_shape(TensorShape in) {
+	return in;
+}
+
+
 
 template <typename F>
 SigmoidOperation<F>::SigmoidOperation(F scale_) : scale(scale_) {
