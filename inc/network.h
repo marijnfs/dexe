@@ -40,28 +40,18 @@ struct Network {
 
 	Node<F> input(int n_channels, std::string name = "input");
 
+	void new_forward(std::vector<int> inputs, std::vector<int> outputs);
 
-	void add_conv(int outmap, int kw, int kh);
-	void add_pool(int kw, int kh);
-	void add_squash(int outmap);
-	void add_tanh();
-	void add_relu();
-	void add_softmax();
 
-  void add_unsquash(TensorShape shape);
-  void add_merge();
-  void add_split();
-  
-	void add_operation(Operation<F> *op);
 	void finish();
 	void assert_finished();
 
-	void forward();
-	void forward(F const *cpu_data);
+	//void forward();
+	//void forward(F const *cpu_data);
 
-	void backward(F const *cpu_data);
-	void backward();
-	void backward_data();
+	//void backward(F const *cpu_data);
+	//void backward();
+	//void backward_data();
 
 	void update(F lr);
 	void l2(F l);
@@ -89,14 +79,14 @@ struct Network {
 
 
 	// Tensor<F> &input();
-	Tensor<F> *input_grad();
+	// Tensor<F> *input_grad();
 
 	std::string get_unique_name(std::string name);
 
 
 	std::vector<std::string> names;
 	std::vector<std::unique_ptr<Operation<F>>> operations;
-	std::vector<std::unique_ptr<TensorSet<F>>> tensors;
+	std::vector<TensorSet<F>> tensors;
 	std::vector<std::vector<int>> input_indices;
 
 	std::vector<Parametrised<F>*> parameters;

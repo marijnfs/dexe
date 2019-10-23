@@ -72,6 +72,17 @@ ConvolutionOperation<F>::ConvolutionOperation(string dummy, int in_map_, int out
 	//handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
 }
 
+
+template <typename F>
+void ConvolutionOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	forward(*in[0], *out[0]);
+}
+
+template <typename F>
+bool ConvolutionOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	
+}
+
 template <typename F>
 void ConvolutionOperation<F>::update(F lr) {
 	// cout << filter_bank_grad.to_vector() << endl;

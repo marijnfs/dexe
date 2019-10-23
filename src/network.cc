@@ -4,71 +4,17 @@
 #include <algorithm>
 #include <iterator>
 #include <fstream>
+#include <queue>
+#include <set>
+#include <vector>
 
 using namespace std;
 
 template <typename F>
 Network<F>::Network(TensorShape in) : n_params(0), finished(false) {
 	shapes.push_back(in);
-	tensors.emplace_back(new TensorSet<F>(in));
+	tensors.emplace_back(in);
 }
-
-template <typename F>
-void Network<F>::add_conv(int outmap, int kw, int kh) {
-	ConvolutionOperation<F> *conv = new ConvolutionOperation<F>(last(shapes).c, outmap, kw, kh, true, 512 * 1024 * 1024);
-	add_operation(conv);
-	parameters.push_back(conv);
-}
-
-template <typename F>
-void Network<F>::add_pool(int kw, int kh) {
-	add_operation(new PoolingOperation<F>(kw, kh));
-}
-
-template <typename F>
-void Network<F>::add_squash(int c) {
-	SquashOperation<F> *squash = new SquashOperation<F>(last(shapes), c);
-	add_operation(squash);
-	parameters.push_back(squash);
-}
-
-template <typename F>
-void Network<F>::add_tanh() {
-	add_operation(new TanhOperation<F>());
-}
-
-template <typename F>
-void Network<F>::add_relu() {
-	add_operation(new ReluOperation<F>());
-}
-
-template <typename F>
-void Network<F>::add_softmax() {
-	add_operation(new SoftmaxOperation<F>());
-}
-
-template <typename F>
-void Network<F>::add_unsquash(TensorShape shape) {
-  add_operation(new UnsquashOperation<F>(shape));
-}
-
-template <typename F>
-void Network<F>::add_merge() {
-  add_operation(new MergeOperation<F>());
-}
-
-template <typename F>
-void Network<F>::add_split() {
-  add_operation(new SplitOperation<F>());
-}
-
-template <typename F>
-void Network<F>::add_operation(Operation<F> *op) {
-	operations.emplace_back(op);
-	shapes.push_back(last(operations)->output_shape(last(shapes)));
-	tensors.emplace_back(new TensorSet<F>(last(shapes)));
-}
-
 template <typename F>
 void Network<F>::finish() {
 	align_params();
@@ -80,32 +26,8 @@ void Network<F>::assert_finished() {
 		throw StringException("call network.finish() before using network");
 }
 
-template <typename F>
-void Network<F>::forward(F const *cpu_data) {
-	assert_finished();
-	first(tensors)->x->from_ptr(cpu_data);
 
-	forward();
-}
-
-template <typename F>
-void Network<F>::forward() {
-	assert_finished();
-
-	for (size_t i(0); i < operations.size(); ++i)
-		operations[i]->forward(*tensors[i]->x, *tensors[i+1]->x);
-}
-
-
-template <typename F>
-void Network<F>::backward(F const * cpu_data) {
-	assert_finished();
-	last(tensors)->grad->from_ptr(cpu_data);
-
-	backward();
-}
-
-
+/*
 template <typename F>
 void Network<F>::backward() {
 	assert_finished();
@@ -120,6 +42,7 @@ void Network<F>::backward_data() {
 	for (int i(operations.size() - 1); i >= 0; --i)
 		operations[i]->backward(*tensors[i]->x, *tensors[i+1]->x, *tensors[i+1]->grad, *tensors[i]->grad);
 }
+*/
 
 template <typename F>
 void Network<F>::update(F lr) {
@@ -227,29 +150,11 @@ vector<F> Network<F>::gradient() {
 	return full_grad;
 }
 
-template <typename F>
-Tensor<F> *Network<F>::output() {
-	assert_finished();
-	return last(tensors)->x.get();
-}
-
-template <typename F>
-Tensor<F> *Network<F>::output_grad() {
-	assert_finished();
-	return last(tensors)->grad.get();
-}
-
 // template <typename F>
 // Tensor<F> &Network<F>::input() {
 // 	assert_finished();
 // 	return tensors[0]->x;
 // }
-
-template <typename F>
-Tensor<F> *Network<F>::input_grad() {
-	assert_finished();
-	return tensors[0]->grad.get();
-}
 
 
 template <typename F>
@@ -339,7 +244,7 @@ int Network<F>::add_operation(Operation<F> *op, vector<int> inputs, string name,
 	auto unique_name = get_unique_name(name);
 	names.emplace_back(unique_name);
 	operations.emplace_back(op);
-	tensors.emplace_back(new TensorSet<F>);
+	tensors.emplace_back();
 	shapes.emplace_back(shape);
 	input_indices.emplace_back(inputs);
 
@@ -381,6 +286,46 @@ Node<F> Network<F>::input(int n_channels, string name) {
 
 	return Node<F>(n, this);
 }
+
+template <typename F>
+void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) {
+	set<int> visited;
+	vector<int> sequence;
+	queue<int> q;
+
+	for (auto o : outputs)
+		q.push(o);
+
+	while (!q.empty()) {
+		auto cur = q.front();
+		q.pop();
+
+		if (visited.count(cur))
+			continue;
+
+		visited.insert(cur);
+
+		//don't add leaf nodes to calculation sequence
+		if (input_indices[cur].size())
+			sequence.push_back(cur);
+		
+		for (auto idx : input_indices[cur])
+			q.push(idx);
+	}
+
+	//put calculation nodes in order
+	reverse(sequence.begin(), sequence.end());
+
+	for (auto s : sequence) {
+		vector<Tensor<F>*> inputs, outputs;
+		for (auto idx : input_indices[s])
+			inputs.push_back(tensors[idx].x.get());
+		outputs.push_back(tensors[s].x.get());
+
+		operations[s]->forward(inputs, outputs);
+	}
+}
+
 
 template struct Network<float>;
 // template struct Network<double>;

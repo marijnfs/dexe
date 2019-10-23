@@ -17,19 +17,21 @@ int const CONV_MAX_MEM = 0;
 
 template <typename F>
 struct Operation {
-	virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0){}
+	// virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0){}
 
-	virtual void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0){}
-	virtual void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0){}
+	// virtual void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0){}
+	// virtual void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0){}
+
 	virtual TensorShape output_shape(TensorShape input) { return TensorShape{0, 0, 0, 0}; }
 
-	virtual void forward_dry_run(Tensor<F> &in, Tensor<F> &out){}
+	virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { throw std::runtime_error("Not Implemented"); }
+	virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out){ throw std::runtime_error("Not Implemented"); }
 	virtual void describe(std::ostream &out){}
 
 
-	virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){ forward(in, out, beta); }
-	virtual void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0){}
-	virtual void backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, int t, F beta = 0.0){}
+	// virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){ forward(in, out, beta); }
+	// virtual void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0){}
+	// virtual void backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, int t, F beta = 0.0){}
 };
 
 template <typename F>
@@ -62,6 +64,9 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 
 	virtual void init_normal(F mean, F std);
 	virtual void init_uniform(F var);
+
+	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
 
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 
