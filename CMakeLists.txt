@@ -1,8 +1,8 @@
 # CMakeLists files in this project can
 # refer to the root source directory of the project as ${MCDNN_SOURCE_DIR} and
 
-cmake_minimum_required (VERSION 2.8.11)
-project (MCDNN)
+cmake_minimum_required (VERSION 3.0.0)
+project (DEXE)
 #SET(CMAKE_BUILD_TYPE CACHE RELEASE STRING "Build Type")
 
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
@@ -37,17 +37,23 @@ file(GLOB CPP_HEADERS inc/*.h)
 
 
 
-cuda_add_library(mcdnn ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
-target_link_libraries( mcdnn
+cuda_add_library(DEXE ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
+target_link_libraries( DEXE
 	 ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES}
 )
+install(TARGETS DEXE EXPORT DEXE-targets LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+install(FILES ${CPP_HEADERS} DESTINATION include/DEXE)
 
-
-add_executable(main main.cc)
-target_link_libraries(main mcdnn ${CUDNN})
-
-
-install(TARGETS mcdnn
-	LIBRARY DESTINATION /usr/local/lib
-	ARCHIVE DESTINATION /usr/local/lib
+# install export target and config for find_package
+install(EXPORT DEXE-targets DESTINATION lib/cmake/DEXE)
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+	"DEXEConfig.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/DEXEConfig.cmake"
+	INSTALL_DESTINATION "lib/cmake/DEXE"
 )
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DEXEConfig.cmake" DESTINATION "lib/cmake/DEXE")
+
+
+### Build the executable
+add_executable(main main.cc)
+target_link_libraries(main DEXE ${CUDNN})

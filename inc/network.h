@@ -75,7 +75,7 @@ struct Network {
 
 	Tensor<F> *output();
 	Tensor<F> *output_grad();
-  TensorShape output_shape() { return last(shapes); }
+	TensorShape output_shape() { return last(shapes); }
 
 
 	// Tensor<F> &input();
