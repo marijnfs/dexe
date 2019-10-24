@@ -1,7 +1,8 @@
 DEXE (Deep Execution Engine)
 ===============
+Developed by Marijn Stollenga. 
 
 A simple deep neural network execution engine.
-Developed by Marijn Stollenga. Previously named MCDNN.
+Previously named MCDNN.
 
-Licenses under Mozilla Public License Version 2.0, see LICENSE
+Licensed under Mozilla Public License Version 2.0, see LICENSE
