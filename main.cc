@@ -26,7 +26,9 @@ void test3() {
 	auto node2 = net.convolution(next_c, k)(in1);
 	auto added = net.addition()(in1, node2);
 
-
+	net.tensors[0].shape = TensorShape{1, 1, 64, 64};
+	net.tensors[0].alloc_x();
+	
 	net.new_forward(vector<int>{0}, vector<int>{2});
 	cout << "Done" << endl;
 }

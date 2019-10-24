@@ -19,7 +19,7 @@ template <typename F>
 struct Node {
 	Node(int index_, Network<F> *network_) : index(index_), network(network_) {}
 
-	TensorShape shape() { return network->shapes[index]; }
+	TensorShape shape();
 
 	int index = -1; //-1 means undefined
 	Network<F> *network = nullptr;

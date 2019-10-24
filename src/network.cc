@@ -11,6 +11,12 @@
 using namespace std;
 
 template <typename F>
+TensorShape Node<F>::shape() { 
+	cout << network->shapes.size() << endl;
+	return network->shapes[index]; 
+}
+
+template <typename F>
 Network<F>::Network(TensorShape in) : n_params(0), finished(false) {
 	shapes.push_back(in);
 	tensors.emplace_back(in);
@@ -247,7 +253,7 @@ int Network<F>::add_operation(Operation<F> *op, vector<int> inputs, TensorShape 
 	tensors.emplace_back();
 	shapes.emplace_back(shape);
 	input_indices.emplace_back(inputs);
-
+	cout << "added: " << names.size() << endl;
 	if (auto param = dynamic_cast<Parametrised<F>*>(op))
 		parameters.emplace_back(param);
 	return index;
@@ -257,6 +263,7 @@ int Network<F>::add_operation(Operation<F> *op, vector<int> inputs, TensorShape 
 template <typename F>
 std::function<Node<F>(Node<F>)> Network<F>::convolution(int out_c, int k, string name) {
 	return [this, out_c, k, name](Node<F> n) {
+		cout << "conf lambda: " << endl;
 		auto in_c = n.shape().c;
 		auto index = add_operation(new ConvolutionOperation<F>(in_c, out_c, k, k), vector<int>{n.index}, TensorShape{0, out_c, 0, 0}, name);
 		return Node<F>(index, this);
@@ -285,11 +292,8 @@ std::function<Node<F>(Node<F>, Node<F>)> Network<F>::addition(string name) {
 
 template <typename F>
 Node<F> Network<F>::input(int n_channels, string name) {
-	int n = operations.size();
-	auto op = new InputOperation<F>();
-	operations.emplace_back(op);
-
-	return Node<F>(n, this);
+	auto index = add_operation(new InputOperation<F>(), vector<int>{}, TensorShape{0, n_channels, 0, 0}, name);
+	return Node<F>(index, this);
 }
 
 template <typename F>
@@ -297,6 +301,12 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 	set<int> visited;
 	vector<int> sequence;
 	queue<int> q;
+
+	for (auto i : inputs)
+		if (!tensors[i].x) {
+			cerr << "Input tensor at index " << i << " is not set" << endl;
+			return;
+		}
 
 	for (auto o : outputs)
 		q.push(o);
@@ -323,22 +333,24 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 
 	//Forward Dryrun
 	for (auto s : sequence) {
-		vector<Tensor<F>*> inputs, outputs;
+		vector<Tensor<F>*> tmp_inputs, tmp_outputs;
 		for (auto idx : input_indices[s])
-			inputs.push_back(tensors[idx].x.get());
-		outputs.push_back(tensors[s].x.get());
+			tmp_inputs.push_back(tensors[idx].x.get());
 
-		operations[s]->forward_dry_run(inputs, outputs);
+		tensors[s].alloc_x();
+		tmp_outputs.push_back(tensors[s].x.get());
+
+		operations[s]->forward_dry_run(tmp_inputs, tmp_outputs);
 	}
 
 	//Run Forward
 	for (auto s : sequence) {
-		vector<Tensor<F>*> inputs, outputs;
+		vector<Tensor<F>*> tmp_inputs, tmp_outputs;
 		for (auto idx : input_indices[s])
-			inputs.push_back(tensors[idx].x.get());
-		outputs.push_back(tensors[s].x.get());
+			tmp_inputs.push_back(tensors[idx].x.get());
+		tmp_outputs.push_back(tensors[s].x.get());
 
-		operations[s]->forward(inputs, outputs);
+		operations[s]->forward(tmp_inputs, tmp_outputs);
 	}
 }
 

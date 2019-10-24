@@ -30,7 +30,7 @@ bool TensorShape::operator!=(TensorShape const &other) const {
 
 template <>
 Tensor<float>::Tensor(int n_, int c_, int w_, int h_):
-  shape(n_, w_, h_, c_), allocated(true)
+  shape(n_, c_, w_, h_), owning(true)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 
@@ -49,7 +49,7 @@ Tensor<float>::Tensor(int n_, int c_, int w_, int h_):
 
 template <>
 Tensor<float>::Tensor(int n_, int c_, int w_, int h_, float *data_):
-  shape(n_, w_, h_, c_), allocated(false), data(data_)
+  shape(n_, c_, w_, h_), owning(false), data(data_)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 	if (size() != 0) {
@@ -59,7 +59,7 @@ Tensor<float>::Tensor(int n_, int c_, int w_, int h_, float *data_):
 
 template <>
 Tensor<float>::Tensor(TensorShape s):
-  shape(s), allocated(true)
+  shape(s), owning(true)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 
@@ -77,7 +77,7 @@ Tensor<float>::Tensor(TensorShape s):
 
 template <>
 Tensor<float>::Tensor(TensorShape s, float *data_):
-  shape(s), allocated(false), data(data_)
+  shape(s), owning(false), data(data_)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 	if (shape.size() != 0) {
@@ -87,7 +87,7 @@ Tensor<float>::Tensor(TensorShape s, float *data_):
 
 template <>
 Tensor<double>::Tensor(int n_, int c_, int w_, int h_):
-  shape(n_, c_, w_, h_), allocated(true)
+  shape(n_, c_, w_, h_), owning(true)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 
@@ -104,6 +104,10 @@ Tensor<double>::Tensor(int n_, int c_, int w_, int h_):
 
 template <>
 void Tensor<float>::reshape(int n_, int c_, int w_, int h_) {
+	if (!owning) {
+		cerr << "Can't reshape non-owning tensor" << endl;
+	}
+
 	auto new_shape = TensorShape(n_, c_, w_, h_);
 	if (new_shape == shape)
 		return;
@@ -111,29 +115,22 @@ void Tensor<float>::reshape(int n_, int c_, int w_, int h_) {
 	//If sizes match but shapes don't, we don't want to deallocate
 	if (new_shape.size() != shape.size())
 	{
-		if (allocated) {
+		if (shape.size() != 0)
 			cudaFree(data);
-			allocated = false;
-		}
-	}
-	shape = new_shape;
 
-	// handle_error( cudnnDestroyTensorDescriptor(td));
-	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
-
-	if (!allocated) {
-		handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
+		handle_error( cudaMalloc( (void**)&data, sizeof(float) * new_shape.size()));
 		if (ZERO_ON_INIT)
 			zero();
 	}
+	shape = new_shape;
+	
+	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
 }
-
-
 
 
 template <>
 Tensor<double>::Tensor(int n_, int c_, int w_, int h_, double *data_):
-  shape(n_, w_, h_, c_), allocated(false), data(data_)
+  shape(n_, c_, w_, h_), owning(false), data(data_)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
@@ -141,7 +138,7 @@ Tensor<double>::Tensor(int n_, int c_, int w_, int h_, double *data_):
 
 template <>
 Tensor<double>::Tensor(TensorShape s):
-  shape(s), allocated(true)
+  shape(s), owning(true)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
@@ -155,6 +152,10 @@ Tensor<double>::Tensor(TensorShape s):
 
 template <>
 void Tensor<double>::reshape(int n_, int c_, int w_, int h_) {
+	if (!owning) {
+		cerr << "Can't reshape non-owning tensor" << endl;
+	}
+
 	auto new_shape = TensorShape(n_, c_, w_, h_);
 	if (new_shape == shape)
 		return;
@@ -162,26 +163,21 @@ void Tensor<double>::reshape(int n_, int c_, int w_, int h_) {
 	//If sizes match but shapes don't, we don't want to deallocate
 	if (new_shape.size() != shape.size())
 	{
-		if (allocated) {
+		if (shape.size() != 0)
 			cudaFree(data);
-			allocated = false;
-		}
-	}
-	shape = new_shape;
 
-	// handle_error( cudnnDestroyTensorDescriptor(td));
-	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
-
-	if (!allocated) {
-		handle_error( cudaMalloc( (void**)&data, sizeof(double) * size()));
+		handle_error( cudaMalloc( (void**)&data, sizeof(float) * new_shape.size()));
 		if (ZERO_ON_INIT)
 			zero();
 	}
+	shape = new_shape;
+	
+	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
 }
 
 template <>
 Tensor<double>::Tensor(TensorShape s, double *data_):
-  shape(s), allocated(false), data(data_)
+  shape(s), owning(false), data(data_)
 {
 	handle_error( cudnnCreateTensorDescriptor(&td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
@@ -190,7 +186,7 @@ Tensor<double>::Tensor(TensorShape s, double *data_):
 template <typename F>
 Tensor<F>::~Tensor() {
 	handle_error( cudnnDestroyTensorDescriptor(td));
-	if (allocated)
+	if (owning)
 	  cudaFree(data);
 }
 
@@ -339,21 +335,18 @@ TensorSet<F>::TensorSet(TensorShape shape_) : shape(shape_) {
 
 template <typename F>
 void TensorSet<F>::alloc_x() {
-	if (shape.size() == 0) {
-		cerr << "Warning, alloc_x: shape not set" << endl;
-		return;
-	}
-
-	x.reset(new Tensor<F>(shape));
+	if (x)
+		x->reshape(shape);
+	else
+		x.reset(new Tensor<F>(shape));
 }
 
 template <typename F>
 void TensorSet<F>::alloc_grad() {
-	if (shape.size() == 0) {
-		cerr << "Warning, alloc_grad: shape not set" << endl;
-		return;
-	}
-	grad.reset(new Tensor<F>(shape));
+	if (grad)
+		grad->reshape(shape);
+	else
+		grad.reset(new Tensor<F>(shape));
 }
 
 template <>

@@ -60,7 +60,7 @@ struct Tensor {
    
 
     TensorShape shape;
-	bool allocated;
+	bool owning = false;
 	cudnnTensorDescriptor_t td;
 	F *data;
 };
@@ -112,12 +112,12 @@ struct FilterBank {
 };
 
 inline std::ostream &operator<<(std::ostream &o, TensorShape s) {
-	return o << "[" << s.n << "," << s.c << "," << s.w << "," << s.h << "]";
+	return o << "[n: " << s.n << ", c:" << s.c << ", w:" << s.w << ", h:" << s.h << "]";
 }
 
 template <typename F>
 inline std::ostream &operator<<(std::ostream &o, FilterBank<F> &f) {
-  return o << "[" << f.in_c << ">" << f.out_c << " " << f.kw << "x" << f.kh << " " << f.N << " " << f.T << "]";
+  return o << "[in_c: " << f.in_c << ">out_c:" << f.out_c << " kw:" << f.kw << " kh:" << f.kh << " N:" << f.N << " T:" << f.T << "]";
 }
 
 

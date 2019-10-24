@@ -90,8 +90,7 @@ bool ConvolutionOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::
 	if (in_tensor.shape.c != in_c) {
 		cerr << "ConvolutionOperation: input channels don't match filters" << endl;
 		return false;
-	
-}
+	}
 	auto target_shape = in_tensor.shape;
 	target_shape.c = out_c;
 	out_tensor.reshape(target_shape);
@@ -165,6 +164,9 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
     //cout << input.shape() << " " << output.shape() << " " << filter_bank << endl;
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, algo, workspace, workspace_size, &beta, output.td, output.data));
 	// handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_FEATURE_MAP, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
+	cout << filter_bank << endl;
+	cout << "bias: " << bias.shape << endl;
+	cout << input.shape << " " << output.shape << endl;
 	handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 }
 
