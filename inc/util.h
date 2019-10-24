@@ -209,6 +209,15 @@ inline void scale_cuda(double *data, int n, double const alpha) {
 /* } */
 
 template <typename T>
+T calculate_product(std::vector<T> const &other) {
+  T product(1);
+  for (auto d : other)
+    product *= d;
+  return product;
+}
+
+
+template <typename T>
 inline std::ostream &operator<<(std::ostream &out, std::vector<T> in) {
   out << "[";
   typename std::vector<T>::const_iterator it = in.begin(), end = in.end();

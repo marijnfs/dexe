@@ -24,7 +24,7 @@ void split(Tensor<float> &a, Tensor<float> &out) {
 	int dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
 
     auto shape = a.shape;
-    split_kernelf<<<dimGrid, dimBlock>>>(s, shape.c, shape.w, shape.h, a.data, out.data);
+    split_kernelf<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.data, out.data);
 }
 
 __global__ void merge_kernelf(int const N, int const C, int const X, int const Y, float const *input, float *out) {
@@ -49,7 +49,7 @@ void merge(Tensor<float> &a, Tensor<float> &out) {
 	int dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
 
     auto shape = a.shape;
-    merge_kernelf<<<dimGrid, dimBlock>>>(s, shape.c, shape.w, shape.h, a.data, out.data);
+    merge_kernelf<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.data, out.data);
 }
 
 

@@ -63,7 +63,6 @@ struct InputOperation : public Operation<F> {
 template <typename F>
 struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	ConvolutionOperation(int in_c, int out_c, int kw, int kh, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);// 64*1024*1024);
-	ConvolutionOperation(std::string tmp, int in_c, int out_c, int kw, int kh, int z, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);//32*1024*1024);
 
 	~ConvolutionOperation();
 
@@ -97,9 +96,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	virtual int size();
 
 	TensorShape output_shape(TensorShape input);
-	void describe(std::ostream &out) { out << "conv " << kw << "x" << kh << " " << in_c << "->" << out_c; }
-
-	int kw, kh, in_c, out_c;
+	void describe(std::ostream &out) { out << filter_bank.dimensions; }
 
 	cudnnConvolutionDescriptor_t conv;
 	FilterBank<F> filter_bank, filter_bank_grad;

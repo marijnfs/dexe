@@ -9,55 +9,15 @@ using namespace std;
 
 template <typename F>
 ConvolutionOperation<F>::ConvolutionOperation(int in_c_, int out_c_, int kw_, int kh_, bool keep_, size_t workspace_limit_):
-	in_c(in_c_),
-	out_c(out_c_),
-	kw(kw_),
-	kh(kh_),
-	filter_bank(in_c_, out_c_, kw_, kh_),
-	filter_bank_grad(in_c_, out_c_, kw_, kh_),
-	bias(1, out_c_, 1, 1),
-	bias_grad(1, out_c_, 1, 1),
+	filter_bank({in_c_, out_c_, kw_, kh_}),
+	filter_bank_grad({in_c_, out_c_, kw_, kh_}),
+	bias({1, out_c_, 1, 1}),
+	bias_grad({1, out_c_, 1, 1}),
 	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
 	workspace(0),
 	workspace_size(workspace_limit_),
 	keep(keep_),
 	rollout(false)
-{
-	int pad_h(0), pad_w(0), stride_w(1), stride_h(1), upscalex(1), upscaley(1);
-	if (keep) {
-		pad_w = kw / 2;
-		pad_h = kh / 2;
-	}
-	// cout << "weight buffer: " << filter_bank.n_weights() << endl;
-	// cout << "bias buffer: " << bias.size() << endl;
-	//todo: calculate padding
-	handle_error( cudnnCreateConvolutionDescriptor(&conv));
-	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
-	//handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
-}
-
-
-template <typename F>
-ConvolutionOperation<F>::ConvolutionOperation(string dummy, int in_c_, int out_c_, int kw_, int kh_, int z, bool keep_, size_t workspace_limit_):
-	in_c(in_c_),
-	out_c(out_c_),
-	kw(kw_),
-	kh(kh_),
-	filter_bank(in_c_, out_c_, kw_, kh_, z),
-	filter_bank_grad(in_c_, out_c_, kw_, kh_, z),
-	bias(1, out_c_, 1, 1),
-	bias_grad(1, out_c_, 1, 1),
-	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
-	algo_bwd_filter(CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1),
-	algo_bwd(CUDNN_CONVOLUTION_BWD_DATA_ALGO_1),
-	workspace(0),
-	workspace_size(workspace_limit_),
-	workspace_bwd(0),
-	workspace_size_bwd(workspace_limit_),
-	workspace_bwd_filter(0),
-	workspace_size_bwd_filter(workspace_limit_),
-	keep(keep_),
-	rollout(true)
 {
 	int pad_h(0), pad_w(0), stride_w(1), stride_h(1), upscalex(1), upscaley(1);
 	if (keep) {
@@ -87,7 +47,7 @@ bool ConvolutionOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::
 		cerr << "ConvolutionOperation: dry run failed, input size is zero" << endl;
 		return false;
 	}
-	if (in_tensor.shape.c != in_c) {
+	if (in_tensor.shape.c() != in_c) {
 		cerr << "ConvolutionOperation: input channels don't match filters" << endl;
 		return false;
 	}
@@ -164,9 +124,6 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
     //cout << input.shape() << " " << output.shape() << " " << filter_bank << endl;
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, algo, workspace, workspace_size, &beta, output.td, output.data));
 	// handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_FEATURE_MAP, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
-	cout << filter_bank << endl;
-	cout << "bias: " << bias.shape << endl;
-	cout << input.shape << " " << output.shape << endl;
 	handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 }
 
@@ -194,8 +151,8 @@ void ConvolutionOperation<F>::zero_grad() {
 
 template <typename F>
 TensorShape ConvolutionOperation<F>::output_shape(TensorShape in) {
-	int x_even((filter_bank.kw + 1) % 2), y_even((filter_bank.kh + 1) % 2);
-	return TensorShape{in.n, filter_bank.out_c, in.w + x_even, in.h + y_even};
+	in.set_c(filter_bank.out_c());
+	return in;
 }
 
 template <typename F>
@@ -457,7 +414,7 @@ MergeOperation<F>::MergeOperation() {
 
 template <typename F>
 TensorShape MergeOperation<F>::output_shape(TensorShape in) {
-  return TensorShape{in.n, in.c / 4, in.w * 2, in.h * 2};
+  return TensorShape{in.n(), in.c() / 4, in.w() * 2, in.h() * 2};
 }
 
 template <typename F>
@@ -479,7 +436,7 @@ SplitOperation<F>::SplitOperation() {
 
 template <typename F>
 TensorShape SplitOperation<F>::output_shape(TensorShape in) {
-  return TensorShape{in.n, in.c * 4, in.w / 2, in.h / 2};
+  return TensorShape{in.n(), in.c() * 4, in.w() / 2, in.h() / 2};
 }
 
 template <typename F>
@@ -518,7 +475,7 @@ void PoolingOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out
 template <typename F>
 TensorShape PoolingOperation<F>::output_shape(TensorShape in) {
 	// cout << in.c << endl;
-	return TensorShape{in.n, in.c, in.w / kw, in.h / kh};
+	return TensorShape{in.n(), in.c(), in.w() / kw, in.h() / kh};
 }
 
 template <typename F>

@@ -8,180 +8,124 @@
 
 using namespace std;
 
-TensorShape::TensorShape(int n_, int c_, int w_, int h_) :
-n(n_), c(c_), w(w_), h(h_) {}
-
-
 int TensorShape::offset(int n_, int c_, int y_, int x_) {
-  return n_ * (c * w * h) + c_ * (w * h) + y_ * w + x_;
+  return n_ * (c() * w() * h()) + c_ * (w() * h()) + y_ * w() + x_;
 }
 
 int TensorShape::size() {
-	return n * c * w * h;
+	return calculate_product(dimensions);
 }
 
+void TensorShape::set_c(int c) {
+	dimensions[1] = c;
+}
+
+int TensorShape::n() {
+	return dimensions[0];
+}
+
+int TensorShape::c() {
+	return dimensions[1];
+}
+
+int TensorShape::d() {
+	if (dimensions.size() == 5)
+		return dimensions[2];
+	return 1;
+}
+int TensorShape::h() {
+	if (dimensions.size() == 5)
+		return dimensions[3];
+	return dimensions[2];
+}
+
+int TensorShape::w() {
+	if (dimensions.size() == 5)
+		return dimensions[4];
+	dimensions[3];
+} 
+
 bool TensorShape::operator==(TensorShape const &other) const {
-	return other.n == n && other.c == c && other.w == w && other.h == h; 
+	return other.dimensions == other.dimensions; 
 }
 
 bool TensorShape::operator!=(TensorShape const &other) const {
 	return !(*this == other); 
 }
 
-template <>
-Tensor<float>::Tensor(int n_, int c_, int w_, int h_):
-  shape(n_, c_, w_, h_), owning(true)
-{
-	handle_error( cudnnCreateTensorDescriptor(&td));
-
-	//size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
-	// size_t even_size(size());
-	// handle_error( cudaMalloc( (void**)&data, sizeof(float) * even_size));
-    
-	if (shape.size() != 0) {
-		handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
-        cout << "Tensor allocating" << sizeof(float) * size() << endl;
-		handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
-		if (ZERO_ON_INIT)
-		  zero();
-	}
-}
-
-template <>
-Tensor<float>::Tensor(int n_, int c_, int w_, int h_, float *data_):
-  shape(n_, c_, w_, h_), owning(false), data(data_)
-{
-	handle_error( cudnnCreateTensorDescriptor(&td));
-	if (size() != 0) {
-		handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
-	}
-}
-
-template <>
-Tensor<float>::Tensor(TensorShape s):
+template <typename F>
+Tensor<F>::Tensor(TensorShape s):
   shape(s), owning(true)
 {
-	handle_error( cudnnCreateTensorDescriptor(&td));
+	handle_error( cudnnCreateTensorDescriptor(&td) );
+	allocate();
+}
 
-	////size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
-	//size_t even_size(size());
+
+template <F>
+void Tensor<F>::set_descriptor() {
+	vector<int> strides;
+	strides.reserve(dimensions.size());
+
+	int stride(1);
+	for (auto d_it = dimensions.rbegin(); d_it != dimensions.rend(); ++d_it) {
+		strides.emplace_back(stride);
+		stride *= *d_it;
+	}
+
+	if (td)
+		handle_error( cudnnDestroyTensorDescriptor(td));
+
+	set_descriptor_typed();
+}
+
+template <>
+void Tensor<double>::set_descriptor_typed() {
+	handle_error( cudnnSetTensorNdDescriptor(td, CUDNN_DATA_DOUBLE, dimensions.size(), dimensions.data(), strides.data()) );	
+}
+
+template <>
+void Tensor<float>::set_descriptor_typed() {
+	handle_error( cudnnSetTensorNdDescriptor(td, CUDNN_DATA_FLOAT, dimensions.size(), dimensions.data(), strides.data()) );	
+}
+
+template <typename F>
+void Tensor<F>::allocate() {
+	if (!owning)
+		return;
 
 	if (shape.size() != 0) {
-		handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
-        cout << "Tensor allocating" << sizeof(float) * size() << endl;
-        handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
+		set_descriptor();
+		handle_error( cudaMalloc( (void**)&data, sizeof(F) * size()));
 		if (ZERO_ON_INIT)
 		  zero();
 	}
 }
 
-template <>
-Tensor<float>::Tensor(TensorShape s, float *data_):
-  shape(s), owning(false), data(data_)
-{
-	handle_error( cudnnCreateTensorDescriptor(&td));
-	if (shape.size() != 0) {
-		handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
-	}
-}
 
-template <>
-Tensor<double>::Tensor(int n_, int c_, int w_, int h_):
-  shape(n_, c_, w_, h_), owning(true)
-{
-	handle_error( cudnnCreateTensorDescriptor(&td));
-
-	if (shape.size() != 0) {
-		handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
-		//size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
-		// size_t even_size(size());
-        cout << "Tensor allocating" << sizeof(double) * size() << endl;
-		handle_error( cudaMalloc( (void**)&data, sizeof(double) * size()));
-		if (ZERO_ON_INIT)
-		  zero();
-	}
-}
-
-template <>
-void Tensor<float>::reshape(int n_, int c_, int w_, int h_) {
+template <typename F>
+void Tensor<F>::reshape(TensorShape new_shape) {
 	if (!owning) {
 		cerr << "Can't reshape non-owning tensor" << endl;
 	}
 
-	auto new_shape = TensorShape(n_, c_, w_, h_);
 	if (new_shape == shape)
 		return;
 
 	//If sizes match but shapes don't, we don't want to deallocate
 	if (new_shape.size() != shape.size())
 	{
-		if (shape.size() != 0)
+		if (data) {
 			cudaFree(data);
-
-		handle_error( cudaMalloc( (void**)&data, sizeof(float) * new_shape.size()));
-		if (ZERO_ON_INIT)
-			zero();
+			data = nullptr;
+		}
+		shape = new_shape;
+		alloc();
 	}
 	shape = new_shape;
-	
-	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
+	set_descriptor();
 }
 
-
-template <>
-Tensor<double>::Tensor(int n_, int c_, int w_, int h_, double *data_):
-  shape(n_, c_, w_, h_), owning(false), data(data_)
-{
-	handle_error( cudnnCreateTensorDescriptor(&td));
-	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
-}
-
-template <>
-Tensor<double>::Tensor(TensorShape s):
-  shape(s), owning(true)
-{
-	handle_error( cudnnCreateTensorDescriptor(&td));
-	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
-	//size_t even_size(((size() + 1) / 2) * 2); //we want multiple of two for curand
-	size_t even_size(size());
-    cout << "Tensor allocating" << sizeof(double) * size() << endl;
-	handle_error( cudaMalloc( (void**)&data, sizeof(double) * even_size));
-	if (ZERO_ON_INIT)
-	  zero();
-}
-
-template <>
-void Tensor<double>::reshape(int n_, int c_, int w_, int h_) {
-	if (!owning) {
-		cerr << "Can't reshape non-owning tensor" << endl;
-	}
-
-	auto new_shape = TensorShape(n_, c_, w_, h_);
-	if (new_shape == shape)
-		return;
-
-	//If sizes match but shapes don't, we don't want to deallocate
-	if (new_shape.size() != shape.size())
-	{
-		if (shape.size() != 0)
-			cudaFree(data);
-
-		handle_error( cudaMalloc( (void**)&data, sizeof(float) * new_shape.size()));
-		if (ZERO_ON_INIT)
-			zero();
-	}
-	shape = new_shape;
-	
-	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
-}
-
-template <>
-Tensor<double>::Tensor(TensorShape s, double *data_):
-  shape(s), owning(false), data(data_)
-{
-	handle_error( cudnnCreateTensorDescriptor(&td));
-	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
-}
 
 template <typename F>
 Tensor<F>::~Tensor() {
@@ -190,10 +134,6 @@ Tensor<F>::~Tensor() {
 	  cudaFree(data);
 }
 
-template <typename F>
-void Tensor<F>::reshape(TensorShape shape) {
-	reshape(shape.n, shape.c, shape.w, shape.h);
-}
 
 
 template <typename F>
@@ -318,17 +258,6 @@ double Tensor<double>::sum() {
 }
 
 template <typename F>
-void Tensor<F>::write_img(string filename, int c) {
-	vector<F> v = to_vector();
-	vector<float> vf(v.size());
-
-	for (size_t i(0); i < shape.w * shape.h; ++i)
-      vf[i] = v[i + shape.c * shape.w * shape.h];
-  throw std::runtime_error("Not implemented");
-	// ::write_img1c(filename, w, h, &vf[0]);
-}
-
-template <typename F>
 TensorSet<F>::TensorSet(TensorShape shape_) : shape(shape_) {
 	cout << "created set with shape: " << shape_ << ", not allocated" << endl;
 }
@@ -350,30 +279,27 @@ void TensorSet<F>::alloc_grad() {
 }
 
 template <>
-FilterBank<float>::FilterBank(int in_c_, int out_c_, int kw_, int kh_, int T_):
-  in_c(in_c_), out_c(out_c_), kw(kw_), kh(kh_),
-  T(T_), N(in_c_ * out_c_ * kw_ * kh_)
-{
+FilterBank<float>::FilterBank(std::vector<int> dimensions_) 
+	: dimensions(dimensions_) {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
-	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, out_c, in_c, kh, kw));
-    cout << "Filterbank allocating" << sizeof(float) * T * N << endl;
-	handle_error( cudaMalloc( (void**)&weights, sizeof(float) * T * N));
+	handle_error( cudnnSetFilterNdDescriptor(fd, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, dimensions.size(), dimensions.data()) );
+
+	handle_error( cudaMalloc( (void**)&weights, sizeof(float) * n_weights()) );
 	if (ZERO_ON_INIT)
 	  zero();
 }
 
 template <>
-FilterBank<double>::FilterBank(int in_c_, int out_c_, int kw_, int kh_, int T_):
-  in_c(in_c_), out_c(out_c_), kw(kw_), kh(kh_),
-  T(T_), N(in_c_ * out_c_ * kw_ * kh_)
-{
+FilterBank<double>::FilterBank(std::vector<int> dimensions_) 
+	: dimensions(dimensions_) {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
-	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_DOUBLE, CUDNN_TENSOR_NCHW, out_c, in_c, kh, kw));
-    cout << "Filterbank allocating" << sizeof(double) * T * N << endl;
-	handle_error( cudaMalloc( (void**)&weights, sizeof(double) * T * N));
+	handle_error( cudnnSetFilterNdDescriptor(fd, CUDNN_DATA_DOUBLE, CUDNN_TENSOR_NCHW, dimensions.size(), dimensions.data()) );
+
+	handle_error( cudaMalloc( (void**)&weights, sizeof(double) *  * n_weights()) );
 	if (ZERO_ON_INIT)
 	  zero();
 }
+
 
 template <typename F>
 FilterBank<F>::~FilterBank() {
@@ -423,6 +349,15 @@ void FilterBank<F>::from_vector(vector<F> &in) {
  	handle_error( cudaMemcpy(weights, &in[0], in.size() * sizeof(F), cudaMemcpyHostToDevice));
 }
 
+template <typename F>
+int FilterBank<F>::in_c() {
+	return dimensions[0];
+}
+
+template <typename F>
+int FilterBank<F>::out_c() {
+	return dimensions[1];
+}
 
 template <typename F>
 void FilterBank<F>::fill(F val) {
@@ -431,33 +366,6 @@ void FilterBank<F>::fill(F val) {
 	from_vector(vals);
 }
 
-template <>
-void FilterBank<double>::draw_filterbank(string filename) {
-}
-
-template <>
-void FilterBank<float>::draw_filterbank(string filename) {
-	vector<float> filters(n_weights());
-	copy_gpu_to_cpu(weights, &filters[0], n_weights());
-
-	int n_filters(in_c * out_c * T);
-	int sqrt_n_filters(sqrt(n_filters) + 1);
-	vector<float> values(sqrt_n_filters * sqrt_n_filters * kw * kh);
-	cout << filters.size() << " " << values.size() << " " << sqrt_n_filters << " " << n_filters << endl;
-
-		for (size_t y(0); y < sqrt_n_filters; ++y)
-			for (size_t x(0); x < sqrt_n_filters; ++x) {
-				int filter_index(y * sqrt_n_filters + x);
-				if (filter_index < n_filters)
-					for (size_t fy(0); fy < kh; ++fy)
-						for (size_t fx(0); fx < kw; ++fx)
-							values[((y * kh) + fy) * sqrt_n_filters * kw + (x * kw) + fx] = filters[filter_index * kw * kh + fy * kw + fx];
-			}
-
-
-	// write_img1c(filename, sqrt_n_filters * kw, sqrt_n_filters * kh, &values[0]);
-	throw std::runtime_error("Not implemented");
-}
 
 template <typename F>
 Tensor<F> &operator-=(Tensor<F> &in, Tensor<F> &other) {
