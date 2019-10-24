@@ -239,7 +239,7 @@ string Network<F>::get_unique_name(string name) {
 }
 
 template <typename F>
-int Network<F>::add_operation(Operation<F> *op, vector<int> inputs, string name, TensorShape shape) {
+int Network<F>::add_operation(Operation<F> *op, vector<int> inputs, TensorShape shape, string name) {
 	int index = names.size();
 	auto unique_name = get_unique_name(name);
 	names.emplace_back(unique_name);
@@ -258,23 +258,28 @@ template <typename F>
 std::function<Node<F>(Node<F>)> Network<F>::convolution(int out_c, int k, string name) {
 	return [this, out_c, k, name](Node<F> n) {
 		auto in_c = n.shape().c;
-		auto index = add_operation(new ConvolutionOperation<F>(in_c, out_c, k, k), vector<int>{n.index}, name, TensorShape{0, out_c, 0, 0});
+		auto index = add_operation(new ConvolutionOperation<F>(in_c, out_c, k, k), vector<int>{n.index}, TensorShape{0, out_c, 0, 0}, name);
 		return Node<F>(index, this);
 	};
 }
+
 template <typename F>
 std::function<Node<F>(Node<F>)> Network<F>::relu(string name) {
 	return [this, name](Node<F> n) {
 		auto in_c = n.shape().c;
-		auto index = add_operation(new ReluOperation<F>(), vector<int>{n.index}, name, TensorShape{0, in_c, 0, 0});
+		auto index = add_operation(new ReluOperation<F>(), vector<int>{n.index}, TensorShape{0, in_c, 0, 0}, name);
 
 		return Node<F>(index, this);
 	};
 }
+
 template <typename F>
 std::function<Node<F>(Node<F>, Node<F>)> Network<F>::addition(string name) {
-	return [this](Node<F> n1, Node<F> n2) {
-		return n1;
+	return [this, name](Node<F> n1, Node<F> n2) {
+		auto in_c = n1.shape().c;
+		auto index = add_operation(new AdditionOperation<F>(), vector<int>{n1.index, n2.index}, TensorShape{0, in_c, 0, 0}, name);
+
+		return Node<F>(index, this);
 	};
 }
 
@@ -316,6 +321,17 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 	//put calculation nodes in order
 	reverse(sequence.begin(), sequence.end());
 
+	//Forward Dryrun
+	for (auto s : sequence) {
+		vector<Tensor<F>*> inputs, outputs;
+		for (auto idx : input_indices[s])
+			inputs.push_back(tensors[idx].x.get());
+		outputs.push_back(tensors[s].x.get());
+
+		operations[s]->forward_dry_run(inputs, outputs);
+	}
+
+	//Run Forward
 	for (auto s : sequence) {
 		vector<Tensor<F>*> inputs, outputs;
 		for (auto idx : input_indices[s])

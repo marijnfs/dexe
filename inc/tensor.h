@@ -14,6 +14,8 @@ struct TensorShape {
  
   TensorShape(){}
   TensorShape(int n, int c, int w, int h);
+  bool operator==(TensorShape const &other) const;
+  bool operator!=(TensorShape const &other) const;
 
   int offset(int n, int c, int y, int x);
   int size();
@@ -42,7 +44,7 @@ struct Tensor {
 	void from_ptr(F const *in);
 	void from_tensor(Tensor &in);
 	void fill(F val);
-  void write_img(std::string filename, int c = 0);
+  	void write_img(std::string filename, int c = 0);
    
 	void reshape(TensorShape shape);
 	void reshape(int n, int c, int w, int h);
@@ -87,9 +89,9 @@ struct TensorSet {
 
 template <typename F>
 struct FilterBank {
-	FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T = 1); //T is for rolledout filter bank
+	FilterBank(int in_c_, int out_c_, int kw_, int kh_, int T = 1); //T is for rolledout filter bank
 	~FilterBank();
-	int in_map, out_map;
+	int in_c, out_c;
 	int kw, kh;
 	int N, T;
 	cudnnFilterDescriptor_t fd;
@@ -115,7 +117,7 @@ inline std::ostream &operator<<(std::ostream &o, TensorShape s) {
 
 template <typename F>
 inline std::ostream &operator<<(std::ostream &o, FilterBank<F> &f) {
-  return o << "[" << f.in_map << ">" << f.out_map << " " << f.kw << "x" << f.kh << " " << f.N << " " << f.T << "]";
+  return o << "[" << f.in_c << ">" << f.out_c << " " << f.kw << "x" << f.kh << " " << f.N << " " << f.T << "]";
 }
 
 

@@ -8,15 +8,15 @@ using namespace std;
 
 
 template <typename F>
-ConvolutionOperation<F>::ConvolutionOperation(int in_map_, int out_map_, int kw_, int kh_, bool keep_, size_t workspace_limit_):
-	in_map(in_map_),
-	out_map(out_map_),
+ConvolutionOperation<F>::ConvolutionOperation(int in_c_, int out_c_, int kw_, int kh_, bool keep_, size_t workspace_limit_):
+	in_c(in_c_),
+	out_c(out_c_),
 	kw(kw_),
 	kh(kh_),
-	filter_bank(in_map_, out_map_, kw_, kh_),
-	filter_bank_grad(in_map_, out_map_, kw_, kh_),
-	bias(1, out_map_, 1, 1),
-	bias_grad(1, out_map_, 1, 1),
+	filter_bank(in_c_, out_c_, kw_, kh_),
+	filter_bank_grad(in_c_, out_c_, kw_, kh_),
+	bias(1, out_c_, 1, 1),
+	bias_grad(1, out_c_, 1, 1),
 	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
 	workspace(0),
 	workspace_size(workspace_limit_),
@@ -38,15 +38,15 @@ ConvolutionOperation<F>::ConvolutionOperation(int in_map_, int out_map_, int kw_
 
 
 template <typename F>
-ConvolutionOperation<F>::ConvolutionOperation(string dummy, int in_map_, int out_map_, int kw_, int kh_, int z, bool keep_, size_t workspace_limit_):
-	in_map(in_map_),
-	out_map(out_map_),
+ConvolutionOperation<F>::ConvolutionOperation(string dummy, int in_c_, int out_c_, int kw_, int kh_, int z, bool keep_, size_t workspace_limit_):
+	in_c(in_c_),
+	out_c(out_c_),
 	kw(kw_),
 	kh(kh_),
-	filter_bank(in_map_, out_map_, kw_, kh_, z),
-	filter_bank_grad(in_map_, out_map_, kw_, kh_, z),
-	bias(1, out_map_, 1, 1),
-	bias_grad(1, out_map_, 1, 1),
+	filter_bank(in_c_, out_c_, kw_, kh_, z),
+	filter_bank_grad(in_c_, out_c_, kw_, kh_, z),
+	bias(1, out_c_, 1, 1),
+	bias_grad(1, out_c_, 1, 1),
 	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
 	algo_bwd_filter(CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1),
 	algo_bwd(CUDNN_CONVOLUTION_BWD_DATA_ALGO_1),
@@ -80,7 +80,22 @@ void ConvolutionOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<T
 
 template <typename F>
 bool ConvolutionOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	auto &in_tensor = *in[0];
+	auto &out_tensor = *out[0];
 
+	if (in_tensor.size() == 0) {
+		cerr << "ConvolutionOperation: dry run failed, input size is zero" << endl;
+		return false;
+	}
+	if (in_tensor.shape.c != in_c) {
+		cerr << "ConvolutionOperation: input channels don't match filters" << endl;
+		return false;
+	
+}
+	auto target_shape = in_tensor.shape;
+	target_shape.c = out_c;
+	out_tensor.reshape(target_shape);
+	return true;
 }
 
 template <typename F>
@@ -178,7 +193,7 @@ void ConvolutionOperation<F>::zero_grad() {
 template <typename F>
 TensorShape ConvolutionOperation<F>::output_shape(TensorShape in) {
 	int x_even((filter_bank.kw + 1) % 2), y_even((filter_bank.kh + 1) % 2);
-	return TensorShape{in.n, filter_bank.out_map, in.w + x_even, in.h + y_even};
+	return TensorShape{in.n, filter_bank.out_c, in.w + x_even, in.h + y_even};
 }
 
 template <typename F>
@@ -297,8 +312,8 @@ ConvolutionOperation<F>::~ConvolutionOperation() {
 /////////////Convolution Shift
 
 template <typename F>
-ConvolutionShiftOperation<F>::ConvolutionShiftOperation(int in_map, int out_map, int kw, int kh, int shift_x, int shift_y, bool keep_, size_t workspace_limit_):
-	ConvolutionOperation<F>(in_map, out_map, kw, kh, keep_, workspace_limit_),
+ConvolutionShiftOperation<F>::ConvolutionShiftOperation(int in_c, int out_c, int kw, int kh, int shift_x, int shift_y, bool keep_, size_t workspace_limit_):
+	ConvolutionOperation<F>(in_c, out_c, kw, kh, keep_, workspace_limit_),
 	dx(shift_x * (kw / 2)),
 	dy(shift_y * (kh / 2))
 {
@@ -547,27 +562,42 @@ AdditionOperation<F>::AdditionOperation() {
 
 template <typename F>
 void AdditionOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
-	forward(*in[0], *out[0]);
+	forward(*in[0], *in[1], *out[0]);
 }
 
 template <typename F>
 bool AdditionOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
-	return false;
+	auto &in_tensor0 = *in[0];
+	auto &in_tensor1 = *in[1];
+	auto &out_tensor = *out[0];
+
+	if (in_tensor0.shape.size() != 0 || in_tensor1.shape.size() != 0) {
+		cerr << "AdditionOperation: Input shape is empty" << endl;
+		return false;
+	}
+	if (in_tensor0.shape != out_tensor.shape) {
+		cerr << "AdditionOperation: inputs don't match" << endl;
+		return false;
+	}
+
+	out_tensor.reshape(in_tensor0.shape);
+
+	return true;
 }
 
 template <typename F>
 void AdditionOperation<F>::forward(Tensor<F> &in1, Tensor<F> &in2, Tensor<F> &out) {
   F alpha(1);
 
-  add_cuda(in1.ptr(), out.ptr(), in1.size(), 1.0);
-  add_cuda(in2.ptr(), out.ptr(), in2.size(), 1.0);
+  add_cuda<F>(in1.ptr(), out.ptr(), in1.size(), float(1.0));
+  add_cuda<F>(in2.ptr(), out.ptr(), in2.size(), 1.0);
 }
 
 template <typename F>
 void AdditionOperation<F>::backward(Tensor<F> &out_grad, Tensor<F> &in_grad1, Tensor<F> &in_grad2) {
   F alpha(1);
-  add_cuda(out_grad.ptr(), in_grad1.ptr(), out_grad.size(), 1.0);
-  add_cuda(out_grad.ptr(), in_grad2.ptr(), out_grad.size(), 1.0);
+  add_cuda<F>(out_grad.ptr(), in_grad1.ptr(), out_grad.size(), 1.0);
+  add_cuda<F>(out_grad.ptr(), in_grad2.ptr(), out_grad.size(), 1.0);
 }
 
 template <typename F>
@@ -663,17 +693,17 @@ template struct SquashOperation<float>;
 template struct UnsquashOperation<float>;
 template struct MergeOperation<float>;
 template struct SplitOperation<float>;
-
+template struct AdditionOperation<float>;
 template struct PoolingOperation<float>;
 template struct TanhOperation<float>;
 template struct SigmoidOperation<float>;
 template struct ReluOperation<float>;
 template struct SoftmaxOperation<float>;
 
-template struct ConvolutionOperation<double>;
-template struct SquashOperation<double>;
-template struct PoolingOperation<double>;
-template struct TanhOperation<double>;
-template struct SigmoidOperation<double>;
-template struct ReluOperation<double>;
-template struct SoftmaxOperation<double>;
+// template struct ConvolutionOperation<double>;
+// template struct SquashOperation<double>;
+// template struct PoolingOperation<double>;
+// template struct TanhOperation<double>;
+// template struct SigmoidOperation<double>;
+// template struct ReluOperation<double>;
+// template struct SoftmaxOperation<double>;

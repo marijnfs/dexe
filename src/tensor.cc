@@ -17,7 +17,15 @@ int TensorShape::offset(int n_, int c_, int y_, int x_) {
 }
 
 int TensorShape::size() {
-	return n  * c * w * h;
+	return n * c * w * h;
+}
+
+bool TensorShape::operator==(TensorShape const &other) const {
+	return other.n == n && other.c == c && other.w == w && other.h == h; 
+}
+
+bool TensorShape::operator!=(TensorShape const &other) const {
+	return !(*this == other); 
 }
 
 template <>
@@ -96,17 +104,24 @@ Tensor<double>::Tensor(int n_, int c_, int w_, int h_):
 
 template <>
 void Tensor<float>::reshape(int n_, int c_, int w_, int h_) {
-	if (allocated)
-		if (shape.size() != 0)
-			cudaFree(data);
+	auto new_shape = TensorShape(n_, c_, w_, h_);
+	if (new_shape == shape)
+		return;
 
-	shape = TensorShape(n_, c_, w_, h_);
+	//If sizes match but shapes don't, we don't want to deallocate
+	if (new_shape.size() != shape.size())
+	{
+		if (allocated) {
+			cudaFree(data);
+			allocated = false;
+		}
+	}
+	shape = new_shape;
 
 	// handle_error( cudnnDestroyTensorDescriptor(td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
 
-	if (allocated) {
-      cout << "Tensor allocating" << sizeof(float) * size() << endl;
+	if (!allocated) {
 		handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
 		if (ZERO_ON_INIT)
 			zero();
@@ -140,18 +155,25 @@ Tensor<double>::Tensor(TensorShape s):
 
 template <>
 void Tensor<double>::reshape(int n_, int c_, int w_, int h_) {
-	if (allocated)
-		if (shape.size() != 0)
-			cudaFree(data);
+	auto new_shape = TensorShape(n_, c_, w_, h_);
+	if (new_shape == shape)
+		return;
 
-	shape = TensorShape{.n = n_, .c = c_, .w = w_, .h = h_};
+	//If sizes match but shapes don't, we don't want to deallocate
+	if (new_shape.size() != shape.size())
+	{
+		if (allocated) {
+			cudaFree(data);
+			allocated = false;
+		}
+	}
+	shape = new_shape;
 
 	// handle_error( cudnnDestroyTensorDescriptor(td));
 	handle_error( cudnnSetTensor4dDescriptor(td, CUDNN_TENSOR_NCHW, CUDNN_DATA_DOUBLE, shape.n, shape.c, shape.h, shape.w)); //CUDNN_TENSOR_NHWC not supported for some reason
 
-	if (allocated) {
-      cout << "Tensor allocating" << sizeof(float) * size() << endl;
-		handle_error( cudaMalloc( (void**)&data, sizeof(float) * size()));
+	if (!allocated) {
+		handle_error( cudaMalloc( (void**)&data, sizeof(double) * size()));
 		if (ZERO_ON_INIT)
 			zero();
 	}
@@ -335,12 +357,12 @@ void TensorSet<F>::alloc_grad() {
 }
 
 template <>
-FilterBank<float>::FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T_):
-  in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_),
-  T(T_), N(in_map_ * out_map_ * kw_ * kh_)
+FilterBank<float>::FilterBank(int in_c_, int out_c_, int kw_, int kh_, int T_):
+  in_c(in_c_), out_c(out_c_), kw(kw_), kh(kh_),
+  T(T_), N(in_c_ * out_c_ * kw_ * kh_)
 {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
-	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, out_map, in_map, kh, kw));
+	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, out_c, in_c, kh, kw));
     cout << "Filterbank allocating" << sizeof(float) * T * N << endl;
 	handle_error( cudaMalloc( (void**)&weights, sizeof(float) * T * N));
 	if (ZERO_ON_INIT)
@@ -348,12 +370,12 @@ FilterBank<float>::FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T
 }
 
 template <>
-FilterBank<double>::FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T_):
-  in_map(in_map_), out_map(out_map_), kw(kw_), kh(kh_),
-  T(T_), N(in_map_ * out_map_ * kw_ * kh_)
+FilterBank<double>::FilterBank(int in_c_, int out_c_, int kw_, int kh_, int T_):
+  in_c(in_c_), out_c(out_c_), kw(kw_), kh(kh_),
+  T(T_), N(in_c_ * out_c_ * kw_ * kh_)
 {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
-	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_DOUBLE, CUDNN_TENSOR_NCHW, out_map, in_map, kh, kw));
+	handle_error( cudnnSetFilter4dDescriptor(fd, CUDNN_DATA_DOUBLE, CUDNN_TENSOR_NCHW, out_c, in_c, kh, kw));
     cout << "Filterbank allocating" << sizeof(double) * T * N << endl;
 	handle_error( cudaMalloc( (void**)&weights, sizeof(double) * T * N));
 	if (ZERO_ON_INIT)
@@ -391,7 +413,7 @@ void FilterBank<F>::init_uniform(F var) {
 
 template <typename F>
 void FilterBank<F>::zero() {
-	// cout << "zero: " << in_map << " " << out_map << " " << kw << " " << kh << " " << N << " " << T  << " " << n_weights() << " " << weights << endl;
+	// cout << "zero: " << in_c << " " << out_c << " " << kw << " " << kh << " " << N << " " << T  << " " << n_weights() << " " << weights << endl;
 	handle_error( cudaMemset(weights, 0, sizeof(F) * n_weights()));
 }
 
@@ -425,7 +447,7 @@ void FilterBank<float>::draw_filterbank(string filename) {
 	vector<float> filters(n_weights());
 	copy_gpu_to_cpu(weights, &filters[0], n_weights());
 
-	int n_filters(in_map * out_map * T);
+	int n_filters(in_c * out_c * T);
 	int sqrt_n_filters(sqrt(n_filters) + 1);
 	vector<float> values(sqrt_n_filters * sqrt_n_filters * kw * kh);
 	cout << filters.size() << " " << values.size() << " " << sqrt_n_filters << " " << n_filters << endl;

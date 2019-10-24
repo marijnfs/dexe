@@ -24,8 +24,13 @@ struct Operation {
 
 	virtual TensorShape output_shape(TensorShape input) { return TensorShape{0, 0, 0, 0}; }
 
+	// Runs the forward step
 	virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { throw std::runtime_error("Not Implemented"); }
+
+	// Responsible for both checking if sizes match, and making sure the memory is allocated
 	virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out){ throw std::runtime_error("Not Implemented"); }
+
+	// Write a readable string to the ostream
 	virtual void describe(std::ostream &out){}
 
 
@@ -57,8 +62,8 @@ struct InputOperation : public Operation<F> {
 
 template <typename F>
 struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
-	ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);// 64*1024*1024);
-	ConvolutionOperation(std::string tmp, int in_map, int out_map, int kw, int kh, int z, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);//32*1024*1024);
+	ConvolutionOperation(int in_c, int out_c, int kw, int kh, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);// 64*1024*1024);
+	ConvolutionOperation(std::string tmp, int in_c, int out_c, int kw, int kh, int z, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);//32*1024*1024);
 
 	~ConvolutionOperation();
 
@@ -92,9 +97,9 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	virtual int size();
 
 	TensorShape output_shape(TensorShape input);
-	void describe(std::ostream &out) { out << "conv " << kw << "x" << kh << " " << in_map << "->" << out_map; }
+	void describe(std::ostream &out) { out << "conv " << kw << "x" << kh << " " << in_c << "->" << out_c; }
 
-	int kw, kh, in_map, out_map;
+	int kw, kh, in_c, out_c;
 
 	cudnnConvolutionDescriptor_t conv;
 	FilterBank<F> filter_bank, filter_bank_grad;
@@ -112,7 +117,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 
 template <typename F>
 struct ConvolutionShiftOperation : public ConvolutionOperation<F> {
-	ConvolutionShiftOperation(int in_map, int out_map, int kw, int kh, int shift_x, int shift_y, bool keep = true, size_t workspace_limit = 0);
+	ConvolutionShiftOperation(int in_c, int out_c, int kw, int kh, int shift_x, int shift_y, bool keep = true, size_t workspace_limit = 0);
 	~ConvolutionShiftOperation();
 
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
