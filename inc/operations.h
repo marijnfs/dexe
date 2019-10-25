@@ -62,7 +62,7 @@ struct InputOperation : public Operation<F> {
 
 template <typename F>
 struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
-	ConvolutionOperation(int in_c, int out_c, int kw, int kh, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);// 64*1024*1024);
+	ConvolutionOperation(std::vector<int> dimensions, std::vector<int> strides, bool keep_, size_t workspace_limit_ = CONV_MAX_MEM);
 
 	~ConvolutionOperation();
 
@@ -85,10 +85,6 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 
 	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
 
-	void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0);
-	void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0);
-	void backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, int t, F beta = 0.0);
-
 
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &v);
@@ -106,27 +102,12 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	cudnnConvolutionBwdDataAlgo_t algo_bwd;
 	cudnnConvolutionBwdFilterAlgo_t algo_bwd_filter;
 
-	char *workspace, *workspace_bwd, *workspace_bwd_filter;
+	char *workspace = nullptr, *workspace_bwd = nullptr, *workspace_bwd_filter = nullptr;
 	size_t workspace_size, workspace_size_bwd, workspace_size_bwd_filter;
 
-	bool keep, rollout;
+	bool keep = true;
 };
 
-template <typename F>
-struct ConvolutionShiftOperation : public ConvolutionOperation<F> {
-	ConvolutionShiftOperation(int in_c, int out_c, int kw, int kh, int shift_x, int shift_y, bool keep = true, size_t workspace_limit = 0);
-	~ConvolutionShiftOperation();
-
-	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
-
-	void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0);
-	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
-	void zero_grad();
-
-	int dx, dy;
-	Tensor<F> slate, slate_grad;
-};
 
 template <typename F>
 struct SquashOperation : public ConvolutionOperation<F> {

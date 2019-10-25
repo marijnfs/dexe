@@ -15,6 +15,9 @@ struct TensorShape {
 
   TensorShape(){}
   TensorShape(int n, int c, int h, int w);
+  TensorShape(int n, int c, int d, int h, int w);
+  TensorShape(std::vector<int> dimensions);
+
   bool operator==(TensorShape const &other) const;
   bool operator!=(TensorShape const &other) const;
 
@@ -38,7 +41,8 @@ struct Tensor {
 	~Tensor();
 
 	void allocate();
-    void set_descriptor_typed();
+    void set_descriptor_typed(int N, std::vector<int> dimensions, std::vector<int> strides);
+    void set_descriptor();
 	void reshape(TensorShape shape);
 
 	//Remove copy and assignment operator to be safe
@@ -106,19 +110,21 @@ struct FilterBank {
 
 	F *weights = nullptr;
 
-	int n_weights() { return calculate_product(dimensions); }
-	void init_normal(F mean, F std);
+	int n_weights() { return calculate_product(dimensions); }	void init_normal(F mean, F std);
 	void init_uniform(F var);
 
 	int in_c();
 	int out_c();
+	int kd();
+	int kh();
+	int kw();
 
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &in);
 	void fill(F val);
 	void zero();
 
-	// F *ptr(int n = 0) { return weights + n; }
+	F *ptr() { return weights; }
 };
 
 inline std::ostream &operator<<(std::ostream &o, TensorShape s) {

@@ -264,8 +264,8 @@ template <typename F>
 std::function<Node<F>(Node<F>)> Network<F>::convolution(int out_c, int k, string name) {
 	return [this, out_c, k, name](Node<F> n) {
 		cout << "conf lambda: " << endl;
-		auto in_c = n.shape().c;
-		auto index = add_operation(new ConvolutionOperation<F>(in_c, out_c, k, k), vector<int>{n.index}, TensorShape{0, out_c, 0, 0}, name);
+		auto in_c = n.shape().c();
+		auto index = add_operation(new ConvolutionOperation<F>({in_c, out_c, k, k}, {1, 1, 1, 1}, true), vector<int>{n.index}, TensorShape{0, out_c, 0, 0}, name);
 		return Node<F>(index, this);
 	};
 }
@@ -273,7 +273,7 @@ std::function<Node<F>(Node<F>)> Network<F>::convolution(int out_c, int k, string
 template <typename F>
 std::function<Node<F>(Node<F>)> Network<F>::relu(string name) {
 	return [this, name](Node<F> n) {
-		auto in_c = n.shape().c;
+		auto in_c = n.shape().c();
 		auto index = add_operation(new ReluOperation<F>(), vector<int>{n.index}, TensorShape{0, in_c, 0, 0}, name);
 
 		return Node<F>(index, this);
@@ -283,7 +283,7 @@ std::function<Node<F>(Node<F>)> Network<F>::relu(string name) {
 template <typename F>
 std::function<Node<F>(Node<F>, Node<F>)> Network<F>::addition(string name) {
 	return [this, name](Node<F> n1, Node<F> n2) {
-		auto in_c = n1.shape().c;
+		auto in_c = n1.shape().c();
 		auto index = add_operation(new AdditionOperation<F>(), vector<int>{n1.index, n2.index}, TensorShape{0, in_c, 0, 0}, name);
 
 		return Node<F>(index, this);

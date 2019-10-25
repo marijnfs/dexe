@@ -8,6 +8,18 @@
 
 using namespace std;
 
+TensorShape::TensorShape(int n, int c, int h, int w) 
+	: dimensions{n, c, h, w} {
+}
+
+TensorShape::TensorShape(int n, int c, int d, int h, int w)
+	: dimensions{n, c, d, h, w} {
+}
+
+TensorShape::TensorShape(std::vector<int> dimensions_) 
+	: dimensions(dimensions_) {
+}
+
 int TensorShape::offset(int n_, int c_, int y_, int x_) {
   return n_ * (c() * w() * h()) + c_ * (w() * h()) + y_ * w() + x_;
 }
@@ -42,7 +54,7 @@ int TensorShape::h() {
 int TensorShape::w() {
 	if (dimensions.size() == 5)
 		return dimensions[4];
-	dimensions[3];
+	return dimensions[3];
 } 
 
 bool TensorShape::operator==(TensorShape const &other) const {
@@ -62,13 +74,13 @@ Tensor<F>::Tensor(TensorShape s):
 }
 
 
-template <F>
+template <typename F>
 void Tensor<F>::set_descriptor() {
 	vector<int> strides;
-	strides.reserve(dimensions.size());
+	strides.reserve(shape.size());
 
 	int stride(1);
-	for (auto d_it = dimensions.rbegin(); d_it != dimensions.rend(); ++d_it) {
+	for (auto d_it = shape.dimensions.rbegin(); d_it != shape.dimensions.rend(); ++d_it) {
 		strides.emplace_back(stride);
 		stride *= *d_it;
 	}
@@ -76,17 +88,17 @@ void Tensor<F>::set_descriptor() {
 	if (td)
 		handle_error( cudnnDestroyTensorDescriptor(td));
 
-	set_descriptor_typed();
+	set_descriptor_typed(shape.size(), shape.dimensions, strides);
 }
 
 template <>
-void Tensor<double>::set_descriptor_typed() {
-	handle_error( cudnnSetTensorNdDescriptor(td, CUDNN_DATA_DOUBLE, dimensions.size(), dimensions.data(), strides.data()) );	
+void Tensor<double>::set_descriptor_typed(int N, vector<int> dimensions, vector<int> strides) {
+	handle_error( cudnnSetTensorNdDescriptor(td, CUDNN_DATA_DOUBLE, N, dimensions.data(), strides.data()) );	
 }
 
 template <>
-void Tensor<float>::set_descriptor_typed() {
-	handle_error( cudnnSetTensorNdDescriptor(td, CUDNN_DATA_FLOAT, dimensions.size(), dimensions.data(), strides.data()) );	
+void Tensor<float>::set_descriptor_typed(int N, vector<int> dimensions, vector<int> strides) {
+	handle_error( cudnnSetTensorNdDescriptor(td, CUDNN_DATA_FLOAT, N, dimensions.data(), strides.data()) );
 }
 
 template <typename F>
@@ -120,7 +132,7 @@ void Tensor<F>::reshape(TensorShape new_shape) {
 			data = nullptr;
 		}
 		shape = new_shape;
-		alloc();
+		allocate();
 	}
 	shape = new_shape;
 	set_descriptor();
@@ -295,7 +307,7 @@ FilterBank<double>::FilterBank(std::vector<int> dimensions_)
 	handle_error( cudnnCreateFilterDescriptor(&fd));
 	handle_error( cudnnSetFilterNdDescriptor(fd, CUDNN_DATA_DOUBLE, CUDNN_TENSOR_NCHW, dimensions.size(), dimensions.data()) );
 
-	handle_error( cudaMalloc( (void**)&weights, sizeof(double) *  * n_weights()) );
+	handle_error( cudaMalloc( (void**)&weights, sizeof(double) * n_weights()) );
 	if (ZERO_ON_INIT)
 	  zero();
 }
@@ -357,6 +369,27 @@ int FilterBank<F>::in_c() {
 template <typename F>
 int FilterBank<F>::out_c() {
 	return dimensions[1];
+}
+
+template <typename F>
+int FilterBank<F>::kd() {
+	if (dimensions.size() == 5)
+		return dimensions[2];
+	return 1;
+}
+
+template <typename F>
+int FilterBank<F>::kh() {
+	if (dimensions.size() == 5)
+		return dimensions[3];
+	return dimensions[2];
+}
+
+template <typename F>
+int FilterBank<F>::kw() {
+	if (dimensions.size() == 5)
+		return dimensions[4];
+	return dimensions[3];
 }
 
 template <typename F>
