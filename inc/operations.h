@@ -11,8 +11,8 @@
 #include "util.h"
 #include "cudaptr.h"
 
-int const CONV_MAX_MEM = 0;
-//int const CONV_MAX_MEM = 64 * 1024 * 1024;
+// int const CONV_MAX_MEM = 0;
+int const CONV_MAX_MEM = 64 * 1024 * 1024;
 
 
 template <typename F>
@@ -94,16 +94,21 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	TensorShape output_shape(TensorShape input);
 	void describe(std::ostream &out) { out << filter_bank.dimensions; }
 
-	cudnnConvolutionDescriptor_t conv;
+	cudnnConvolutionDescriptor_t conv = nullptr;
 	FilterBank<F> filter_bank, filter_bank_grad;
 	Tensor<F> bias, bias_grad;
 
-	cudnnConvolutionFwdAlgo_t algo;
+	cudnnConvolutionFwdAlgo_t algo = nullptr;
 	cudnnConvolutionBwdDataAlgo_t algo_bwd;
 	cudnnConvolutionBwdFilterAlgo_t algo_bwd_filter;
 
-	char *workspace = nullptr, *workspace_bwd = nullptr, *workspace_bwd_filter = nullptr;
-	size_t workspace_size, workspace_size_bwd, workspace_size_bwd_filter;
+	char *workspace = nullptr;
+	char *workspace_bwd = nullptr;
+	char *workspace_bwd_filter = nullptr;
+
+	size_t workspace_size = 0;
+	size_t workspace_size_bwd = 0;
+	size_t workspace_size_bwd_filter = 0;
 
 	bool keep = true;
 };

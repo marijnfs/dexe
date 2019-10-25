@@ -269,7 +269,7 @@ std::function<Node<F>(Node<F>)> Network<F>::convolution(int out_c, int k, string
 	return [this, out_c, k, name](Node<F> n) {
 		cout << "conf lambda: " << endl;
 		auto in_c = n.shape().c();
-		auto index = add_operation(new ConvolutionOperation<F>({in_c, out_c, k, k}, {1, 1, 1, 1}, true), vector<int>{n.index}, TensorShape{0, out_c, 0, 0}, name);
+		auto index = add_operation(new ConvolutionOperation<F>({out_c, in_c, k, k}, {1, 1}, true), vector<int>{n.index}, TensorShape{0, out_c, 0, 0}, name);
 		return Node<F>(index, this);
 	};
 }
@@ -279,7 +279,7 @@ std::function<Node<F>(Node<F>)> Network<F>::convolution3D(int out_c, int k, stri
 	return [this, out_c, k, name](Node<F> n) {
 		cout << "conf lambda: " << endl;
 		auto in_c = n.shape().c();
-		auto index = add_operation(new ConvolutionOperation<F>({in_c, out_c, k, k, k}, {1, 1, 1, 1, 1}, true), vector<int>{n.index}, TensorShape{0, out_c, 0, 0, 0}, name);
+		auto index = add_operation(new ConvolutionOperation<F>({out_c, in_c, k, k, k}, {1, 1, 1}, true), vector<int>{n.index}, TensorShape{0, out_c, 0, 0, 0}, name);
 		return Node<F>(index, this);
 	};
 }
@@ -368,7 +368,10 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 		}
 
 		tmp_outputs.push_back(tensors[s].x.get());
-		operations[s]->forward_dry_run(tmp_inputs, tmp_outputs);
+		bool success = operations[s]->forward_dry_run(tmp_inputs, tmp_outputs);
+		if (!success) {
+			throw std::runtime_error("forward dry run failed");
+		}
 	}
 
 	//Run Forward

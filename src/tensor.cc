@@ -86,6 +86,7 @@ Tensor<F>::Tensor(TensorShape s):
 
 template <typename F>
 void Tensor<F>::set_descriptor() {
+	cout << "set descriptor: " << shape << endl;
 	vector<int> strides;
 	strides.reserve(shape.n_dimensions());
 
@@ -96,7 +97,6 @@ void Tensor<F>::set_descriptor() {
 	}
 	reverse(strides.begin(), strides.end());
 
-	cout << "Shape: " << shape << " strides:" << strides << endl;
 	set_descriptor_typed(shape.n_dimensions(), shape.dimensions, strides);
 }
 
@@ -119,7 +119,7 @@ void Tensor<F>::allocate() {
 		return;
 
 	if (shape.n_elements() != 0) {
-		set_descriptor();
+		cout << "allocating: " << shape << " " << shape.n_elements() << endl;
 		handle_error( cudaMalloc( (void**)&data, sizeof(F) * shape.n_elements()));
 		if (ZERO_ON_INIT)
 		  zero();
@@ -316,6 +316,7 @@ void TensorSet<F>::alloc_grad() {
 template <>
 FilterBank<float>::FilterBank(std::vector<int> dimensions_) 
 	: dimensions(dimensions_) {
+	cout << "setting filter descriptor " << dimensions << " nweights: " << n_weights() << endl;
 	handle_error( cudnnCreateFilterDescriptor(&fd));
 	handle_error( cudnnSetFilterNdDescriptor(fd, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, dimensions.size(), dimensions.data()) );
 
@@ -385,14 +386,15 @@ void FilterBank<F>::from_vector(vector<F> &in) {
 }
 
 template <typename F>
-int FilterBank<F>::in_c() {
+int FilterBank<F>::out_c() {
 	return dimensions[0];
 }
 
 template <typename F>
-int FilterBank<F>::out_c() {
+int FilterBank<F>::in_c() {
 	return dimensions[1];
 }
+
 
 template <typename F>
 int FilterBank<F>::kd() {
