@@ -98,7 +98,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	FilterBank<F> filter_bank, filter_bank_grad;
 	Tensor<F> bias, bias_grad;
 
-	cudnnConvolutionFwdAlgo_t algo = nullptr;
+	cudnnConvolutionFwdAlgo_t algo;
 	cudnnConvolutionBwdDataAlgo_t algo_bwd;
 	cudnnConvolutionBwdFilterAlgo_t algo_bwd_filter;
 
