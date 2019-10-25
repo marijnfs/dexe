@@ -77,7 +77,7 @@ struct Network {
 
 	Tensor<F> *output();
 	Tensor<F> *output_grad();
-	TensorShape output_shape() { return last(shapes); }
+	TensorShape output_shape() { return tensors.back().shape(); }
 
 
 	// Tensor<F> &input();
@@ -92,7 +92,6 @@ struct Network {
 	std::vector<std::vector<int>> input_indices;
 
 	std::vector<Parametrised<F>*> parameters;
-	std::vector<TensorShape> shapes;
 
 	CudaVec param_vec, grad_vec;
 	std::vector<CudaPtr<F>> param_ptrs, grad_ptrs;

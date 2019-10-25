@@ -24,8 +24,11 @@ int TensorShape::offset(int n_, int c_, int y_, int x_) {
   return n_ * (c() * w() * h()) + c_ * (w() * h()) + y_ * w() + x_;
 }
 
-int TensorShape::size() {
+int TensorShape::n_elements() {
 	return calculate_product(dimensions);
+}
+int TensorShape::n_dimensions() {
+	return dimensions.size();
 }
 
 void TensorShape::set_c(int c) {
@@ -58,12 +61,19 @@ int TensorShape::w() {
 } 
 
 bool TensorShape::operator==(TensorShape const &other) const {
-	return other.dimensions == other.dimensions; 
+	return dimensions == other.dimensions; 
 }
 
 bool TensorShape::operator!=(TensorShape const &other) const {
 	return !(*this == other); 
 }
+
+template <typename F>
+Tensor<F>::Tensor() 
+: owning(true) {
+	handle_error( cudnnCreateTensorDescriptor(&td) );
+}
+
 
 template <typename F>
 Tensor<F>::Tensor(TensorShape s):
@@ -77,27 +87,29 @@ Tensor<F>::Tensor(TensorShape s):
 template <typename F>
 void Tensor<F>::set_descriptor() {
 	vector<int> strides;
-	strides.reserve(shape.size());
+	strides.reserve(shape.n_dimensions());
 
 	int stride(1);
 	for (auto d_it = shape.dimensions.rbegin(); d_it != shape.dimensions.rend(); ++d_it) {
 		strides.emplace_back(stride);
 		stride *= *d_it;
 	}
+	reverse(strides.begin(), strides.end());
 
-	if (td)
-		handle_error( cudnnDestroyTensorDescriptor(td));
-
-	set_descriptor_typed(shape.size(), shape.dimensions, strides);
+	cout << "Shape: " << shape << " strides:" << strides << endl;
+	set_descriptor_typed(shape.n_dimensions(), shape.dimensions, strides);
 }
 
 template <>
 void Tensor<double>::set_descriptor_typed(int N, vector<int> dimensions, vector<int> strides) {
+	if (!N) return;
 	handle_error( cudnnSetTensorNdDescriptor(td, CUDNN_DATA_DOUBLE, N, dimensions.data(), strides.data()) );	
 }
 
 template <>
 void Tensor<float>::set_descriptor_typed(int N, vector<int> dimensions, vector<int> strides) {
+	cout << "tensor desc, dims: " << dimensions << " strides: " << strides << endl;
+	if (!N) return;
 	handle_error( cudnnSetTensorNdDescriptor(td, CUDNN_DATA_FLOAT, N, dimensions.data(), strides.data()) );
 }
 
@@ -106,9 +118,9 @@ void Tensor<F>::allocate() {
 	if (!owning)
 		return;
 
-	if (shape.size() != 0) {
+	if (shape.n_elements() != 0) {
 		set_descriptor();
-		handle_error( cudaMalloc( (void**)&data, sizeof(F) * size()));
+		handle_error( cudaMalloc( (void**)&data, sizeof(F) * shape.n_elements()));
 		if (ZERO_ON_INIT)
 		  zero();
 	}
@@ -125,7 +137,7 @@ void Tensor<F>::reshape(TensorShape new_shape) {
 		return;
 
 	//If sizes match but shapes don't, we don't want to deallocate
-	if (new_shape.size() != shape.size())
+	if (new_shape.n_elements() != shape.n_elements())
 	{
 		if (data) {
 			cudaFree(data);
@@ -147,7 +159,6 @@ Tensor<F>::~Tensor() {
 }
 
 
-
 template <typename F>
 void Tensor<F>::zero() {
 	handle_error( cudaMemset(data, 0, sizeof(F) * size()));
@@ -156,7 +167,7 @@ void Tensor<F>::zero() {
 
 template <typename F>
 vector<F> Tensor<F>::to_vector() {
-	vector<F> vec(shape.size());
+	vector<F> vec(shape.n_elements());
 	handle_error( cudaMemcpy(&vec[0], data, vec.size() * sizeof(F), cudaMemcpyDeviceToHost));
 	return vec;
 }
@@ -223,7 +234,7 @@ void Tensor<F>::fill(F val) {
 
 template <typename F>
 int Tensor<F>::size() {
-	return shape.size();
+	return shape.n_elements();
 }
 
 template <>
@@ -270,12 +281,24 @@ double Tensor<double>::sum() {
 }
 
 template <typename F>
-TensorSet<F>::TensorSet(TensorShape shape_) : shape(shape_) {
-	cout << "created set with shape: " << shape_ << ", not allocated" << endl;
+TensorSet<F>::TensorSet(TensorShape shape_) {
+	alloc_x(shape_);
 }
 
 template <typename F>
-void TensorSet<F>::alloc_x() {
+TensorSet<F>::TensorSet() {
+	alloc_x(TensorShape());
+}
+
+template <typename F>
+TensorShape TensorSet<F>::shape() {
+	if (!x)
+		return TensorShape();
+	return x->shape;
+}
+
+template <typename F>
+void TensorSet<F>::alloc_x(TensorShape shape) {
 	if (x)
 		x->reshape(shape);
 	else
@@ -285,9 +308,9 @@ void TensorSet<F>::alloc_x() {
 template <typename F>
 void TensorSet<F>::alloc_grad() {
 	if (grad)
-		grad->reshape(shape);
+		grad->reshape(shape());
 	else
-		grad.reset(new Tensor<F>(shape));
+		grad.reset(new Tensor<F>(shape()));
 }
 
 template <>

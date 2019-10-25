@@ -22,7 +22,8 @@ struct TensorShape {
   bool operator!=(TensorShape const &other) const;
 
   int offset(int n, int c, int y, int x);
-  int size();
+  int n_elements();
+  int n_dimensions();
 
   void set_c(int c);
 
@@ -35,6 +36,7 @@ struct TensorShape {
 
 template <typename F>
 struct Tensor {
+	Tensor();
 	Tensor(TensorShape shape);
 	Tensor(TensorShape shape, F *data);
 
@@ -73,7 +75,7 @@ struct Tensor {
 
     TensorShape shape;
 	bool owning = false;
-	cudnnTensorDescriptor_t td;
+	cudnnTensorDescriptor_t td = nullptr;
 	F *data = nullptr;
 };
 
@@ -88,15 +90,14 @@ inline Tensor<F> &operator*=(Tensor<F> &in, float const other) {
 
 template <typename F>
 struct TensorSet {
-	std::unique_ptr<Tensor<F>> x, grad;
-
 	TensorSet(TensorShape shape);
-	TensorSet(){}
+	TensorSet();
 
-	void alloc_x();
+	void alloc_x(TensorShape shape);
 	void alloc_grad();
+	TensorShape shape();
 
-	TensorShape shape;
+	std::unique_ptr<Tensor<F>> x, grad;
 };
 
 template <typename F>
@@ -128,12 +129,12 @@ struct FilterBank {
 };
 
 inline std::ostream &operator<<(std::ostream &o, TensorShape s) {
-	return o << "[" << s.dimensions << "]";
+	return o << "T:" << s.dimensions;
 }
 
 template <typename F>
 inline std::ostream &operator<<(std::ostream &o, FilterBank<F> &f) {
-  return o << "[in_c: " << f.in_c << ">out_c:" << f.out_c << " kw:" << f.kw << " kh:" << f.kh << " N:" << f.N << " T:" << f.T << "]";
+  return o << "F:" << f.dimensions;
 }
 
 

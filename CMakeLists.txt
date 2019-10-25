@@ -15,9 +15,9 @@ find_library(CUDNN cudnn HINTS /usr/local/cuda/lib64 /usr/local/cuda/lib)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_60 -std=c++11")
+set(CUDA_NVCC_FLAGS "-arch=sm_60 -std=c++14")
 
-set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_CXX_FLAGS "-std=c++17")
 
 # Specify include directories
 include_directories(
@@ -38,6 +38,7 @@ file(GLOB CPP_HEADERS inc/*.h)
 
 
 cuda_add_library(DEXE ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
+set_property(TARGET DEXE PROPERTY CXX_STANDARD 11)
 target_link_libraries( DEXE
 	 ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES}
 )

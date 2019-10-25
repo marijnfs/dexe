@@ -12,13 +12,11 @@ using namespace std;
 
 template <typename F>
 TensorShape Node<F>::shape() { 
-	cout << network->shapes.size() << endl;
-	return network->shapes[index]; 
+	return network->tensors[index].shape();
 }
 
 template <typename F>
 Network<F>::Network(TensorShape in) : n_params(0), finished(false) {
-	shapes.push_back(in);
 	tensors.emplace_back(in);
 }
 template <typename F>
@@ -247,13 +245,19 @@ string Network<F>::get_unique_name(string name) {
 template <typename F>
 int Network<F>::add_operation(Operation<F> *op, vector<int> inputs, TensorShape shape, string name) {
 	int index = names.size();
+
 	auto unique_name = get_unique_name(name);
+
 	names.emplace_back(unique_name);
+	names_set.insert(unique_name);
+
 	operations.emplace_back(op);
-	tensors.emplace_back();
-	shapes.emplace_back(shape);
+	cout << "add operation, add tensor by shape " << shape << endl;
+	tensors.emplace_back(shape);
+	cout << "done add operation, add tensor by shape " << shape << endl;
+
 	input_indices.emplace_back(inputs);
-	cout << "added: " << names.size() << endl;
+	cout << "added: " << name << " N:" << names.size() << endl;
 	if (auto param = dynamic_cast<Parametrised<F>*>(op))
 		parameters.emplace_back(param);
 	return index;
@@ -293,6 +297,9 @@ std::function<Node<F>(Node<F>)> Network<F>::relu(string name) {
 template <typename F>
 std::function<Node<F>(Node<F>, Node<F>)> Network<F>::addition(string name) {
 	return [this, name](Node<F> n1, Node<F> n2) {
+		cout << n1.index << " " << n2.index << endl;
+		cout << n1.shape() << ", " << n2.shape() << endl;
+		
 		auto in_c = n1.shape().c();
 		auto index = add_operation(new AdditionOperation<F>(), vector<int>{n1.index, n2.index}, TensorShape{0, in_c, 0, 0}, name);
 
@@ -349,18 +356,23 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 	reverse(sequence.begin(), sequence.end());
 
 	//Forward Dryrun
+	cout << "DryRun" << endl;
 	for (auto s : sequence) {
 		vector<Tensor<F>*> tmp_inputs, tmp_outputs;
-		for (auto idx : input_indices[s])
+		cout << "op: " << names[s] << endl;
+		for (auto idx : input_indices[s]) {
+			cout << "input: " << names[idx] << endl;
+			cout << "asdf: " << tensors[idx].x.get() << endl;
+			cout << "in: " << tensors[idx].x->shape << endl;
 			tmp_inputs.push_back(tensors[idx].x.get());
+		}
 
-		tensors[s].alloc_x();
 		tmp_outputs.push_back(tensors[s].x.get());
-
 		operations[s]->forward_dry_run(tmp_inputs, tmp_outputs);
 	}
 
 	//Run Forward
+	cout << "Actual Run" << endl;
 	for (auto s : sequence) {
 		vector<Tensor<F>*> tmp_inputs, tmp_outputs;
 		for (auto idx : input_indices[s])

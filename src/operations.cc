@@ -11,13 +11,18 @@ template <typename F>
 ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions, vector<int> strides, bool keep_, size_t workspace_limit_):
 	filter_bank(dimensions),
 	filter_bank_grad(dimensions),
-	bias({1, dimensions[1], 1, 1}),
-	bias_grad({1, dimensions[1], 1, 1}),
 	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
 	workspace(0),
 	workspace_size(workspace_limit_),
 	keep(keep_)
 {
+	vector<int> bias_dims(dimensions.size() - 1, 1); //number of filter dimensions is one more than output dim
+	bias_dims[1] = dimensions[1]; //dimensions[1] corresponds to output channels
+	cout << "reshaping bias" << endl;
+	bias.reshape(bias_dims);
+	bias_grad.reshape(bias_dims);
+	cout << "done reshaping bias" << endl;
+
 	vector<int> paddings(dimensions.size());
 	vector<int> dilations(dimensions.size(), 1);
 
@@ -55,6 +60,7 @@ bool ConvolutionOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::
 	}
 	auto target_shape = in_tensor.shape;
 	target_shape.set_c(filter_bank.out_c());
+	cout << "reshaping: " << target_shape << endl;
 	out_tensor.reshape(target_shape);
 	return true;
 }
@@ -404,11 +410,11 @@ bool AdditionOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vec
 	auto &in_tensor1 = *in[1];
 	auto &out_tensor = *out[0];
 
-	if (in_tensor0.shape.size() != 0 || in_tensor1.shape.size() != 0) {
+	if (in_tensor0.shape.n_elements() == 0 || in_tensor1.shape.n_elements() == 0) {
 		cerr << "AdditionOperation: Input shape is empty" << endl;
 		return false;
 	}
-	if (in_tensor0.shape != out_tensor.shape) {
+	if (in_tensor0.shape != in_tensor1.shape) {
 		cerr << "AdditionOperation: inputs don't match" << endl;
 		return false;
 	}
