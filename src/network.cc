@@ -271,6 +271,16 @@ std::function<Node<F>(Node<F>)> Network<F>::convolution(int out_c, int k, string
 }
 
 template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::convolution3D(int out_c, int k, string name) {
+	return [this, out_c, k, name](Node<F> n) {
+		cout << "conf lambda: " << endl;
+		auto in_c = n.shape().c();
+		auto index = add_operation(new ConvolutionOperation<F>({in_c, out_c, k, k, k}, {1, 1, 1, 1, 1}, true), vector<int>{n.index}, TensorShape{0, out_c, 0, 0, 0}, name);
+		return Node<F>(index, this);
+	};
+}
+
+template <typename F>
 std::function<Node<F>(Node<F>)> Network<F>::relu(string name) {
 	return [this, name](Node<F> n) {
 		auto in_c = n.shape().c();
@@ -295,6 +305,13 @@ Node<F> Network<F>::input(int n_channels, string name) {
 	auto index = add_operation(new InputOperation<F>(), vector<int>{}, TensorShape{0, n_channels, 0, 0}, name);
 	return Node<F>(index, this);
 }
+
+template <typename F>
+Node<F> Network<F>::input3D(int n_channels, string name) {
+	auto index = add_operation(new InputOperation<F>(), vector<int>{}, TensorShape{0, n_channels, 0, 0, 0}, name);
+	return Node<F>(index, this);
+}
+
 
 template <typename F>
 void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) {
