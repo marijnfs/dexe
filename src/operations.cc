@@ -56,7 +56,14 @@ void ConvolutionOperation<F>::forward(vector<Tensor<F>*> &in, vector<Tensor<F>*>
 template <typename F>
 bool ConvolutionOperation<F>::backward_dry_run(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out, vector<Tensor<F>*> &in_grad, vector<Tensor<F>*> &out_grad) {
     in_grad[0]->reshape(in[0]->shape);
+    prepare_backward(*in[0], *out[0]);
+    prepare_backward_weights(*in[0], *out[0]);
     return true;
+}
+
+template <typename F>
+void ConvolutionOperation<F>::backward(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out, vector<Tensor<F>*> &in_grad, vector<Tensor<F>*> &out_grad) {
+    backward(*in[0], *out[0], *in_grad[0], *out_grad[0]);
 }
 
 template <typename F>
@@ -223,7 +230,7 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
 
 
 template <typename F>
-void ConvolutionOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &output_grad, Tensor<F> &input_grad, F beta) {
+void ConvolutionOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &input_grad, Tensor<F> &output_grad, F beta) {
 	F alpha(1.0);
 	handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, filter_bank.fd, filter_bank.weights, output_grad.td, output_grad.data, conv, algo_bwd, workspace_bwd, workspace_size_bwd, &beta, input_grad.td, input_grad.data) );
 }

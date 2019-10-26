@@ -22,7 +22,7 @@ struct Operation {
 	// virtual void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0){}
 	// virtual void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0){}
 
-	virtual TensorShape output_shape(TensorShape input) { return TensorShape{0, 0, 0, 0}; }
+	virtual TensorShape output_shape(TensorShape input) { return input; }
 
 	// Runs the forward step
 	virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { throw std::runtime_error("Not Implemented"); }
@@ -30,6 +30,9 @@ struct Operation {
 	// Responsible for both checking if sizes match, and making sure the memory is allocated
 	virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out){ throw std::runtime_error("Not Implemented"); }
 
+
+	// Runs the backward step
+	virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { throw std::runtime_error("Not Implemented"); }
     virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { throw std::runtime_error("Not Implemented"); }
 	
         // Write a readable string to the ostream
@@ -39,6 +42,17 @@ struct Operation {
 	// virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){ forward(in, out, beta); }
 	// virtual void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0){}
 	// virtual void backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, int t, F beta = 0.0){}
+};
+
+template <typename F>
+struct DefaultOp : public Operation<F> {    
+	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { forward(*in[0], *out[0]); }
+	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { backward(*in[0], *out[0], *in_grad[0], *out_grad[0]); }
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { out[0]->reshape(in[0]->shape); return true; }
+    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_) { in_grad[0]->reshape(in[0]->shape); return true; }
+    
+	virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
+	virtual void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
 };
 
 template <typename F>
@@ -59,7 +73,8 @@ struct Parametrised {
 
 template <typename F>
 struct InputOperation : public Operation<F> {
-	
+    Tensor<F> *reference = nullptr;
+    
 };
 
 template <typename F>
@@ -73,19 +88,21 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 
 	bool check_fit(Tensor<F> &in_tensor, Tensor<F> &out_tensor);
 
+    // API
 	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
 	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
     bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
 
-
+    // regular
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
+	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
 
     void prepare_forward(Tensor<F> &in, Tensor<F> &out);
     void prepare_backward_weights(Tensor<F> &in, Tensor<F> &out);
     void prepare_backward(Tensor<F> &in, Tensor<F> &out);
-
 	void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0);
-	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+
 	void update(F lr);
 	void l2(F l);
 	void zero_grad();
