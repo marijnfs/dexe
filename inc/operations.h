@@ -30,7 +30,9 @@ struct Operation {
 	// Responsible for both checking if sizes match, and making sure the memory is allocated
 	virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out){ throw std::runtime_error("Not Implemented"); }
 
-	// Write a readable string to the ostream
+    virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { throw std::runtime_error("Not Implemented"); }
+	
+        // Write a readable string to the ostream
 	virtual void describe(std::ostream &out){}
 
 
@@ -69,10 +71,18 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	virtual void init_normal(F mean, F std);
 	virtual void init_uniform(F var);
 
+	bool check_fit(Tensor<F> &in_tensor, Tensor<F> &out_tensor);
+
 	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
 	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+
 
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
+
+    void prepare_forward(Tensor<F> &in, Tensor<F> &out);
+    void prepare_backward_weights(Tensor<F> &in, Tensor<F> &out);
+    void prepare_backward(Tensor<F> &in, Tensor<F> &out);
 
 	void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
@@ -83,7 +93,6 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F>> &grads, std::vector<CudaPtr<F> > &fast_grads) override;
 	void share(ConvolutionOperation<F> &other);
 
-	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
 
 
 	std::vector<F> to_vector();
