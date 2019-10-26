@@ -45,14 +45,15 @@ struct Operation {
 };
 
 template <typename F>
-struct DefaultOp : public Operation<F> {    
+struct DefaultOperation : public Operation<F> {    
 	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { forward(*in[0], *out[0]); }
 	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { backward(*in[0], *out[0], *in_grad[0], *out_grad[0]); }
-	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { out[0]->reshape(in[0]->shape); return true; }
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { out[0]->reshape(output_shape(in[0]->shape) ); return true; }
     bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_) { in_grad[0]->reshape(in[0]->shape); return true; }
-    
-	virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-	virtual void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+
+    virtual TensorShape output_shape(TensorShape input) = 0;
+	virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) = 0;
+	virtual void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0) = 0;
 };
 
 template <typename F>
@@ -264,8 +265,8 @@ struct STanhOperation : public Operation<F> {
 };
 
 template <typename F>
-struct ReluOperation : public Operation<F> {
-		ReluOperation();
+struct ReluOperation : public DefaultOperation<F> {
+    ReluOperation();
 
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
