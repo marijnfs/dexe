@@ -24,11 +24,8 @@ void normalise_fast(float *ptr, int n)
   // with fusion
 
   thrust::device_ptr<float> dev_ptr = thrust::device_pointer_cast(ptr);
-  float mean = thrust::reduce(dev_ptr, dev_ptr + n, 0, thrust::plus<float>()) / n;
-    
+  float mean = thrust::reduce(dev_ptr, dev_ptr + n, 0, thrust::plus<float>()) / n;    
   float std = sqrt( transform_reduce(dev_ptr, dev_ptr + n, square(mean), 0.0f, thrust::plus<float>())) / n;
-  
-  
   thrust::for_each(dev_ptr, dev_ptr + n, thrust::placeholders::_1 /= std);
   
 }
