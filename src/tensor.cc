@@ -68,6 +68,10 @@ bool TensorShape::operator!=(TensorShape const &other) const {
 	return !(*this == other); 
 }
 
+int &TensorShape::operator[](int index) {
+    return dimensions[index];
+}
+
 template <typename F>
 Tensor<F>::Tensor() 
 : owning(true) {

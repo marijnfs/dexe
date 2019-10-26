@@ -94,6 +94,8 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	TensorShape output_shape(TensorShape input);
 	void describe(std::ostream &out) { out << filter_bank.dimensions; }
 
+    std::vector<int> dimensions, strides, paddings, dilations;
+
 	cudnnConvolutionDescriptor_t conv = nullptr;
 	FilterBank<F> filter_bank, filter_bank_grad;
 	Tensor<F> bias, bias_grad;

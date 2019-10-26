@@ -20,6 +20,7 @@ struct TensorShape {
 
   bool operator==(TensorShape const &other) const;
   bool operator!=(TensorShape const &other) const;
+  int &operator[](int index);
 
   int offset(int n, int c, int y, int x);
   int n_elements();

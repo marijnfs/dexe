@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include "operations.h"
 #include "util.h"
-#include "database.h"
 #include "network.h"
 #include "img.h"
 #include "colour.h"

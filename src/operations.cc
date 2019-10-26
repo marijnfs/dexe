@@ -8,13 +8,15 @@ using namespace std;
 
 
 template <typename F>
-ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions, vector<int> strides, bool keep_, size_t workspace_limit_):
+ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions_, vector<int> strides_, bool keep_, size_t workspace_limit_):
 	filter_bank(dimensions),
 	filter_bank_grad(dimensions),
 	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
 	workspace(0),
 	workspace_size(workspace_limit_),
-	keep(keep_)
+	keep(keep_),
+    dimensions(dimensions_),
+    strides(strides_)
 {
 	vector<int> bias_dims(dimensions.size(), 1); //number of filter dimensions is one more than output dim
 	bias_dims[1] = filter_bank.out_c(); //dimensions[1] corresponds to output channels
@@ -24,8 +26,8 @@ ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions, vector<int
 	cout << "done reshaping bias" << endl;
 
 	vector<int> kernel_dims(dimensions.begin() + 2, dimensions.end());
-	vector<int> paddings(kernel_dims.size());
-	vector<int> dilations(kernel_dims.size(), 1);
+	paddings = vector<int>(kernel_dims.size());
+    dilations = vector<int>(kernel_dims.size(), 1);
 
 	if (keep) {
 		cout << "pad: " << paddings << endl;
@@ -55,7 +57,8 @@ template <typename F>
 bool ConvolutionOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
 	auto &in_tensor = *in[0];
 	auto &out_tensor = *out[0];
-
+    
+    // Check if input makes sense
 	if (in_tensor.size() == 0) {
 		cerr << "ConvolutionOperation: dry run failed, input size is zero" << endl;
 		return false;
@@ -64,15 +67,29 @@ bool ConvolutionOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::
 		cerr << "ConvolutionOperation: input channels don't match filters" << endl;
 		return false;
 	}
+    if (in_tensor.shape.n_dimensions() != out_tensor.shape.n_dimensions()) {
+        cerr << "ConvolutionOperation: number of input dimensions don't match output dimensions" << endl;
+		return false;
+	}
+    
+    // check if strides divide
+    
+    for (int n(0); n < paddings.size(); ++n) {
+        if ((in_tensor.shape[n + 2] + 2 * paddings[n] - dimensions[n + 2] + 1) % strides[n] != 0) {
+            cerr << "Stride does not divide dimension" << endl;
+        }            
+    }
 
 	//reshape output tensor
 	auto target_shape = in_tensor.shape;
 	target_shape.set_c(filter_bank.out_c());
+    for (int n(0); n < paddings.size(); ++n) {
+        target_shape[n + 2] = (in_tensor.shape[n + 2] + 2 * paddings[n] - dimensions[n + 2] + 1) / strides[n];
+    }
 	out_tensor.reshape(target_shape);
 
 	//prepare the workspaces
 	forward_dry_run(in_tensor, out_tensor);
-
 	return true;
 }
 
@@ -264,7 +281,10 @@ SquashOperation<F>::SquashOperation(TensorShape s, int c_) : c(c_), ConvolutionO
 
 template <typename F>
 TensorShape SquashOperation<F>::output_shape(TensorShape in) {
-	return TensorShape(in.n(), c, 1, 1);
+  vector<int> out_dimensions(in.n_dimensions(), 1);
+  out_dimensions[0] = in.n();
+  out_dimensions[1] = c;
+  return out_dimensions;
 }
 
 template <typename F>
@@ -445,7 +465,7 @@ template <typename F>
 void AdditionOperation<F>::forward(Tensor<F> &in1, Tensor<F> &in2, Tensor<F> &out) {
   F alpha(1);
 
-  add_cuda<F>(in1.ptr(), out.ptr(), in1.size(), float(1.0));
+  add_cuda<F>(in1.ptr(), out.ptr(), in1.size(), 1.0);
   add_cuda<F>(in2.ptr(), out.ptr(), in2.size(), 1.0);
 }
 
