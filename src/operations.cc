@@ -79,6 +79,7 @@ bool ConvolutionOperation<F>::backward_dry_run(vector<Tensor<F>*> &in, vector<Te
 template <typename F>
 void ConvolutionOperation<F>::backward(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out, vector<Tensor<F>*> &in_grad, vector<Tensor<F>*> &out_grad) {
     backward(*in[0], *out[0], *in_grad[0], *out_grad[0]);
+    backward_weights(*in[0], *out_grad[0]);
 }
 
 template <typename F>
@@ -99,7 +100,7 @@ bool ConvolutionOperation<F>::check_fit(Tensor<F> &in_tensor, Tensor<F> &out_ten
 
     // check if strides divide    
     for (int n(0); n < paddings.size(); ++n) {
-        if ((in_tensor.shape[n + 2] + 2 * paddings[n] - dimensions[n + 2] + 1) % strides[n] != 0) {
+        if ((in_tensor.shape[n + 2] + 2 * paddings[n] - dimensions[n + 2]) % strides[n] != 0) {
             cerr << "Stride does not divide dimension" << endl;
         }            
     }
@@ -119,7 +120,13 @@ bool ConvolutionOperation<F>::forward_dry_run(vector<Tensor<F>*> &in, vector<Ten
 	auto target_shape = in_tensor.shape;
 	target_shape.set_c(filter_bank.out_c());
     for (int n(0); n < paddings.size(); ++n) {
-        target_shape[n + 2] = (in_tensor.shape[n + 2] + 2 * paddings[n] - dimensions[n + 2] + 1) / strides[n];
+        // in = (out - 1) * stride + dim - 2 * paddings
+        // in + 2 * paddings = (out - 1) * stride + dim
+        // in + 2 * paddings - dim = (out - 1) * stride
+        // (in + 2 * paddings - dim) / stride = out - 1
+        // out = (in + 2 * paddings - dim) / stride + 1
+        
+        target_shape[n + 2] = (in_tensor.shape[n + 2] + 2 * paddings[n] - dimensions[n + 2]) / strides[n] + 1;
     }
 	out_tensor.reshape(target_shape);
 
@@ -319,6 +326,60 @@ ConvolutionOperation<F>::~ConvolutionOperation() {
     if (workspace)
 		cudaFree(workspace);
 }
+
+
+///////////////////
+template <typename F>
+ConvolutionTransposeOperation<F>::ConvolutionTransposeOperation(std::vector<int> dimensions_, std::vector<int> strides_, bool keep_, size_t workspace_limit_) 
+: ConvolutionOperation<F>(dimensions_, strides_, keep_, workspace_limit_) {
+}
+
+template <typename F>
+void ConvolutionTransposeOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out){
+	Tensor<F> dummy;
+	ConvolutionOperation<F>::backward(dummy, dummy, *out[0], *in[0]); //we use ConvolutionOperation in reverse to get the transpose
+}
+
+template <typename F>
+bool ConvolutionTransposeOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out){
+    auto in_shape = in[0]->shape;
+    //In the transpose we use cudnnConvolutions in reverse, so the output dimension is not the 1st dimension, input the 0th.
+    if (in_shape.c() != this->dimensions[0]) {
+        cerr << "channel dimension doesn't fit filter" << endl;
+        return false;
+    }
+
+    auto output_shape = in_shape;
+    output_shape.set_c(this->dimensions[1]);
+    
+    //Check and set the dimensions for every image dimension
+    cout << "shape: " << in_shape << endl;
+    for (int n(0); n < this->paddings.size(); ++n) {
+        // in = (out - 1) * stride + dim - 2 * paddings
+        auto intermediate = (in_shape[n + 2] - 1) * this->strides[n] + this->dimensions[n + 2];
+        if (intermediate <= 2 * this->paddings[n]) {
+            cerr << "paddings would cut off too much" << endl;
+            return false;
+        }
+        output_shape[n + 2] = intermediate - 2 * this->paddings[n];
+    }
+    out[0]->reshape(output_shape);
+
+    return true;
+}
+
+template <typename F>
+void ConvolutionTransposeOperation<F>::backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad){
+	ConvolutionOperation<F>::forward(*out_grad[0], *in_grad[0]); //we use ConvolutionOperation in reverse to get the transpose	
+	ConvolutionOperation<F>::backward_weights(*out_grad[0], *in[0]); //we use ConvolutionOperation in reverse to get the transpose	
+}
+
+template <typename F>
+bool ConvolutionTransposeOperation<F>::backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad){
+	return false;
+}
+
+
 
 
 //////////////////////////////////////
@@ -614,6 +675,7 @@ TensorShape SoftmaxOperation<F>::output_shape(TensorShape in) {
 
 template struct InputOperation<float>;
 template struct ConvolutionOperation<float>;
+template struct ConvolutionTransposeOperation<float>;
 template struct SquashOperation<float>;
 template struct UnsquashOperation<float>;
 template struct MergeOperation<float>;

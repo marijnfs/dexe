@@ -24,6 +24,26 @@ void Handler::init_handler() {
   handle_error( cublasCreate(&h_cublas));
 }
 
+void Handler::deinit() {
+    if (!s_handler)
+        return;
+    if (s_handler->h_cudnn) {
+        cerr << "destroying cudnn" << endl;
+        handle_error( cudnnDestroy(s_handler->h_cudnn) );
+        s_handler->h_cudnn = 0;
+    }
+    if (s_handler->h_curand) {
+        curandDestroyGenerator(s_handler->h_curand);
+        s_handler->h_curand = 0;
+    }
+    if (s_handler->h_cublas) {
+        cublasDestroy(s_handler->h_cublas);
+        s_handler->h_cublas = 0;
+    }
+    delete s_handler;
+    s_handler = 0;        
+}
+
 void Handler::set_device(int n) {
   handle_error( cudaSetDevice(n) );
   cudaDeviceProp prop;

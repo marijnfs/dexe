@@ -45,7 +45,7 @@ struct Operation {
 };
 
 template <typename F>
-struct DefaultOperation : public Operation<F> {    
+struct DefaultOperation : public Operation<F> {
 	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { forward(*in[0], *out[0]); }
 	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { backward(*in[0], *out[0], *in_grad[0], *out_grad[0]); }
 	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { out[0]->reshape(output_shape(in[0]->shape) ); return true; }
@@ -96,10 +96,10 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	bool check_fit(Tensor<F> &in_tensor, Tensor<F> &out_tensor);
 
     // API
-	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+	virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+	virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+    virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+	virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
 
     // regular
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
@@ -148,6 +148,17 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	bool keep = true;
 };
 
+template <typename F>
+struct ConvolutionTransposeOperation : public ConvolutionOperation<F> {
+	ConvolutionTransposeOperation(std::vector<int> dimensions, std::vector<int> strides, bool keep_, size_t workspace_limit_ = CONV_MAX_MEM);
+
+    // API
+	virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+	virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+    virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+	virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+
+};
 
 template <typename F>
 struct SquashOperation : public ConvolutionOperation<F> {

@@ -272,7 +272,7 @@ Node<F> Network<F>::input(int n_channels, std::string name) {
 }
 
 template <typename F>
-Node<F> Network<F>::input3D(int n_channels, std::string name) {
+Node<F> Network<F>::input_3D(int n_channels, std::string name) {
 	auto index = add_operation(new InputOperation<F>(n_channels), vector<int>{}, TensorShape{0, n_channels, 0, 0, 0}, name);
 	return Node<F>(index, this);
 }
@@ -289,11 +289,31 @@ std::function<Node<F>(Node<F>)> Network<F>::convolution(int out_c, int k, string
 }
 
 template <typename F>
-std::function<Node<F>(Node<F>)> Network<F>::convolution3D(int out_c, int k, string name) {
+std::function<Node<F>(Node<F>)> Network<F>::convolution_3D(int out_c, int k, string name) {
 	return [this, out_c, k, name](Node<F> n) {
 		auto in_c = n.shape().c();
 		cout << "in_c : " << in_c << endl;
 		auto index = add_operation(new ConvolutionOperation<F>({out_c, in_c, k, k, k}, {1, 1, 1}, true), vector<int>{n.index}, TensorShape{0, out_c, 0, 0, 0}, name);
+		return Node<F>(index, this);
+	};
+}
+
+template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::convolution_transpose(int out_c, int k, string name) {
+	return [this, out_c, k, name](Node<F> n) {
+		auto in_c = n.shape().c();
+        // in Conv Transpose, the in_c and out_c ordering logic is reversed
+		auto index = add_operation(new ConvolutionTransposeOperation<F>({in_c, out_c, k, k}, {k, k}, false), vector<int>{n.index}, TensorShape{0, out_c, 0, 0}, name);
+		return Node<F>(index, this);
+	};
+}
+
+template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::convolution_transpose_3D(int out_c, int k, string name) {
+	return [this, out_c, k, name](Node<F> n) {
+		auto in_c = n.shape().c();
+        // in Conv Transpose, the in_c and out_c ordering logic is reversed
+		auto index = add_operation(new ConvolutionTransposeOperation<F>({in_c, out_c, k, k, k}, {k, k, k}, false), vector<int>{n.index}, TensorShape{0, out_c, 0, 0, 0}, name);
 		return Node<F>(index, this);
 	};
 }
