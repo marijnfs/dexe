@@ -63,6 +63,9 @@ struct Tensor {
 	void from_tensor(Tensor &in);
 	void fill(F val);
    
+    std::unique_ptr<Tensor<F>> to_channel_last();
+    void from_channel_last(Tensor<F> *other);
+    
 
 	F sum();
 	F norm();

@@ -168,6 +168,22 @@ Tensor<F>::~Tensor() {
 	  cudaFree(data);
 }
 
+template <typename F>
+std::unique_ptr<Tensor<F>> Tensor<F>::to_channel_last() {
+    auto new_shape = shape;
+    auto c = new_shape.c();
+
+    auto &dimensions = new_shape.dimensions;
+    copy(dimensions.begin() + 2, dimensions.end(), dimensions.begin() + 1);
+    dimensions.back() = c;
+
+    result_tensor = std::unique_ptr<Tensor<F>>(new Tensor<F>(new_shape));
+}
+
+template <typename F>
+void Tensor<F>::from_channel_last(Tensor<F> *other) {
+    
+}
 
 template <typename F>
 void Tensor<F>::zero() {
