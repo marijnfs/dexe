@@ -25,6 +25,8 @@ int TensorShape::offset(int n_, int c_, int y_, int x_) {
 }
 
 int TensorShape::n_elements() {
+	if (dimensions.empty())
+		return 0;
 	return calculate_product(dimensions);
 }
 int TensorShape::n_dimensions() {
