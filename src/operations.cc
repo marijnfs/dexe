@@ -6,6 +6,23 @@
 
 using namespace std;
 
+template <typename F>
+bool InputOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { 
+	if (!reference)
+		return false;
+	if (reference->shape.c() != n_channels) {
+		cerr << "input channels don't correspond data" << endl;
+		return false;
+	}
+	out[0]->reshape(reference->shape);
+	return true; 
+}
+     
+
+template <typename F>
+void InputOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
+	out.from_tensor(*reference);
+}
 
 template <typename F>
 ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions_, vector<int> strides_, bool keep_, size_t workspace_limit_):
@@ -20,7 +37,7 @@ ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions_, vector<in
 {
 	vector<int> bias_dims(dimensions.size(), 1); //number of filter dimensions is one more than output dim
 	bias_dims[1] = filter_bank.out_c(); //dimensions[1] corresponds to output channels
-	cout << "reshaping bias" << endl;
+	cout << "reshaping bias to " << bias_dims << endl;
 	bias.reshape(bias_dims);
 	bias_grad.reshape(bias_dims);
 	cout << "done reshaping bias" << endl;
@@ -221,9 +238,15 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
 
 	F alpha_bias(1), beta_bias(1);
     cout << input.shape << " " << output.shape << " " << filter_bank << endl;
+    cout << dimensions << " " << strides << " " << paddings << " " << dilations << endl; 
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, algo, workspace, workspace_size, &beta, output.td, output.data));
 	// handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_FEATURE_MAP, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
+	cout << bias.td << " " << output.td << endl;
+	cout << "bias data: " << bias.data << " bias shape:" << bias.shape << " alpha: " << alpha_bias << " beta:" << beta_bias << " " << output.shape << endl;
+	auto v = bias.to_vector();
+	cout << "cpu vec: " << v << endl;
 	handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
+	cout << "done" << endl;
 }
 
 
@@ -589,6 +612,7 @@ TensorShape SoftmaxOperation<F>::output_shape(TensorShape in) {
 	return in;
 }
 
+template struct InputOperation<float>;
 template struct ConvolutionOperation<float>;
 template struct SquashOperation<float>;
 template struct UnsquashOperation<float>;

@@ -76,6 +76,12 @@ template <typename F>
 struct InputOperation : public Operation<F> {
     Tensor<F> *reference = nullptr;
     
+    InputOperation(int n_channels_, Tensor<F> *reference_ = nullptr) : n_channels(n_channels_), reference(reference_) {}
+
+    bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+    void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
+
+    int n_channels = 0;
 };
 
 template <typename F>

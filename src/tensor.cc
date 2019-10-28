@@ -102,6 +102,7 @@ void Tensor<F>::set_descriptor() {
 		stride *= *d_it;
 	}
 	reverse(strides.begin(), strides.end());
+	cout << "set descriptor dims: " << shape.n_dimensions() << " " << shape.dimensions << " " << strides << endl;
 
 	set_descriptor_typed(shape.n_dimensions(), shape.dimensions, strides);
 }
@@ -127,6 +128,7 @@ void Tensor<F>::allocate() {
 	if (shape.n_elements() != 0) {
 		cout << "allocating: " << shape << " " << shape.n_elements() << endl;
 		handle_error( cudaMalloc( (void**)&data, sizeof(F) * shape.n_elements()));
+		cout << data << endl;
 		if (ZERO_ON_INIT)
 		  zero();
 	}
@@ -139,10 +141,12 @@ void Tensor<F>::reshape(TensorShape new_shape) {
 		cerr << "Can't reshape non-owning tensor" << endl;
 	}
 
+	//new shape is the same, no need to do anything
 	if (new_shape == shape)
 		return;
 
 	//If sizes match but shapes don't, we don't want to deallocate
+	cout << "Reshape : " << shape << " to " << new_shape << " elements: " << shape.n_elements() << " " << new_shape.n_elements() << endl;
 	if (new_shape.n_elements() != shape.n_elements())
 	{
 		if (data) {
@@ -174,6 +178,7 @@ void Tensor<F>::zero() {
 template <typename F>
 vector<F> Tensor<F>::to_vector() {
 	vector<F> vec(shape.n_elements());
+	cout << shape << " " << shape.n_elements() << " " << data << endl;
 	handle_error( cudaMemcpy(&vec[0], data, vec.size() * sizeof(F), cudaMemcpyDeviceToHost));
 	return vec;
 }

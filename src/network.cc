@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iterator>
 #include <fstream>
+#include <sstream>
 #include <queue>
 #include <set>
 #include <vector>
@@ -227,6 +228,7 @@ void Network<F>::position_params(F *pos_param, F *pos_grad) {
 
 template <typename F>
 Network<F>::~Network() {
+	cout << "DESTRUCTOR" << endl;
 }
 
 template <typename F>
@@ -263,12 +265,24 @@ int Network<F>::add_operation(Operation<F> *op, vector<int> inputs, TensorShape 
 	return index;
 }
 
+template <typename F>
+Node<F> Network<F>::input(int n_channels, std::string name) {
+	auto index = add_operation(new InputOperation<F>(n_channels), vector<int>{}, TensorShape{0, n_channels, 0, 0}, name);
+	return Node<F>(index, this);
+}
+
+template <typename F>
+Node<F> Network<F>::input3D(int n_channels, std::string name) {
+	auto index = add_operation(new InputOperation<F>(n_channels), vector<int>{}, TensorShape{0, n_channels, 0, 0, 0}, name);
+	return Node<F>(index, this);
+}
 
 template <typename F>
 std::function<Node<F>(Node<F>)> Network<F>::convolution(int out_c, int k, string name) {
 	return [this, out_c, k, name](Node<F> n) {
-		cout << "conf lambda: " << endl;
 		auto in_c = n.shape().c();
+		cout << "in_c : " << in_c << endl;
+		
 		auto index = add_operation(new ConvolutionOperation<F>({out_c, in_c, k, k}, {1, 1}, true), vector<int>{n.index}, TensorShape{0, out_c, 0, 0}, name);
 		return Node<F>(index, this);
 	};
@@ -277,8 +291,8 @@ std::function<Node<F>(Node<F>)> Network<F>::convolution(int out_c, int k, string
 template <typename F>
 std::function<Node<F>(Node<F>)> Network<F>::convolution3D(int out_c, int k, string name) {
 	return [this, out_c, k, name](Node<F> n) {
-		cout << "conf lambda: " << endl;
 		auto in_c = n.shape().c();
+		cout << "in_c : " << in_c << endl;
 		auto index = add_operation(new ConvolutionOperation<F>({out_c, in_c, k, k, k}, {1, 1, 1}, true), vector<int>{n.index}, TensorShape{0, out_c, 0, 0, 0}, name);
 		return Node<F>(index, this);
 	};
@@ -305,18 +319,6 @@ std::function<Node<F>(Node<F>, Node<F>)> Network<F>::addition(string name) {
 
 		return Node<F>(index, this);
 	};
-}
-
-template <typename F>
-Node<F> Network<F>::input(int n_channels, string name) {
-	auto index = add_operation(new InputOperation<F>(), vector<int>{}, TensorShape{0, n_channels, 0, 0}, name);
-	return Node<F>(index, this);
-}
-
-template <typename F>
-Node<F> Network<F>::input3D(int n_channels, string name) {
-	auto index = add_operation(new InputOperation<F>(), vector<int>{}, TensorShape{0, n_channels, 0, 0, 0}, name);
-	return Node<F>(index, this);
 }
 
 
@@ -362,7 +364,6 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 		cout << "op: " << names[s] << endl;
 		for (auto idx : input_indices[s]) {
 			cout << "input: " << names[idx] << endl;
-			cout << "asdf: " << tensors[idx].x.get() << endl;
 			cout << "in: " << tensors[idx].x->shape << endl;
 			tmp_inputs.push_back(tensors[idx].x.get());
 		}
@@ -370,13 +371,16 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 		tmp_outputs.push_back(tensors[s].x.get());
 		bool success = operations[s]->forward_dry_run(tmp_inputs, tmp_outputs);
 		if (!success) {
-			throw std::runtime_error("forward dry run failed");
+			ostringstream oss;
+			oss << "Failure on step: " << names[s] << endl;
+			throw std::runtime_error(oss.str());
 		}
 	}
 
 	//Run Forward
 	cout << "Actual Run" << endl;
 	for (auto s : sequence) {
+		cout << "running layer: " << names[s] << endl;
 		vector<Tensor<F>*> tmp_inputs, tmp_outputs;
 		for (auto idx : input_indices[s])
 			tmp_inputs.push_back(tensors[idx].x.get());
