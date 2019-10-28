@@ -1,0 +1,42 @@
+Target syntax:
+=============
+
+net = Network<double>();
+
+in = net.input(c=1)
+c1 = net.conv3D(k=3, c = 4, strides={1,1,1}, keep = true)(in)
+c1f = net.relu()(c1)
+
+up2 = net.conv3D(k=2, c = 8, strides={2,2,2}, keep = false)(c1f)
+c2 = net.conv3D(k=3, c = 8, strides={1,1,1}, keep = true)(up2)
+c2f = net.relu()(c2)
+
+down = net.conv3Dtranspose(k=2, c = 4, strides={2,2,2}, keep = false)(c2f)
+added = net.addition()(c1f, c2f)
+total = net.Conv3D(k=3, c=1, strides={1,1,1}, keep = true)
+
+diff = net.SquaredLoss()(total)
+
+Tensor some_target(c1.shape())
+Tensor some_input(c1.shape())
+some_input.from_cpu(dataptr)
+some_target.from_cpu(targetptr)
+
+in = some_input
+diff.set_target(some_target)
+diff.calculate()
+
+
+Adding costs:
+===========
+[CostOperation]
+- set_target(Tensor)
+- forward -> 1-dim Tensor with cost
+- backward -> sets in_grad to in - target
+- target could also be a normal input, and probably should be at some point
+
+Weights as tensor:
+============
+Weights should in the end be tensors as well. As such, derivatives can be
+propagated properly through them.
+
