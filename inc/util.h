@@ -96,8 +96,6 @@ inline void handle_error(cublasStatus_t status) {
 		throw StringException("SOME CUBLAS ERROR");
 
     }
-
-  throw StringException("<unknown>");
 }
 
 inline void handle_error(curandStatus_t status) {
@@ -135,8 +133,6 @@ inline void handle_error(curandStatus_t status) {
   default:
 	  throw StringException("SOME CURAND ERROR");
   }
-
-  throw StringException("Unknown error");
 }
 
 inline void handle_error(cudaError_t err) {
@@ -182,7 +178,6 @@ inline void add_cuda(F const *from, F *to, int n, F const alpha);
 
 template <>
 inline void add_cuda(float const *from, float *to, int n, float const alpha) {
-  std::cout << from << " " << to << " " << n << " " << alpha << std::endl;
   handle_error(cublasSaxpy(Handler::cublas(), n, &alpha, from, 1, to, 1));
 }
 
@@ -214,6 +209,15 @@ inline void scale_cuda(double *data, int n, double const alpha) {
 /* } */
 
 template <typename T>
+T calculate_product(std::vector<T> const &other) {
+  T product(1);
+  for (auto d : other)
+    product *= d;
+  return product;
+}
+
+
+template <typename T>
 inline std::ostream &operator<<(std::ostream &out, std::vector<T> in) {
   out << "[";
   typename std::vector<T>::const_iterator it = in.begin(), end = in.end();
@@ -232,11 +236,6 @@ inline bool operator==(std::vector<T> &v1, std::vector<T> &v2) {
   for (size_t i(0); i < v1.size(); ++i)
     if (v1[i] != v2[i]) return false;
   return true;
-}
-
-template <typename T>
-inline T &last(std::vector<T> &v) {
-	return v[v.size() - 1];
 }
 
 template <typename T>
@@ -481,5 +480,7 @@ __global__ void shift_kernel(int X, int Y, int C, float const *in, float *out, i
 __global__ void unshift_kernel(int X, int Y, int C, float const *in, float *out, int dx, int dy, float const beta);
 void shift(float const *in, float *out, int X, int Y, int C, int dx, int dy, float const beta);
 void unshift(float const *in, float *out, int X, int Y, int C, int dx, int dy, float const beta);
+
+
 
 #endif

@@ -11,39 +11,49 @@
 #include "util.h"
 #include "cudaptr.h"
 
-int const CONV_MAX_MEM = 0;
-//int const CONV_MAX_MEM = 64 * 1024 * 1024;
+// int const CONV_MAX_MEM = 0;
+int const CONV_MAX_MEM = 64 * 1024 * 1024;
 
 
 template <typename F>
 struct Operation {
-	virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0){}
+	// virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0){}
 
-	virtual void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0){}
-	virtual void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0){}
-	virtual TensorShape output_shape(TensorShape input) { return TensorShape{0, 0, 0, 0}; }
+	// virtual void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0){}
+	// virtual void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0){}
 
-	virtual void forward_dry_run(Tensor<F> &in, Tensor<F> &out){}
+	virtual TensorShape output_shape(TensorShape input) { return input; }
+
+	// Runs the forward step
+	virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { throw std::runtime_error("Not Implemented"); }
+
+	// Responsible for both checking if sizes match, and making sure the memory is allocated
+	virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out){ throw std::runtime_error("Not Implemented"); }
+
+
+	// Runs the backward step
+	virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { throw std::runtime_error("Not Implemented"); }
+    virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { throw std::runtime_error("Not Implemented"); }
+	
+        // Write a readable string to the ostream
 	virtual void describe(std::ostream &out){}
 
 
-	virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){ forward(in, out, beta); }
-	virtual void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0){}
-	virtual void backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, int t, F beta = 0.0){}
+	// virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){ forward(in, out, beta); }
+	// virtual void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0){}
+	// virtual void backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, int t, F beta = 0.0){}
 };
 
 template <typename F>
-struct Operation2 {
-	virtual void forward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, F beta = 0.0){}
+struct DefaultOperation : public Operation<F> {    
+	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { forward(*in[0], *out[0]); }
+	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { backward(*in[0], *out[0], *in_grad[0], *out_grad[0]); }
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { out[0]->reshape(output_shape(in[0]->shape) ); return true; }
+    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_) { in_grad[0]->reshape(in[0]->shape); return true; }
 
-	virtual void backward_weights(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out_grad){}
-	virtual void backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad, F beta = 0.0){}
-
-	virtual TensorShape output_shape(TensorShape input) { return TensorShape{0, 0, 0, 0}; }
-
-	virtual void forward_dry_run(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out){}
-	virtual void describe(std::ostream &out){}
-
+    virtual TensorShape output_shape(TensorShape input) = 0;
+	virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) = 0;
+	virtual void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0) = 0;
 };
 
 template <typename F>
@@ -63,19 +73,37 @@ struct Parametrised {
 };
 
 template <typename F>
+struct InputOperation : public Operation<F> {
+    Tensor<F> *reference = nullptr;
+    
+};
+
+template <typename F>
 struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
-	ConvolutionOperation(int in_map, int out_map, int kw, int kh, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);// 64*1024*1024);
-	ConvolutionOperation(std::string tmp, int in_map, int out_map, int kw, int kh, int z, bool keep = true, size_t workspace_limit = CONV_MAX_MEM);//32*1024*1024);
+	ConvolutionOperation(std::vector<int> dimensions, std::vector<int> strides, bool keep_, size_t workspace_limit_ = CONV_MAX_MEM);
 
 	~ConvolutionOperation();
 
 	virtual void init_normal(F mean, F std);
 	virtual void init_uniform(F var);
 
-	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
+	bool check_fit(Tensor<F> &in_tensor, Tensor<F> &out_tensor);
 
-	void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0);
+    // API
+	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+
+    // regular
+	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+
+    void prepare_forward(Tensor<F> &in, Tensor<F> &out);
+    void prepare_backward_weights(Tensor<F> &in, Tensor<F> &out);
+    void prepare_backward(Tensor<F> &in, Tensor<F> &out);
+	void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0);
+
 	void update(F lr);
 	void l2(F l);
 	void zero_grad();
@@ -83,11 +111,6 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F>> &grads, std::vector<CudaPtr<F> > &fast_grads) override;
 	void share(ConvolutionOperation<F> &other);
 
-	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
-
-	void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0);
-	void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0);
-	void backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, int t, F beta = 0.0);
 
 
 	std::vector<F> to_vector();
@@ -96,11 +119,11 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	virtual int size();
 
 	TensorShape output_shape(TensorShape input);
-	void describe(std::ostream &out) { out << "conv " << kw << "x" << kh << " " << in_map << "->" << out_map; }
+	void describe(std::ostream &out) { out << filter_bank.dimensions; }
 
-	int kw, kh, in_map, out_map;
+    std::vector<int> dimensions, strides, paddings, dilations;
 
-	cudnnConvolutionDescriptor_t conv;
+	cudnnConvolutionDescriptor_t conv = nullptr;
 	FilterBank<F> filter_bank, filter_bank_grad;
 	Tensor<F> bias, bias_grad;
 
@@ -108,27 +131,17 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	cudnnConvolutionBwdDataAlgo_t algo_bwd;
 	cudnnConvolutionBwdFilterAlgo_t algo_bwd_filter;
 
-	char *workspace, *workspace_bwd, *workspace_bwd_filter;
-	size_t workspace_size, workspace_size_bwd, workspace_size_bwd_filter;
+	char *workspace = nullptr;
+	char *workspace_bwd = nullptr;
+	char *workspace_bwd_filter = nullptr;
 
-	bool keep, rollout;
+	size_t workspace_size = 0;
+	size_t workspace_size_bwd = 0;
+	size_t workspace_size_bwd_filter = 0;
+
+	bool keep = true;
 };
 
-template <typename F>
-struct ConvolutionShiftOperation : public ConvolutionOperation<F> {
-	ConvolutionShiftOperation(int in_map, int out_map, int kw, int kh, int shift_x, int shift_y, bool keep = true, size_t workspace_limit = 0);
-	~ConvolutionShiftOperation();
-
-	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
-
-	void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0);
-	void forward_dry_run(Tensor<F> &in, Tensor<F> &out); // allocates workspace
-	void zero_grad();
-
-	int dx, dy;
-	Tensor<F> slate, slate_grad;
-};
 
 template <typename F>
 struct SquashOperation : public ConvolutionOperation<F> {
@@ -136,7 +149,7 @@ struct SquashOperation : public ConvolutionOperation<F> {
 	TensorShape output_shape(TensorShape input);
 
 	int c;
-    
+
 	void describe(std::ostream &out) { out << "squash"; }
     void init_normal(F mean, F std);
     void init_uniform(F var);
@@ -179,16 +192,6 @@ struct SplitOperation : public Operation<F> {
 };
 
 
-template <typename F>
-struct GateOperation : public Operation2<F> {
-	//GateOperation() {}
-	TensorShape output_shape(TensorShape input);
-
-	virtual void forward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, F beta = 0.0);
-	virtual void backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad, F beta = 0.0);
-	void describe(std::ostream &out) { out << "gate"; }
-
-};
 
 template <typename F>
 struct PoolingOperation : public Operation<F> {
@@ -209,6 +212,9 @@ struct TanhOperation : public Operation<F> {
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
 	void describe(std::ostream &out) { out << "tanh"; }
+
+	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
 
 	TensorShape output_shape(TensorShape input);
 
@@ -231,6 +237,23 @@ struct SigmoidOperation : public Operation<F> {
 };
 
 template <typename F>
+struct AdditionOperation : public Operation<F> {
+  AdditionOperation();
+
+	void forward(Tensor<F> &in1, Tensor<F> &in2, Tensor<F> &out);
+	void backward(Tensor<F> &out_grad, Tensor<F> &in_grad1, Tensor<F> &in_grad2);
+	void describe(std::ostream &out) { out << "addition"; }
+
+	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+
+	TensorShape output_shape(TensorShape input);
+	cudnnActivationDescriptor_t desc;
+
+	F scale;
+};
+
+template <typename F>
 struct STanhOperation : public Operation<F> {
 	STanhOperation(TensorShape s);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
@@ -242,8 +265,8 @@ struct STanhOperation : public Operation<F> {
 };
 
 template <typename F>
-struct ReluOperation : public Operation<F> {
-		ReluOperation();
+struct ReluOperation : public DefaultOperation<F> {
+    ReluOperation();
 
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);

@@ -63,7 +63,7 @@ void SoftmaxLoss<F>::calculate_average_loss(Tensor<F> &in, Tensor<F> &err) {
 	const F e(.00000001);
 	vector<F> err_v(err.size());
 
-	F guess = 1.0 / in.c;
+	F guess = 1.0 / in.shape.c();
 
 	err.fill(guess);
 	vector<F> prob = in.to_vector();

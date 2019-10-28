@@ -10,18 +10,47 @@
 const bool ZERO_ON_INIT(true);
 
 struct TensorShape {
-	int n, c, w, h;
+  std::vector<int> dimensions;
+
+
+  TensorShape(){}
+  TensorShape(int n, int c, int h, int w);
+  TensorShape(int n, int c, int d, int h, int w);
+  TensorShape(std::vector<int> dimensions);
+
+  bool operator==(TensorShape const &other) const;
+  bool operator!=(TensorShape const &other) const;
+  int &operator[](int index);
 
   int offset(int n, int c, int y, int x);
+  int n_elements();
+  int n_dimensions();
+
+  void set_c(int c);
+
+  int n();
+  int c();
+  int d();
+  int h(); 
+  int w();
 };
 
 template <typename F>
 struct Tensor {
-	Tensor(int n = 0, int c = 0, int w = 0, int h = 0);
-	Tensor(int n, int c, int w, int h, F *data);
+	Tensor();
 	Tensor(TensorShape shape);
 	Tensor(TensorShape shape, F *data);
+
 	~Tensor();
+
+	void allocate();
+    void set_descriptor_typed(int N, std::vector<int> dimensions, std::vector<int> strides);
+    void set_descriptor();
+	void reshape(TensorShape shape);
+
+	//Remove copy and assignment operator to be safe
+	Tensor<F> & operator=(const Tensor<F>&) = delete;
+    Tensor<F>(const Tensor<F>&) = delete;
 
 	void init_normal(F mean, F std);
 	void init_uniform(F var);
@@ -33,26 +62,22 @@ struct Tensor {
 	void from_ptr(F const *in);
 	void from_tensor(Tensor &in);
 	void fill(F val);
-  void write_img(std::string filename, int c = 0);
    
-	void reshape(TensorShape shape);
-	void reshape(int n, int c, int w, int h);
-  
+
 	F sum();
 	F norm();
 	F norm2();
 
-  	int size() const;
-	TensorShape shape() const;
+  	int size();
 
   	F *ptr() { return data; }
-    F *ptr(int n_, int c_ = 0, int y_ = 0, int x_ = 0) {return data + n_ * (c * w * h) + c_ * (w * h) + y_ * w + x_; }
+    F *ptr(int n_, int c_ = 0, int y_ = 0, int x_ = 0) {return data + shape.offset(n_, c_, y_, x_); }
    
 
-	int n, c, w, h;
-	bool allocated;
-	cudnnTensorDescriptor_t td;
-	F *data;
+    TensorShape shape;
+	bool owning = false;
+	cudnnTensorDescriptor_t td = nullptr;
+	F *data = nullptr;
 };
 
 template <typename F>
@@ -66,47 +91,51 @@ inline Tensor<F> &operator*=(Tensor<F> &in, float const other) {
 
 template <typename F>
 struct TensorSet {
-	Tensor<F> x, grad;
-
-	TensorSet(int n, int c, int w, int h);
 	TensorSet(TensorShape shape);
-	TensorShape shape() const;
+	TensorSet();
 
-	int n, c, w, h;
+	void alloc_x(TensorShape shape);
+	void alloc_grad();
+	TensorShape shape();
+
+	std::unique_ptr<Tensor<F>> x, grad;
 };
 
 template <typename F>
 struct FilterBank {
-	FilterBank(int in_map_, int out_map_, int kw_, int kh_, int T = 1); //T is for rolledout filter bank
+	FilterBank(std::vector<int> dimensions);
 	~FilterBank();
-	int in_map, out_map;
-	int kw, kh;
-	int N, T;
+
+	std::vector<int> dimensions;
+
 	cudnnFilterDescriptor_t fd;
 
-	F *weights;
+	F *weights = nullptr;
 
-	int n_weights() { return N * T; }
-	void init_normal(F mean, F std);
+	int n_weights() { return calculate_product(dimensions); }	void init_normal(F mean, F std);
 	void init_uniform(F var);
+
+	int in_c();
+	int out_c();
+	int kd();
+	int kh();
+	int kw();
 
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &in);
 	void fill(F val);
 	void zero();
-	void draw_filterbank(std::string filename);
 
-	F *ptr(int n = 0) { return weights + n * N; }
-
+	F *ptr() { return weights; }
 };
 
 inline std::ostream &operator<<(std::ostream &o, TensorShape s) {
-	return o << "[" << s.n << "," << s.c << "," << s.w << "," << s.h << "]";
+	return o << "T:" << s.dimensions;
 }
 
 template <typename F>
 inline std::ostream &operator<<(std::ostream &o, FilterBank<F> &f) {
-  return o << "[" << f.in_map << ">" << f.out_map << " " << f.kw << "x" << f.kh << " " << f.N << " " << f.T << "]";
+  return o << "F:" << f.dimensions;
 }
 
 

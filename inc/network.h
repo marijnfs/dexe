@@ -4,41 +4,56 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
+#include <functional>
+
 #include "util.h"
 #include "tensor.h"
 #include "operations.h"
-#include "loss.h"
 #include "cudavec.h"
 
 template <typename F>
+struct Network;
+
+template <typename F>
+struct Node {
+	Node(int index_, Network<F> *network_) : index(index_), network(network_) {}
+
+	TensorShape shape();
+
+	int index = -1; //-1 means undefined
+	Network<F> *network = nullptr;
+};
+
+template <typename F>
 struct Network {
+	Network(){}
 	Network(TensorShape in);
 	~Network();
 
-	void add_conv(int outmap, int kw, int kh);
-	void add_pool(int kw, int kh);
-	void add_squash(int outmap);
-	void add_tanh();
-	void add_relu();
-	void add_softmax();
+ 	int add_operation(Operation<F> *op, std::vector<int> inputs, TensorShape shape, std::string name);
 
-  void add_unsquash(TensorShape shape);
-  void add_merge();
-  void add_split();
-  
-	void add_operation(Operation<F> *op);
+	std::function<Node<F>(Node<F>)> convolution(int out_c, int k, std::string name = "conv");
+	std::function<Node<F>(Node<F>)> convolution3D(int out_c, int k, std::string name = "conv");
+	std::function<Node<F>(Node<F>)> relu(std::string name = "relu");
+	std::function<Node<F>(Node<F>, Node<F>)> addition(std::string name = "addition");
+	// std::function<Node<F>(Node<F>)> pool(std::string name = "pool");
+
+	Node<F> input(int n_channels, std::string name = "input");
+	Node<F> input3D(int n_channels, std::string name = "input");
+
+	void new_forward(std::vector<int> inputs, std::vector<int> outputs);
+
+
 	void finish();
 	void assert_finished();
 
-	void forward();
-	void forward(F const *cpu_data);
-	F calculate_loss(int label);
-	F calculate_loss(std::vector<int> &labels);
-	F calculate_loss(Tensor<F> &target);
-	void calculate_average_loss();
-	void backward(F const *cpu_data);
-	void backward();
-	void backward_data();
+	//void forward();
+	//void forward(F const *cpu_data);
+
+	//void backward(F const *cpu_data);
+	//void backward();
+	//void backward_data();
 
 	void update(F lr);
 	void l2(F l);
@@ -52,35 +67,38 @@ struct Network {
 
 	void register_params();
 	void align_params();
-	void position_params(float *pos_param, float *pos_grad);
+	void position_params(F *pos_param, F *pos_grad);
 
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &vec);
-	std::vector<F> fd_gradient(F const *cpu_data, int label, F e);
+	// std::vector<F> fd_gradient(F const *cpu_data, int label, F e);
 	std::vector<F> gradient();
 
 
-	Tensor<F> &output();
-	Tensor<F> &output_grad();
-  TensorShape output_shape() { return last(shapes); }
+	Tensor<F> *output();
+	Tensor<F> *output_grad();
+	TensorShape output_shape() { return tensors.back().shape(); }
 
-  
-	Tensor<F> &input();
-	Tensor<F> &input_grad();
 
-	F loss();
-	F n_correct();
+	// Tensor<F> &input();
+	// Tensor<F> *input_grad();
 
-	std::vector<Parametrised<F>*> params;
-	std::vector<Operation<F>*> operations;
-	std::vector<TensorSet<F>*> tensors;
-	std::vector<TensorShape> shapes;
+	std::string get_unique_name(std::string name);
+
+
+	std::vector<std::string> names;
+	std::vector<std::unique_ptr<Operation<F>>> operations;
+	std::vector<TensorSet<F>> tensors;
+	std::vector<std::vector<int>> input_indices;
+
+	std::vector<Parametrised<F>*> parameters;
 
 	CudaVec param_vec, grad_vec;
 	std::vector<CudaPtr<F>> param_ptrs, grad_ptrs;
 	std::vector<CudaPtr<F>> fast_param_ptrs, fast_grad_ptrs;
 
-	Loss<F> *loss_ptr;
+	std::set<std::string> names_set;
+
 	int n_params;
 	bool finished;
 };

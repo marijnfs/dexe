@@ -8,68 +8,152 @@ using namespace std;
 
 
 template <typename F>
-ConvolutionOperation<F>::ConvolutionOperation(int in_map_, int out_map_, int kw_, int kh_, bool keep_, size_t workspace_limit_):
-	in_map(in_map_),
-	out_map(out_map_),
-	kw(kw_),
-	kh(kh_),
-	filter_bank(in_map_, out_map_, kw_, kh_),
-	filter_bank_grad(in_map_, out_map_, kw_, kh_),
-	bias(1, out_map_, 1, 1),
-	bias_grad(1, out_map_, 1, 1),
+ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions_, vector<int> strides_, bool keep_, size_t workspace_limit_):
+	filter_bank(dimensions),
+	filter_bank_grad(dimensions),
 	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
 	workspace(0),
 	workspace_size(workspace_limit_),
 	keep(keep_),
-	rollout(false)
+    dimensions(dimensions_),
+    strides(strides_)
 {
-	int pad_h(0), pad_w(0), stride_w(1), stride_h(1), upscalex(1), upscaley(1);
+	vector<int> bias_dims(dimensions.size(), 1); //number of filter dimensions is one more than output dim
+	bias_dims[1] = filter_bank.out_c(); //dimensions[1] corresponds to output channels
+	cout << "reshaping bias" << endl;
+	bias.reshape(bias_dims);
+	bias_grad.reshape(bias_dims);
+	cout << "done reshaping bias" << endl;
+
+	vector<int> kernel_dims(dimensions.begin() + 2, dimensions.end());
+	paddings = vector<int>(kernel_dims.size());
+    dilations = vector<int>(kernel_dims.size(), 1);
+
 	if (keep) {
-		pad_w = kw / 2;
-		pad_h = kh / 2;
+		cout << "pad: " << paddings << endl;
+		for (int n(0); n < kernel_dims.size(); ++n)
+			paddings[n] = kernel_dims[n] / 2;
+		cout << "pad: " << paddings << endl;
 	}
-	// cout << "weight buffer: " << filter_bank.n_weights() << endl;
-	// cout << "bias buffer: " << bias.size() << endl;
-	//todo: calculate padding
+
 	handle_error( cudnnCreateConvolutionDescriptor(&conv));
-	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
-	//handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
+	cout << "conv: " << kernel_dims << " " << paddings << " " << strides << " " << dilations << endl;
+	cout << "bias dims: " << bias_dims << endl;
+	if (sizeof(F) == sizeof(float))
+		handle_error( cudnnSetConvolutionNdDescriptor(conv, kernel_dims.size(), paddings.data(), strides.data(), dilations.data(), CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
+	else
+		handle_error( cudnnSetConvolutionNdDescriptor(conv, kernel_dims.size(), paddings.data(), strides.data(), dilations.data(), CUDNN_CROSS_CORRELATION, CUDNN_DATA_DOUBLE));
 }
 
 
 template <typename F>
-ConvolutionOperation<F>::ConvolutionOperation(string dummy, int in_map_, int out_map_, int kw_, int kh_, int z, bool keep_, size_t workspace_limit_):
-	in_map(in_map_),
-	out_map(out_map_),
-	kw(kw_),
-	kh(kh_),
-	filter_bank(in_map_, out_map_, kw_, kh_, z),
-	filter_bank_grad(in_map_, out_map_, kw_, kh_, z),
-	bias(1, out_map_, 1, 1),
-	bias_grad(1, out_map_, 1, 1),
-	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
-	algo_bwd_filter(CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1),
-	algo_bwd(CUDNN_CONVOLUTION_BWD_DATA_ALGO_1),
-	workspace(0),
-	workspace_size(workspace_limit_),
-	workspace_bwd(0),
-	workspace_size_bwd(workspace_limit_),
-	workspace_bwd_filter(0),
-	workspace_size_bwd_filter(workspace_limit_),
-	keep(keep_),
-	rollout(true)
-{
-	int pad_h(0), pad_w(0), stride_w(1), stride_h(1), upscalex(1), upscaley(1);
-	if (keep) {
-		pad_w = kw / 2;
-		pad_h = kh / 2;
+void ConvolutionOperation<F>::forward(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out) {
+	forward(*in[0], *out[0]);
+}
+
+template <typename F>
+bool ConvolutionOperation<F>::backward_dry_run(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out, vector<Tensor<F>*> &in_grad, vector<Tensor<F>*> &out_grad) {
+    in_grad[0]->reshape(in[0]->shape);
+    prepare_backward(*in[0], *out[0]);
+    prepare_backward_weights(*in[0], *out[0]);
+    return true;
+}
+
+template <typename F>
+void ConvolutionOperation<F>::backward(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out, vector<Tensor<F>*> &in_grad, vector<Tensor<F>*> &out_grad) {
+    backward(*in[0], *out[0], *in_grad[0], *out_grad[0]);
+}
+
+template <typename F>
+bool ConvolutionOperation<F>::check_fit(Tensor<F> &in_tensor, Tensor<F> &out_tensor) {
+    // Check if input makes sense
+	if (in_tensor.size() == 0) {
+		cerr << "ConvolutionOperation: dry run failed, input size is zero" << endl;
+		return false;
 	}
-	// cout << "weight buffer: " << filter_bank.n_weights() << endl;
-	// cout << "bias buffer: " << bias.size() << endl;
-	//todo: calculate padding
-	handle_error( cudnnCreateConvolutionDescriptor(&conv));
-	handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
-	//handle_error( cudnnSetConvolution2dDescriptor(conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CONVOLUTION));
+	if (in_tensor.shape.c() != filter_bank.in_c()) {
+		cerr << "ConvolutionOperation: input channels don't match filters" << endl;
+		return false;
+	}
+    if (in_tensor.shape.n_dimensions() != out_tensor.shape.n_dimensions()) {
+        cerr << "ConvolutionOperation: number of input dimensions don't match output dimensions" << endl;
+		return false;
+	}
+
+    // check if strides divide    
+    for (int n(0); n < paddings.size(); ++n) {
+        if ((in_tensor.shape[n + 2] + 2 * paddings[n] - dimensions[n + 2] + 1) % strides[n] != 0) {
+            cerr << "Stride does not divide dimension" << endl;
+        }            
+    }
+    return true;
+}
+
+template <typename F>
+bool ConvolutionOperation<F>::forward_dry_run(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out) {
+	auto &in_tensor = *in[0];
+	auto &out_tensor = *out[0];
+    
+    
+    if (!check_fit(in_tensor, out_tensor))
+        return false;
+
+	//reshape output tensor
+	auto target_shape = in_tensor.shape;
+	target_shape.set_c(filter_bank.out_c());
+    for (int n(0); n < paddings.size(); ++n) {
+        target_shape[n + 2] = (in_tensor.shape[n + 2] + 2 * paddings[n] - dimensions[n + 2] + 1) / strides[n];
+    }
+	out_tensor.reshape(target_shape);
+
+	//prepare the workspaces
+	prepare_forward(in_tensor, out_tensor);
+	return true;
+}
+
+template <typename F>
+void ConvolutionOperation<F>::prepare_forward(Tensor<F> &in, Tensor<F> &out) { // allocates workspace
+	// algo = CUDNN_CONVOLUTION_FWD_ALGO_GEMM;
+	// algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+	// algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+
+	handle_error( cudnnGetConvolutionForwardAlgorithm(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, workspace_size, &algo) );
+	handle_error( cudnnGetConvolutionForwardWorkspaceSize(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, algo, &workspace_size) );
+
+	if (workspace_size) {
+		if (workspace) {
+			cudaFree(workspace);
+			workspace = nullptr;
+		}
+		handle_error( cudaMalloc( (void**)&workspace, workspace_size) );
+	}	
+}
+
+template <typename F>
+void ConvolutionOperation<F>::prepare_backward_weights(Tensor<F> &in, Tensor<F> &out) { // allocates workspace
+    handle_error( cudnnGetConvolutionBackwardFilterAlgorithm( Handler::cudnn(),in.td, out.td, conv, filter_bank.fd, CUDNN_CONVOLUTION_BWD_FILTER_PREFER_FASTEST, workspace_size, &algo_bwd_filter) );
+    handle_error( cudnnGetConvolutionBackwardFilterWorkspaceSize(Handler::cudnn(), in.td, out.td, conv, filter_bank_grad.fd, algo_bwd_filter, &workspace_size_bwd_filter) );
+    if (workspace_size_bwd_filter) {
+		if (workspace_bwd_filter) {
+			cudaFree(workspace_bwd_filter);
+			workspace_bwd_filter = nullptr;
+		}
+		handle_error( cudaMalloc( (void**)&workspace_bwd_filter, workspace_size_bwd_filter) );
+    }
+}
+
+template <typename F>
+void ConvolutionOperation<F>::prepare_backward(Tensor<F> &in, Tensor<F> &out) { // allocates workspace
+	handle_error( cudnnGetConvolutionBackwardDataAlgorithm(Handler::cudnn(), filter_bank.fd, in.td, conv, out.td, CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT, workspace_size_bwd, &algo_bwd) );
+	handle_error( cudnnGetConvolutionBackwardDataWorkspaceSize(Handler::cudnn(), filter_bank.fd, in.td, conv, out.td, algo_bwd, &workspace_size_bwd) );
+
+    if (workspace_size_bwd) {
+		if (workspace_bwd) {
+			cudaFree(workspace_bwd);
+			workspace_bwd = nullptr;
+		}
+		handle_error( cudaMalloc( (void**)&workspace_bwd, workspace_size_bwd) );
+    }
 }
 
 template <typename F>
@@ -136,7 +220,7 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
 	F alpha(1.0);
 
 	F alpha_bias(1), beta_bias(1);
-    //cout << input.shape() << " " << output.shape() << " " << filter_bank << endl;
+    cout << input.shape << " " << output.shape << " " << filter_bank << endl;
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, algo, workspace, workspace_size, &beta, output.td, output.data));
 	// handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_FEATURE_MAP, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 	handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
@@ -144,7 +228,7 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
 
 
 template <typename F>
-void ConvolutionOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &output_grad, Tensor<F> &input_grad, F beta) {
+void ConvolutionOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &input_grad, Tensor<F> &output_grad, F beta) {
 	F alpha(1.0);
 	handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, filter_bank.fd, filter_bank.weights, output_grad.td, output_grad.data, conv, algo_bwd, workspace_bwd, workspace_size_bwd, &beta, input_grad.td, input_grad.data) );
 }
@@ -166,42 +250,10 @@ void ConvolutionOperation<F>::zero_grad() {
 
 template <typename F>
 TensorShape ConvolutionOperation<F>::output_shape(TensorShape in) {
-	int x_even((filter_bank.kw + 1) % 2), y_even((filter_bank.kh + 1) % 2);
-	return TensorShape{in.n, filter_bank.out_map, in.w + x_even, in.h + y_even};
+	in.set_c(filter_bank.out_c());
+	return in;
 }
 
-template <typename F>
-void ConvolutionOperation<F>::forward_dry_run(Tensor<F> &in, Tensor<F> &out) { // allocates workspace
-
-	// handle_error( cudnnGetConvolutionForwardAlgorithm(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, workspace_size, &algo) );
-
-	// handle_error( cudnnGetConvolutionBackwardDataAlgorithm( Handler::cudnn(), filter_bank.fd, out.td, conv, in.td,CUDNN_CONVOLUTION_BWD_DATA_PREFER_FASTEST, workspace_size, &algo_bwd) );
-
-	// handle_error( cudnnGetConvolutionBackwardFilterAlgorithm( Handler::cudnn(),in.td, out.td, conv, filter_bank.fd, CUDNN_CONVOLUTION_BWD_FILTER_PREFER_FASTEST, workspace_size, &algo_bwd_filter) );
-	handle_error( cudnnGetConvolutionForwardAlgorithm(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, workspace_size, &algo) );
-
-	handle_error( cudnnGetConvolutionBackwardDataAlgorithm( Handler::cudnn(), filter_bank.fd, out.td, conv, in.td,CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT, workspace_size, &algo_bwd) );
-
-	handle_error( cudnnGetConvolutionBackwardFilterAlgorithm( Handler::cudnn(),in.td, out.td, conv, filter_bank.fd, CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT, workspace_size, &algo_bwd_filter) );
-
-	//algo = CUDNN_CONVOLUTION_FWD_ALGO_GEMM;
-	//algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
-	// algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
-	handle_error( cudnnGetConvolutionForwardWorkspaceSize(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, algo, &workspace_size) );
-	handle_error( cudnnGetConvolutionBackwardDataWorkspaceSize(Handler::cudnn(), filter_bank_grad.fd, out.td, conv, in.td, algo_bwd, &workspace_size_bwd) );
-	handle_error( cudnnGetConvolutionBackwardFilterWorkspaceSize(Handler::cudnn(), in.td, out.td, conv, filter_bank_grad.fd, algo_bwd_filter, &workspace_size_bwd_filter) );
-
-	// if (workspace_size)
-	cout << "workspace size: " << workspace_size << endl;
-	cout << "workspace backward size: " << workspace_size_bwd << endl;
-
-	if (workspace_size)
-		handle_error( cudaMalloc( (void**)&workspace, workspace_size) );
-	if (workspace_size_bwd)
-		handle_error( cudaMalloc( (void**)&workspace_bwd, workspace_size_bwd) );
-	if (workspace_size_bwd_filter)
-		handle_error( cudaMalloc( (void**)&workspace_bwd_filter, workspace_size_bwd_filter) );
-}
 
 
 template <typename F>
@@ -213,18 +265,11 @@ void ConvolutionOperation<F>::scale_grad(F val) {
 
 
 template <typename F>
-void ConvolutionOperation<F>::register_params(std::vector<CudaPtr<F> > &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F> > &grads, std::vector<CudaPtr<F> > &fast_grads) {
+void ConvolutionOperation<F>::register_params(vector<CudaPtr<F> > &params, vector<CudaPtr<F>> &fast_params, vector<CudaPtr<F> > &grads, vector<CudaPtr<F> > &fast_grads) {
   //cout << "registering " << (rollout?"rollout":"no rollout") << endl;
-	if (!rollout) {
-		params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()});
-		grads.push_back(CudaPtr<F>{&filter_bank_grad.weights, filter_bank_grad.n_weights()});
-	} else {
-		cout << "adding to fastweights " << filter_bank_grad.weights << " " << filter_bank_grad.n_weights() << " n=" << fast_grads.size() << endl;
-		// params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()}); //HACK
-		// grads.push_back(CudaPtr<F>{&filter_bank_grad.weights, filter_bank_grad.n_weights()});
-		fast_params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()});
-		fast_grads.push_back(CudaPtr<F>{&filter_bank_grad.weights, filter_bank_grad.n_weights()});
-	}
+	params.push_back(CudaPtr<F>{&filter_bank.weights, filter_bank.n_weights()});
+	grads.push_back(CudaPtr<F>{&filter_bank_grad.weights, filter_bank_grad.n_weights()});
+	
 	params.push_back(CudaPtr<F>{&bias.data, bias.size()});
 	grads.push_back(CudaPtr<F>{&bias_grad.data, bias_grad.size()});
 }
@@ -243,36 +288,6 @@ void ConvolutionOperation<F>::share(ConvolutionOperation<F> &other){
 
 }
 
-///Timed Operations
-
-template <typename F>
-void ConvolutionOperation<F>::forward_timed(Tensor<F> &input, Tensor<F> &output, int t, F beta) {
-	F alpha(1.0);
-
-	F alpha_bias(1), beta_bias(1);
-
-	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.ptr(t), conv, algo, workspace, workspace_size, &beta, output.td, output.data));
-	// handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_FEATURE_MAP, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
-	handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
-}
-
-
-template <typename F>
-void ConvolutionOperation<F>::backward_weights_timed(Tensor<F> &input, Tensor<F> &output_grad, int t, F beta) {
-	F alpha_bias(1.0), beta_bias(beta);
-	handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, output_grad.td, output_grad.data, &beta_bias, bias_grad.td, bias_grad.data) );
-
-	F alpha(1.0);
-	handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, output_grad.td, output_grad.data, conv, algo_bwd_filter, workspace_bwd_filter, workspace_size_bwd_filter, &beta, filter_bank_grad.fd, filter_bank_grad.ptr(t)) );
-
-}
-
-template <typename F>
-void ConvolutionOperation<F>::backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &output_grad, Tensor<F> &input_grad, int t, F beta) {
-	F alpha(1.0);
-	handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, filter_bank.fd, filter_bank.ptr(t), output_grad.td, output_grad.data, conv, algo_bwd, workspace_bwd, workspace_size_bwd, &beta, input_grad.td, input_grad.data) );
-}
-
 
 template <typename F>
 ConvolutionOperation<F>::~ConvolutionOperation() {
@@ -283,114 +298,24 @@ ConvolutionOperation<F>::~ConvolutionOperation() {
 }
 
 
-/////////////Convolution Shift
-
-template <typename F>
-ConvolutionShiftOperation<F>::ConvolutionShiftOperation(int in_map, int out_map, int kw, int kh, int shift_x, int shift_y, bool keep_, size_t workspace_limit_):
-	ConvolutionOperation<F>(in_map, out_map, kw, kh, keep_, workspace_limit_),
-	dx(shift_x * (kw / 2)),
-	dy(shift_y * (kh / 2))
-{
-	// int pad_h(0), pad_w(0), stride_w(1), stride_h(1), upscalex(1), upscaley(1);
-	// if (this->keep) {
-	// 	pad_w = kw / 2;
-	// 	pad_h = kh / 2;
-	// }
-	// cout << "weight buffer: " << filter_bank.n_weights() << endl;
-	// cout << "bias buffer: " << bias.size() << endl;
-	//todo: calculate padding
-	// handle_error( cudnnCreateConvolutionDescriptor(&(this->conv)));
-	// handle_error( cudnnSetConvolution2dDescriptor(this->conv, pad_h, pad_w, stride_h, stride_w, upscalex, upscaley, CUDNN_CROSS_CORRELATION));
-}
-
-template <typename F>
-ConvolutionShiftOperation<F>::~ConvolutionShiftOperation() {
-  //ConvolutionOperation<F>::~ConvolutionOperation<F>();
-  throw "todo";
-}
-
-
-template <typename F>
-void ConvolutionShiftOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F beta) {
-	F alpha(1.0);
-
-	F alpha_bias(1), beta_bias(1);
-	F slate_beta(0);
-	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, this->filter_bank.fd, this->filter_bank.weights, this->conv, this->algo, this->workspace, this->workspace_size, &slate_beta, slate.td, slate.data));
-	// handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, this->filter_bank.fd, this->filter_bank.weights, this->conv, this->algo, this->workspace, this->workspace_size, &beta, output.td, output.data));//TESTING
-
-	handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, this->bias.td, this->bias.data, &beta_bias, slate.td, slate.data));
-	// handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, this->bias.td, this->bias.data, &beta_bias, output.td, output.data)); //TESTING
-	// cout << "shapes: " << slate.shape() << " " << output.shape() << " " << this->bias.shape() << endl;
-	// cout << "shifts: " << dx << " " << dy << endl;
-	shift(slate.data, output.data, slate.w, slate.h, slate.c, dx, dy, beta);
-	// shift(slate.data, output.data, slate.w, slate.h, slate.c, 0, 0, beta);
-}
-
-template <typename F>
-void ConvolutionShiftOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &output_grad, Tensor<F> &input_grad, F beta) {
-	F alpha(1.0);
-	// slate_grad.zero();
-	unshift(output_grad.data, slate_grad.data, slate_grad.w, slate_grad.h, slate_grad.c, dx, dy, 0);
-	// handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, this->filter_bank.fd, this->filter_bank.weights, output_grad.td, output_grad.data, this->conv, this->algo_bwd, this->workspace_bwd, this->workspace_size_bwd, &beta, input_grad.td, input_grad.data) ); //TESTING
-	handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, this->filter_bank.fd, this->filter_bank.weights, slate_grad.td, slate_grad.data, this->conv, this->algo_bwd, this->workspace_bwd, this->workspace_size_bwd, &beta, input_grad.td, input_grad.data) );
-
-}
-
-template <typename F>
-void ConvolutionShiftOperation<F>::backward_weights(Tensor<F> &input, Tensor<F> &output_grad, F beta) {
-	//Assuming backward_weights comes after backward, so no unshift
-	//unshift(output_grad.data, slate_grad.data, slate_grad.w, slate_grad.h, slate_grad.c, dx, dy, 0);
-
-	F alpha_bias(1.0), beta_bias(beta);
-	handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, slate_grad.td, slate_grad.data, &beta_bias, this->bias_grad.td, this->bias_grad.data) );
-	// handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, output_grad.td, output_grad.data, &beta_bias, this->bias_grad.td, this->bias_grad.data) );//TESTING
-
-	F alpha(1.0);
-	handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, slate_grad.td, slate_grad.data, this->conv, this->algo_bwd_filter, this->workspace_bwd_filter, this->workspace_size_bwd_filter, &beta, this->filter_bank_grad.fd, this->filter_bank_grad.weights) );
-	// handle_error( cudnnConvolutionBackwardFilter(Handler::cudnn(), &alpha, input.td, input.data, output_grad.td, output_grad.data, this->conv, this->algo_bwd_filter, this->workspace_bwd_filter, this->workspace_size_bwd_filter, &beta, this->filter_bank_grad.fd, this->filter_bank_grad.weights) ); //TESTING
-}
-
-
-template <typename F>
-void ConvolutionShiftOperation<F>::forward_dry_run(Tensor<F> &in, Tensor<F> &out) { // allocates workspace
-	slate.reshape(out.shape());
-	slate_grad.reshape(out.shape());
-
-	ConvolutionOperation<F>::forward_dry_run(in, out);
-	// handle_error( cudnnGetConvolutionForwardAlgorithm(Handler::cudnn(), in.td, this->filter_bank.fd, this->conv, out.td, CUDNN_CONVOLUTION_FWD_PREFER_FASTEST, this->workspace_size, &this->algo) );
-	// //algo = CUDNN_CONVOLUTION_FWD_ALGO_GEMM;
-	// //algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
-	// this->algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
-	// handle_error( cudnnGetConvolutionForwardWorkspaceSize(Handler::cudnn(), in.td, this->filter_bank.fd, this->conv, out.td, this->algo, &(this->workspace_size)) );
-	// if (this->workspace_size)
-	// 	cout << "workspace size: " << this->workspace_size << endl;
-	// if (this->workspace_size)
-	// 	handle_error( cudaMalloc( (void**)&this->workspace, this->workspace_size) );
-}
-
-template <typename F>
-void ConvolutionShiftOperation<F>::zero_grad() {
-	this->filter_bank_grad.zero();
-	this->bias_grad.zero();
-	slate_grad.zero();
-}
-
 //////////////////////////////////////
 
 template <typename F>
-SquashOperation<F>::SquashOperation(TensorShape s, int c_) : c(c_), ConvolutionOperation<F>(s.c, c_, s.w, s.h, false) {
-
+SquashOperation<F>::SquashOperation(TensorShape s, int c_) : c(c_), ConvolutionOperation<F>({s.c(), c_, s.d(), s.w(), s.h()}, {1, 1, 1, 1, 1}, false) {
+    
 }
 
 template <typename F>
 TensorShape SquashOperation<F>::output_shape(TensorShape in) {
-	return TensorShape{in.n, c, 1, 1};
+  vector<int> out_dimensions(in.n_dimensions(), 1);
+  out_dimensions[0] = in.n();
+  out_dimensions[1] = c;
+  return out_dimensions;
 }
 
 template <typename F>
 void SquashOperation<F>::init_normal(F mean, F std) {
-  this->filter_bank.init_normal(mean, std / (this->kw * this->kh));
+  this->filter_bank.init_normal(mean, std / (this->filter_bank.kd() * this->filter_bank.kw() * this->filter_bank.kh()));
 	//bias.init_normal(mean, std);
 }
 
@@ -431,7 +356,7 @@ MergeOperation<F>::MergeOperation() {
 
 template <typename F>
 TensorShape MergeOperation<F>::output_shape(TensorShape in) {
-  return TensorShape{in.n, in.c / 4, in.w * 2, in.h * 2};
+  return TensorShape{in.n(), in.c() / 4, in.w() * 2, in.h() * 2};
 }
 
 template <typename F>
@@ -453,7 +378,7 @@ SplitOperation<F>::SplitOperation() {
 
 template <typename F>
 TensorShape SplitOperation<F>::output_shape(TensorShape in) {
-  return TensorShape{in.n, in.c * 4, in.w / 2, in.h / 2};
+  return TensorShape{in.n(), in.c() * 4, in.w() / 2, in.h() / 2};
 }
 
 template <typename F>
@@ -492,13 +417,24 @@ void PoolingOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out
 template <typename F>
 TensorShape PoolingOperation<F>::output_shape(TensorShape in) {
 	// cout << in.c << endl;
-	return TensorShape{in.n, in.c, in.w / kw, in.h / kh};
+	return TensorShape{in.n(), in.c(), in.w() / kw, in.h() / kh};
 }
 
 template <typename F>
 TanhOperation<F>::TanhOperation(F scale_) : scale(scale_) {
 	cudnnCreateActivationDescriptor(&desc);
 	cudnnSetActivationDescriptor(desc, CUDNN_ACTIVATION_TANH, CUDNN_NOT_PROPAGATE_NAN, 0);
+}
+
+template <typename F>
+void TanhOperation<F>::forward(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out) {
+	forward(*in[0], *out[0]);
+}
+
+template <typename F>
+bool TanhOperation<F>::forward_dry_run(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out) {
+	out[0]->reshape(in[0]->shape);
+	return false;
 }
 
 template <typename F>
@@ -519,6 +455,59 @@ template <typename F>
 TensorShape TanhOperation<F>::output_shape(TensorShape in) {
 	return in;
 }
+
+
+
+template <typename F>
+AdditionOperation<F>::AdditionOperation() {
+}
+
+template <typename F>
+void AdditionOperation<F>::forward(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out) {
+	forward(*in[0], *in[1], *out[0]);
+}
+
+template <typename F>
+bool AdditionOperation<F>::forward_dry_run(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out) {
+	auto &in_tensor0 = *in[0];
+	auto &in_tensor1 = *in[1];
+	auto &out_tensor = *out[0];
+
+	if (in_tensor0.shape.n_elements() == 0 || in_tensor1.shape.n_elements() == 0) {
+		cerr << "AdditionOperation: Input shape is empty" << endl;
+		return false;
+	}
+	if (in_tensor0.shape != in_tensor1.shape) {
+		cerr << "AdditionOperation: inputs don't match" << endl;
+		return false;
+	}
+
+	out_tensor.reshape(in_tensor0.shape);
+
+	return true;
+}
+
+template <typename F>
+void AdditionOperation<F>::forward(Tensor<F> &in1, Tensor<F> &in2, Tensor<F> &out) {
+  F alpha(1);
+
+  add_cuda<F>(in1.ptr(), out.ptr(), in1.size(), 1.0);
+  add_cuda<F>(in2.ptr(), out.ptr(), in2.size(), 1.0);
+}
+
+template <typename F>
+void AdditionOperation<F>::backward(Tensor<F> &out_grad, Tensor<F> &in_grad1, Tensor<F> &in_grad2) {
+  F alpha(1);
+  add_cuda<F>(out_grad.ptr(), in_grad1.ptr(), out_grad.size(), 1.0);
+  add_cuda<F>(out_grad.ptr(), in_grad2.ptr(), out_grad.size(), 1.0);
+}
+
+template <typename F>
+TensorShape AdditionOperation<F>::output_shape(TensorShape in) {
+	return in;
+}
+
+
 
 template <typename F>
 SigmoidOperation<F>::SigmoidOperation(F scale_) : scale(scale_) {
@@ -570,22 +559,6 @@ TensorShape ReluOperation<F>::output_shape(TensorShape in) {
 }
 
 template <typename F>
-void GateOperation<F>::forward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, F beta) {
-	gate(in, in2, out);
-}
-
-template <typename F>
-void GateOperation<F>::backward(Tensor<F> &in, Tensor<F> &in2, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, Tensor<F> &in2_grad, F beta) {
-	gate(out_grad, in2, in_grad);
-	gate(out_grad, in, in2_grad);
-}
-
-template <typename F>
-TensorShape GateOperation<F>::output_shape(TensorShape in) {
-	return in;
-}
-
-template <typename F>
 SoftmaxOperation<F>::SoftmaxOperation(bool matched_) : matched(matched_) {
 }
 
@@ -617,24 +590,21 @@ TensorShape SoftmaxOperation<F>::output_shape(TensorShape in) {
 }
 
 template struct ConvolutionOperation<float>;
-template struct ConvolutionShiftOperation<float>;
 template struct SquashOperation<float>;
 template struct UnsquashOperation<float>;
 template struct MergeOperation<float>;
 template struct SplitOperation<float>;
-
+template struct AdditionOperation<float>;
 template struct PoolingOperation<float>;
 template struct TanhOperation<float>;
 template struct SigmoidOperation<float>;
 template struct ReluOperation<float>;
 template struct SoftmaxOperation<float>;
-template struct GateOperation<float>;
 
-template struct ConvolutionOperation<double>;
-template struct SquashOperation<double>;
-template struct PoolingOperation<double>;
-template struct TanhOperation<double>;
-template struct SigmoidOperation<double>;
-template struct ReluOperation<double>;
-template struct SoftmaxOperation<double>;
-template struct GateOperation<double>;
+// template struct ConvolutionOperation<double>;
+// template struct SquashOperation<double>;
+// template struct PoolingOperation<double>;
+// template struct TanhOperation<double>;
+// template struct SigmoidOperation<double>;
+// template struct ReluOperation<double>;
+// template struct SoftmaxOperation<double>;
