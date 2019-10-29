@@ -82,42 +82,36 @@ Tensor<F>::Tensor()
 
 
 template <typename F>
-Tensor<F>::Tensor(TensorShape s):
-  shape(s), owning(true)
-{
+Tensor<F>::Tensor(TensorShape s, cudnnTensorFormat_t format_):
+  shape(s), owning(true), format(format_) {
 	handle_error( cudnnCreateTensorDescriptor(&td) );
 	allocate();
+	set_descriptor();
 }
 
+template <typename F>
+Tensor<F>::Tensor(TensorShape s, F *data_, cudnnTensorFormat_t format_):
+  shape(s), owning(false), data(data_), format(format_) {
+	handle_error( cudnnCreateTensorDescriptor(&td) );
+	allocate();
+	set_descriptor();
+}
 
 template <typename F>
 void Tensor<F>::set_descriptor() {
-	cout << "set descriptor: " << shape << endl;
-	vector<int> strides;
-	strides.reserve(shape.n_dimensions());
-
-	int stride(1);
-	for (auto d_it = shape.dimensions.rbegin(); d_it != shape.dimensions.rend(); ++d_it) {
-		strides.emplace_back(stride);
-		stride *= *d_it;
-	}
-	reverse(strides.begin(), strides.end());
-	cout << "set descriptor dims: " << shape.n_dimensions() << " " << shape.dimensions << " " << strides << endl;
-
-	set_descriptor_typed(shape.n_dimensions(), shape.dimensions, strides);
+	set_descriptor_typed();
 }
 
 template <>
-void Tensor<double>::set_descriptor_typed(int N, vector<int> dimensions, vector<int> strides) {
-	if (!N) return;
-	handle_error( cudnnSetTensorNdDescriptor(td, CUDNN_DATA_DOUBLE, N, dimensions.data(), strides.data()) );	
+void Tensor<float>::set_descriptor_typed() {
+	if (!shape.n_dimensions() || !shape.n_elements()) return;
+	handle_error( cudnnSetTensorNdDescriptorEx(td, format, CUDNN_DATA_FLOAT, shape.n_dimensions(), shape.dimensions.data()) );
 }
 
 template <>
-void Tensor<float>::set_descriptor_typed(int N, vector<int> dimensions, vector<int> strides) {
-	cout << "tensor desc, dims: " << dimensions << " strides: " << strides << endl;
-	if (!N) return;
-	handle_error( cudnnSetTensorNdDescriptor(td, CUDNN_DATA_FLOAT, N, dimensions.data(), strides.data()) );
+void Tensor<double>::set_descriptor_typed() {
+	if (!shape.n_dimensions() || !shape.n_elements()) return;
+	handle_error( cudnnSetTensorNdDescriptorEx(td, format, CUDNN_DATA_DOUBLE, shape.n_dimensions(), shape.dimensions.data()) );
 }
 
 template <typename F>
@@ -217,7 +211,12 @@ void Tensor<F>::from_tensor(Tensor &in) {
 	if (size() != in.size()) {
  			throw StringException("sizes don't match");
 	}
-	handle_error( cudaMemcpy(data, in.data, in.size() * sizeof(F), cudaMemcpyDeviceToDevice));
+	float alpha(1);
+	float beta(0);
+	cout << in.shape << " " << shape << endl;
+	cout << in.format << " " << format << endl;
+	cout << in.td << " " << in.data << " " << td << " " << data << endl;
+	handle_error( cudnnTransformTensor(Handler::cudnn(), &alpha, in.td, in.data, &beta, td, data) );
 }
 
 template <typename F>

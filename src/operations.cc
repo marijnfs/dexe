@@ -31,6 +31,8 @@ ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions_, vector<in
 	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
 	workspace(0),
 	workspace_size(workspace_limit_),
+	workspace_size_bwd(workspace_limit_),
+	workspace_size_bwd_filter(workspace_limit_),
 	keep(keep_),
     dimensions(dimensions_),
     strides(strides_)
@@ -145,6 +147,7 @@ void ConvolutionOperation<F>::prepare_forward(Tensor<F> &in, Tensor<F> &out) { /
 	handle_error( cudnnGetConvolutionForwardWorkspaceSize(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, algo, &workspace_size) );
 
 	if (workspace_size) {
+		cout << "Allocating workspace of size: " << workspace_size << endl;
 		if (workspace) {
 			cudaFree(workspace);
 			workspace = nullptr;
@@ -155,7 +158,7 @@ void ConvolutionOperation<F>::prepare_forward(Tensor<F> &in, Tensor<F> &out) { /
 
 template <typename F>
 void ConvolutionOperation<F>::prepare_backward_weights(Tensor<F> &in, Tensor<F> &out) { // allocates workspace
-    handle_error( cudnnGetConvolutionBackwardFilterAlgorithm( Handler::cudnn(),in.td, out.td, conv, filter_bank.fd, CUDNN_CONVOLUTION_BWD_FILTER_PREFER_FASTEST, workspace_size, &algo_bwd_filter) );
+    handle_error( cudnnGetConvolutionBackwardFilterAlgorithm( Handler::cudnn(),in.td, out.td, conv, filter_bank.fd, CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT, workspace_size_bwd_filter, &algo_bwd_filter) );
     handle_error( cudnnGetConvolutionBackwardFilterWorkspaceSize(Handler::cudnn(), in.td, out.td, conv, filter_bank_grad.fd, algo_bwd_filter, &workspace_size_bwd_filter) );
     if (workspace_size_bwd_filter) {
 		if (workspace_bwd_filter) {
@@ -317,7 +320,6 @@ void ConvolutionOperation<F>::share(ConvolutionOperation<F> &other){
 	other.bias_grad.data = bias_grad.data;
 
 }
-
 
 template <typename F>
 ConvolutionOperation<F>::~ConvolutionOperation() {
