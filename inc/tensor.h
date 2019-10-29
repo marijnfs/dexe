@@ -38,13 +38,13 @@ struct TensorShape {
 template <typename F>
 struct Tensor {
 	Tensor();
-	Tensor(TensorShape shape);
-	Tensor(TensorShape shape, F *data);
+	Tensor(TensorShape shape, cudnnTensorFormat_t format = CUDNN_TENSOR_NCHW);
+	Tensor(TensorShape shape, F *data, cudnnTensorFormat_t format = CUDNN_TENSOR_NCHW);
 
 	~Tensor();
 
 	void allocate();
-    void set_descriptor_typed(int N, std::vector<int> dimensions, std::vector<int> strides);
+    void set_descriptor_typed();
     void set_descriptor();
 	void reshape(TensorShape shape);
 
@@ -78,6 +78,7 @@ struct Tensor {
 	bool owning = false;
 	cudnnTensorDescriptor_t td = nullptr;
 	F *data = nullptr;
+	cudnnTensorFormat_t format = CUDNN_TENSOR_NCHW;
 };
 
 template <typename F>
