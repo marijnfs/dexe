@@ -197,7 +197,9 @@ void Tensor<F>::from_tensor(Tensor &in) {
 	}
 	float alpha(1);
 	float beta(0);
-
+	cout << in.shape << " " << shape << endl;
+	cout << in.format << " " << format << endl;
+	cout << in.td << " " << in.data << " " << td << " " << data << endl;
 	handle_error( cudnnTransformTensor(Handler::cudnn(), &alpha, in.td, in.data, &beta, td, data) );
 }
 
