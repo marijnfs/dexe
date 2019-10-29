@@ -133,9 +133,9 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	FilterBank<F> filter_bank, filter_bank_grad;
 	Tensor<F> bias, bias_grad;
 
-	cudnnConvolutionFwdAlgo_t algo;
-	cudnnConvolutionBwdDataAlgo_t algo_bwd;
-	cudnnConvolutionBwdFilterAlgo_t algo_bwd_filter;
+	cudnnConvolutionFwdAlgo_t algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
+	cudnnConvolutionBwdDataAlgo_t algo_bwd = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
+	cudnnConvolutionBwdFilterAlgo_t algo_bwd_filter = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_0;
 
 	char *workspace = nullptr;
 	char *workspace_bwd = nullptr;

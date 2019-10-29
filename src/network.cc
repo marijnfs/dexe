@@ -5,7 +5,7 @@
 #include <iterator>
 #include <fstream>
 #include <sstream>
-#include <queue>
+#include <stack>
 #include <set>
 #include <vector>
 
@@ -346,7 +346,7 @@ template <typename F>
 void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) {
 	set<int> visited;
 	vector<int> sequence;
-	queue<int> q;
+	stack<int> node_stack;
 
 	for (auto i : inputs)
 		if (!tensors[i].x) {
@@ -355,34 +355,38 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 		}
 
 	for (auto o : outputs)
-		q.push(o);
+		node_stack.push(o);
 
-	while (!q.empty()) {
-		auto cur = q.front();
-		q.pop();
+	while (!node_stack.empty()) {
+		auto cur = node_stack.top();
+		node_stack.pop();
 
 		if (visited.count(cur))
 			continue;
-
 		visited.insert(cur);
+		cout << endl << "cur :" << cur << " " << names[cur] << endl;
 
 		//don't add leaf nodes to calculation sequence
 		if (input_indices[cur].size())
 			sequence.push_back(cur);
 		
-		for (auto idx : input_indices[cur])
-			q.push(idx);
+		for (auto idx : input_indices[cur]) {
+			cout << "idx :" << idx << " " << names[idx] << endl;
+
+			node_stack.push(idx);
+		}
 	}
 
 	//put calculation nodes in order
 	reverse(sequence.begin(), sequence.end());
 
 	//Forward Dryrun
-	cout << "DryRun" << endl;
+	cout << "DryRun " << sequence << endl;
 	for (auto s : sequence) {
 		vector<Tensor<F>*> tmp_inputs, tmp_outputs;
-		cout << "op: " << names[s] << endl;
+		cout << "seq: " << s << "op: " << names[s] << endl;
 		for (auto idx : input_indices[s]) {
+			cout << "idx: " << idx << endl;
 			cout << "input: " << names[idx] << endl;
 			cout << "in: " << tensors[idx].x->shape << endl;
 			tmp_inputs.push_back(tensors[idx].x.get());

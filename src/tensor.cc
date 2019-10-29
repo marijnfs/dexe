@@ -94,7 +94,6 @@ Tensor<F>::Tensor(TensorShape s, F *data_, cudnnTensorFormat_t format_):
   shape(s), owning(false), data(data_), format(format_) {
 	handle_error( cudnnCreateTensorDescriptor(&td) );
 	allocate();
-	set_descriptor();
 }
 
 template <typename F>
@@ -162,22 +161,6 @@ Tensor<F>::~Tensor() {
 	  cudaFree(data);
 }
 
-template <typename F>
-std::unique_ptr<Tensor<F>> Tensor<F>::to_channel_last() {
-    auto new_shape = shape;
-    auto c = new_shape.c();
-
-    auto &dimensions = new_shape.dimensions;
-    copy(dimensions.begin() + 2, dimensions.end(), dimensions.begin() + 1);
-    dimensions.back() = c;
-
-    result_tensor = std::unique_ptr<Tensor<F>>(new Tensor<F>(new_shape));
-}
-
-template <typename F>
-void Tensor<F>::from_channel_last(Tensor<F> *other) {
-    
-}
 
 template <typename F>
 void Tensor<F>::zero() {

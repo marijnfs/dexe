@@ -255,7 +255,7 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
 	cout << "bias data: " << bias.data << " bias shape:" << bias.shape << " alpha: " << alpha_bias << " beta:" << beta_bias << " " << output.shape << endl;
 	auto v = bias.to_vector();
 	cout << "cpu vec: " << v << endl;
-	handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
+	// handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 	cout << "done" << endl;
 }
 
@@ -263,6 +263,11 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
 template <typename F>
 void ConvolutionOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &input_grad, Tensor<F> &output_grad, F beta) {
 	F alpha(1.0);
+	cout << ":in out filter: " << input_grad.shape << " " << output_grad.shape << " " << filter_bank << endl;
+	cout << strides << " " << dimensions << " " << paddings << endl;
+	cout << beta << endl;
+	cout << algo_bwd << endl;
+	// algo_bwd = CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
 	handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, filter_bank.fd, filter_bank.weights, output_grad.td, output_grad.data, conv, algo_bwd, workspace_bwd, workspace_size_bwd, &beta, input_grad.td, input_grad.data) );
 }
 
@@ -367,6 +372,8 @@ bool ConvolutionTransposeOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &
     }
     out[0]->reshape(output_shape);
 
+    Tensor<F> dummy;
+	ConvolutionOperation<F>::prepare_backward(*in[0], *out[0]);
     return true;
 }
 
@@ -378,7 +385,9 @@ void ConvolutionTransposeOperation<F>::backward(std::vector<Tensor<F>*> &in, std
 
 template <typename F>
 bool ConvolutionTransposeOperation<F>::backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad){
-	return false;
+	ConvolutionOperation<F>::prepare_forward(*out_grad[0], *in_grad[0]);
+	ConvolutionOperation<F>::prepare_backward_weights(*out_grad[0], *in[0]); 
+	return true;
 }
 
 
@@ -559,6 +568,7 @@ bool AdditionOperation<F>::forward_dry_run(vector<Tensor<F>*> &in, vector<Tensor
 	auto &in_tensor1 = *in[1];
 	auto &out_tensor = *out[0];
 
+	cout << in_tensor0.shape << " " << in_tensor1.shape << endl;
 	if (in_tensor0.shape.n_elements() == 0 || in_tensor1.shape.n_elements() == 0) {
 		cerr << "AdditionOperation: Input shape is empty" << endl;
 		return false;

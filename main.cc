@@ -35,7 +35,7 @@ void test3() {
 		int in_c = 1;
 		auto in1 = net.input_3D(in_c);
 		// auto in2 = net.input3D(in_c);
-		int next_c = 64;
+		int next_c = 16;
 		int k = 3;
 		auto c1 = net.convolution_3D(next_c, k)(in1);
 		auto c1f = net.relu()(c1);
@@ -45,7 +45,8 @@ void test3() {
 		auto c3f = net.relu()(c3);
 		auto c4 = net.convolution_3D(next_c, k)(c3f);
 		auto c4f = net.relu()(c4);
-		auto c4_t = net.convolution_transpose_3D(next_c / 2, 2)(c3f);
+		auto zusammen = net.addition()(c2f, c4f);
+		auto c4_t = net.convolution_transpose_3D(next_c / 2, 2)(zusammen);
 			// auto node2 = net.addition()(in1, in2);
 
 		cout << "adding addition" << endl;
