@@ -195,7 +195,10 @@ void Tensor<F>::from_tensor(Tensor &in) {
 	if (size() != in.size()) {
  			throw StringException("sizes don't match");
 	}
-	handle_error( cudaMemcpy(data, in.data, in.size() * sizeof(F), cudaMemcpyDeviceToDevice));
+	float alpha(1);
+	float beta(0);
+
+	handle_error( cudnnTransformTensor(Handler::cudnn(), &alpha, in.td, in.data, &beta, td, data) );
 }
 
 template <typename F>
