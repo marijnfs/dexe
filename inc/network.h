@@ -48,7 +48,8 @@ struct Network {
 
 	void new_forward(std::vector<int> inputs, std::vector<int> outputs);
 
-
+	void zero_x();
+	
 	void finish();
 	void assert_finished();
 

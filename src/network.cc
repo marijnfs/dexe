@@ -31,6 +31,12 @@ void Network<F>::assert_finished() {
 		throw StringException("call network.finish() before using network");
 }
 
+template <typename F>
+void Network<F>::zero_x() {
+	for (auto &tensor : tensors)
+		if (tensor.x)
+			tensor.x->zero();
+}
 
 /*
 template <typename F>
@@ -363,6 +369,7 @@ std::function<Node<F>(Node<F>, Node<F>)> Network<F>::addition(string name) {
 template <typename F>
 void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) {
 	vector<int> sequence;
+	set<int> input_set(inputs.begin(), inputs.end());
 
 	for (auto i : inputs)
 		if (!tensors[i].x) {
@@ -424,6 +431,10 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 			oss << "Failure when preparing step: " << names[s] << endl;
 			throw std::runtime_error(oss.str());
 		}
+
+		//make sure x is zero
+		if (!input_set.count(s))
+			tensors[s].x->zero();
 	}
 
 	//Run Forward
