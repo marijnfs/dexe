@@ -161,6 +161,18 @@ struct ConvolutionTransposeOperation : public ConvolutionOperation<F> {
 };
 
 template <typename F>
+struct SquaredLossOperation : public Operation<F> {
+  SquaredLossOperation();
+
+  virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+  virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+  virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+  virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+  
+  void describe(std::ostream &out) { out << "squared_loss"; }
+};
+
+template <typename F>
 struct SquashOperation : public ConvolutionOperation<F> {
 	SquashOperation(TensorShape s, int c);
 	TensorShape output_shape(TensorShape input);

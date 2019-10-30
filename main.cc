@@ -39,16 +39,18 @@ void test3() {
 		int k = 3;
 		auto c1 = net.convolution_3D(next_c, k)(in1);
 		auto c1f = net.relu()(c1);
+		auto c2 = net.convolution_3D(1, k)(c1f);
+		
+		auto target = net.input_3D(in_c);
+		auto loss = net.squared_loss()(c2, target);
 
-		cout << "adding addition" << endl;
+		in1.tensor_set().alloc_x(TensorShape{1, 1, 64, 64, 64});
+		target.tensor_set().alloc_x(TensorShape{1, 1, 64, 64, 64});
 
-		cout << "before: " << net.tensors[0].shape() << endl;
-		net.tensors[0].alloc_x(TensorShape{1, 1, 64, 64, 64});
-		// net.tensors[1].alloc_x(TensorShape{1, 1, 64, 64, 64});
-		cout << "after: " << net.tensors[0].shape() << endl;
+		Tensor<float> sample(TensorShape{1, 1, 64, 64, 64});
 
-		cout << "running forward:" << endl;
-		net.new_forward(vector<int>{0}, vector<int>{c1f.index});
+
+		net.new_forward(vector<int>{in1.index, target.index}, vector<int>{loss.index});
 	}
     cout << "deinit" << endl;
     Handler::deinit();

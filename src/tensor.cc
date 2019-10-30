@@ -234,6 +234,12 @@ void Tensor<F>::init_uniform(F var) {
   */
 }
 
+template <>
+void Tensor<float>::add(Tensor<float> &other, float alpha) {
+	handle_error( cublasSaxpy(Handler::cublas(), size(), &alpha, other.data, 1, data, 1) );
+}
+
+
 template <typename F>
 void Tensor<F>::fill(F val) {
 	vector<F> vals(size());

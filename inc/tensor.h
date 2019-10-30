@@ -73,6 +73,7 @@ struct Tensor {
   	F *ptr() { return data; }
     F *ptr(int n_, int c_ = 0, int y_ = 0, int x_ = 0) {return data + shape.offset(n_, c_, y_, x_); }
    
+   	void add(Tensor<F> &other, F alpha);
 
     TensorShape shape;
 	bool owning = false;

@@ -394,6 +394,39 @@ bool ConvolutionTransposeOperation<F>::backward_dry_run(std::vector<Tensor<F>*> 
 }
 
 
+/////////////////////
+template <typename F>
+SquaredLossOperation<F>::SquaredLossOperation() {
+
+}
+
+template <typename F>
+void SquaredLossOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	
+}
+
+template <typename F>
+bool SquaredLossOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	if (in[0]->shape != in[1]->shape) {
+		cerr << "input shapes don't match" << endl;
+		return false;
+	}
+
+	out[0]->reshape(TensorShape({1}));
+
+	return true;
+}
+
+template <typename F>
+bool SquaredLossOperation<F>::backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) {
+    return true;
+}
+
+template <typename F>
+void SquaredLossOperation<F>::backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) {
+
+}
+
 
 
 //////////////////////////////////////
@@ -731,6 +764,7 @@ template struct TanhOperation<float>;
 template struct SigmoidOperation<float>;
 template struct ReluOperation<float>;
 template struct SoftmaxOperation<float>;
+template struct SquaredLossOperation<float>;
 
 // template struct ConvolutionOperation<double>;
 // template struct SquashOperation<double>;

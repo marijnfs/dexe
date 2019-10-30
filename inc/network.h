@@ -20,6 +20,7 @@ struct Node {
 	Node(int index_, Network<F> *network_) : index(index_), network(network_) {}
 
 	TensorShape shape();
+	TensorSet<F> &tensor_set();
 
 	int index = -1; //-1 means undefined
 	Network<F> *network = nullptr;
@@ -42,6 +43,7 @@ struct Network {
 	std::function<Node<F>(Node<F>)> relu(std::string name = "relu");
 	std::function<Node<F>(Node<F>)> local_normalisation(int k, std::string name = "lnc");
 	std::function<Node<F>(Node<F>)> local_normalisation_3D(int k, std::string name = "lnc");
+	std::function<Node<F>(Node<F>, Node<F>)> squared_loss(std::string name = "squared_loss");
 
 	std::function<Node<F>(Node<F>, Node<F>)> addition(std::string name = "addition");
 	// std::function<Node<F>(Node<F>)> pool(std::string name = "pool");

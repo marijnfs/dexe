@@ -17,6 +17,11 @@ TensorShape Node<F>::shape() {
 }
 
 template <typename F>
+TensorSet<F> &Node<F>::tensor_set() {
+	return network->tensors[index];	
+}
+
+template <typename F>
 Network<F>::Network(TensorShape in) : n_params(0), finished(false) {
 	tensors.emplace_back(in);
 }
@@ -30,6 +35,7 @@ void Network<F>::assert_finished() {
 	if (!finished)
 		throw StringException("call network.finish() before using network");
 }
+
 
 template <typename F>
 void Network<F>::zero_x() {
@@ -373,6 +379,17 @@ std::function<Node<F>(Node<F>)> Network<F>::local_normalisation_3D(int k, string
 }
 
 template <typename F>
+std::function<Node<F>(Node<F>, Node<F>)> Network<F>::squared_loss(std::string name) {
+	return [this, name](Node<F> n1, Node<F> n2) {
+		auto in_c = n1.shape().c();
+		auto index = add_operation(new SquaredLossOperation<F>(), vector<int>{n1.index, n2.index}, TensorShape{0, in_c, 0, 0, 0}, name);
+
+		return Node<F>(index, this);
+	};
+}
+
+
+template <typename F>
 std::function<Node<F>(Node<F>, Node<F>)> Network<F>::addition(string name) {
 	return [this, name](Node<F> n1, Node<F> n2) {
 		cout << n1.index << " " << n2.index << endl;
@@ -470,6 +487,7 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 	}
 }
 
+template struct Node<float>;
 
 template struct Network<float>;
 // template struct Network<double>;
