@@ -105,6 +105,7 @@ bool ConvolutionOperation<F>::check_fit(Tensor<F> &in_tensor, Tensor<F> &out_ten
     for (int n(0); n < paddings.size(); ++n) {
         if ((in_tensor.shape[n + 2] + 2 * paddings[n] - dimensions[n + 2]) % strides[n] != 0) {
             cerr << "Stride does not divide dimension" << endl;
+            return false;
         }            
     }
     return true;
