@@ -181,7 +181,7 @@ struct UnsquashOperation : public Operation<F> {
   void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
   void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
   
-  void describe(std::ostream &out) { out << "squash"; }
+  void describe(std::ostream &out) { out << "unsquash"; }
   
   TensorShape s;
 };
@@ -194,7 +194,7 @@ struct MergeOperation : public Operation<F> {
   void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
   void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
   
-  void describe(std::ostream &out) { out << "squash"; }
+  void describe(std::ostream &out) { out << "merge"; }
 };
 
 template <typename F>
@@ -205,9 +205,22 @@ struct SplitOperation : public Operation<F> {
   void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
   void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
   
-  void describe(std::ostream &out) { out << "squash"; }
+  void describe(std::ostream &out) { out << "split"; }
 };
 
+
+template <typename F>
+struct LocalNormalisationOperation : public Operation<F> {
+  LocalNormalisationOperation(int w);
+
+  TensorShape output_shape(TensorShape input);
+  void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
+  void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta = 0.0);
+  
+  void describe(std::ostream &out) { out << "local_normalisation"; }
+	
+	cudnnLRNDescriptor_t lrn_desc = 0;
+};
 
 
 template <typename F>

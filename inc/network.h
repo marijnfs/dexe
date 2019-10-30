@@ -40,6 +40,9 @@ struct Network {
 	std::function<Node<F>(Node<F>)> convolution_upscale(int out_c, int k, std::string name = "upscale");
 	std::function<Node<F>(Node<F>)> convolution_upscale_3D(int out_c, int k, std::string name = "upscale");
 	std::function<Node<F>(Node<F>)> relu(std::string name = "relu");
+	std::function<Node<F>(Node<F>)> local_normalisation(int k, std::string name = "lnc");
+	std::function<Node<F>(Node<F>)> local_normalisation_3D(int k, std::string name = "lnc");
+
 	std::function<Node<F>(Node<F>, Node<F>)> addition(std::string name = "addition");
 	// std::function<Node<F>(Node<F>)> pool(std::string name = "pool");
 
@@ -49,7 +52,7 @@ struct Network {
 	void new_forward(std::vector<int> inputs, std::vector<int> outputs);
 
 	void zero_x();
-	
+
 	void finish();
 	void assert_finished();
 

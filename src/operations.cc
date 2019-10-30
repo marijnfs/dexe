@@ -489,7 +489,35 @@ void SplitOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_g
   merge(out_grad, in_grad);
 }
 
+/////////// LocalNormalisationOperation
 
+template <typename F>
+LocalNormalisationOperation<F>::LocalNormalisationOperation(int w) {
+	handle_error( cudnnSetLRNDescriptor( lrn_desc, w, 1.0, 0.0, 2.0) );
+}
+
+template <typename F>
+TensorShape LocalNormalisationOperation<F>::output_shape(TensorShape input) {
+	return input;
+}
+
+template <typename F>
+void LocalNormalisationOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
+	F alpha(1.0);
+ 	handle_error( cudnnLRNCrossChannelForward(Handler::cudnn(), lrn_desc, CUDNN_LRN_CROSS_CHANNEL_DIM1, 
+ 				&alpha, in.td, in.data,
+ 				&beta, out.td, out.data) );
+}
+
+template <typename F>
+void LocalNormalisationOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_grad, Tensor<F> &in_grad, F beta) {
+	F alpha(1.0);
+	handle_error( cudnnLRNCrossChannelBackward(Handler::cudnn(), lrn_desc, CUDNN_LRN_CROSS_CHANNEL_DIM1, 
+ 				&alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data,
+ 				&beta, in_grad.td, in_grad.data) );
+}
+	
+/////////// PoolingOperation
 
 template <typename F>
 PoolingOperation<F>::PoolingOperation(int kw_, int kh_, cudnnPoolingMode_t mode) : kw(kw_), kh(kh_) {
@@ -691,6 +719,7 @@ TensorShape SoftmaxOperation<F>::output_shape(TensorShape in) {
 template struct InputOperation<float>;
 template struct ConvolutionOperation<float>;
 template struct ConvolutionTransposeOperation<float>;
+template struct LocalNormalisationOperation<float>;
 template struct SquashOperation<float>;
 template struct UnsquashOperation<float>;
 template struct MergeOperation<float>;
