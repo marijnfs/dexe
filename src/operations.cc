@@ -419,12 +419,14 @@ bool SquaredLossOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::
 
 template <typename F>
 bool SquaredLossOperation<F>::backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) {
+	in_grad[0]->reshape(in[0]->shape);
     return true;
 }
 
 template <typename F>
 void SquaredLossOperation<F>::backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) {
-
+	in_grad[0]->from_tensor(*in[0]);
+	in_grad[0]->add(*in[1], -1.0);
 }
 
 
