@@ -39,15 +39,6 @@ void test3() {
 		int k = 3;
 		auto c1 = net.convolution_3D(next_c, k)(in1);
 		auto c1f = net.relu()(c1);
-		auto c2 = net.convolution_3D(next_c, k)(c1f);
-		auto c2f = net.relu()(c2);
-		auto c3 = net.convolution_3D(next_c, k)(c2f);
-		auto c3f = net.relu()(c3);
-		auto c4 = net.convolution_3D(next_c, k)(c3f);
-		auto c4f = net.relu()(c4);
-		auto zusammen = net.addition()(c2f, c4f);
-		auto c4_t = net.convolution_transpose_3D(next_c / 2, 2)(zusammen);
-			// auto node2 = net.addition()(in1, in2);
 
 		cout << "adding addition" << endl;
 
@@ -57,8 +48,7 @@ void test3() {
 		cout << "after: " << net.tensors[0].shape() << endl;
 
 		cout << "running forward:" << endl;
-		net.new_forward(vector<int>{0}, vector<int>{c4_t.index});
-        cout << net.tensors[c4_t.index].x->shape << endl;
+		net.new_forward(vector<int>{0}, vector<int>{c1f.index});
 	}
     cout << "deinit" << endl;
     Handler::deinit();

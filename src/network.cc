@@ -299,7 +299,25 @@ std::function<Node<F>(Node<F>)> Network<F>::convolution_3D(int out_c, int k, str
 }
 
 template <typename F>
-std::function<Node<F>(Node<F>)> Network<F>::convolution_transpose(int out_c, int k, string name) {
+std::function<Node<F>(Node<F>)> Network<F>::convolution_downscale(int out_c, int k, string name) {
+	return [this, out_c, k, name](Node<F> n) {
+		auto in_c = n.shape().c();
+		auto index = add_operation(new ConvolutionOperation<F>({out_c, in_c, k, k}, {k, k}, false), vector<int>{n.index}, TensorShape{0, out_c, 0, 0}, name);
+		return Node<F>(index, this);
+	};
+}
+
+template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::convolution_downscale_3D(int out_c, int k, string name) {
+	return [this, out_c, k, name](Node<F> n) {
+		auto in_c = n.shape().c();
+		auto index = add_operation(new ConvolutionOperation<F>({out_c, in_c, k, k, k}, {k, k, k}, false), vector<int>{n.index}, TensorShape{0, out_c, 0, 0, 0}, name);
+		return Node<F>(index, this);
+	};
+}
+
+template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::convolution_upscale(int out_c, int k, string name) {
 	return [this, out_c, k, name](Node<F> n) {
 		auto in_c = n.shape().c();
         // in Conv Transpose, the in_c and out_c ordering logic is reversed
@@ -309,7 +327,7 @@ std::function<Node<F>(Node<F>)> Network<F>::convolution_transpose(int out_c, int
 }
 
 template <typename F>
-std::function<Node<F>(Node<F>)> Network<F>::convolution_transpose_3D(int out_c, int k, string name) {
+std::function<Node<F>(Node<F>)> Network<F>::convolution_upscale_3D(int out_c, int k, string name) {
 	return [this, out_c, k, name](Node<F> n) {
 		auto in_c = n.shape().c();
         // in Conv Transpose, the in_c and out_c ordering logic is reversed
@@ -344,9 +362,7 @@ std::function<Node<F>(Node<F>, Node<F>)> Network<F>::addition(string name) {
 
 template <typename F>
 void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) {
-	set<int> visited;
 	vector<int> sequence;
-	stack<int> node_stack;
 
 	for (auto i : inputs)
 		if (!tensors[i].x) {
@@ -354,27 +370,36 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 			return;
 		}
 
-	for (auto o : outputs)
-		node_stack.push(o);
+	//Build the forward dependency (resolution) graph
+	vector<vector<int>> output_indices(operations.size());
+	for (int n(0); n < operations.size(); ++n)
+		for (int in_n : input_indices[n])
+			output_indices[in_n].push_back(n);
+
+	stack<int> node_stack;
+	set<int> resolved_nodes;
+
+	for (auto i : inputs)
+		node_stack.push(i);
 
 	while (!node_stack.empty()) {
 		auto cur = node_stack.top();
-		node_stack.pop();
-
-		if (visited.count(cur))
+		bool resolved = true;
+		for (auto n : output_indices[cur])
+			if (!resolved_nodes.count(n)) {
+				node_stack.push(n);
+				resolved = false;
+			}
+		
+		if (!resolved)
 			continue;
-		visited.insert(cur);
+
+		node_stack.pop();
+		resolved_nodes.insert(cur);
 		cout << endl << "cur :" << cur << " " << names[cur] << endl;
 
 		//don't add leaf nodes to calculation sequence
-		if (input_indices[cur].size())
-			sequence.push_back(cur);
-		
-		for (auto idx : input_indices[cur]) {
-			cout << "idx :" << idx << " " << names[idx] << endl;
-
-			node_stack.push(idx);
-		}
+		sequence.push_back(cur);
 	}
 
 	//put calculation nodes in order

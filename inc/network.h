@@ -35,8 +35,10 @@ struct Network {
 
 	std::function<Node<F>(Node<F>)> convolution(int out_c, int k, std::string name = "conv");
 	std::function<Node<F>(Node<F>)> convolution_3D(int out_c, int k, std::string name = "conv");
-	std::function<Node<F>(Node<F>)> convolution_transpose(int out_c, int k, std::string name = "conv_trans");
-	std::function<Node<F>(Node<F>)> convolution_transpose_3D(int out_c, int k, std::string name = "conv_trans");
+	std::function<Node<F>(Node<F>)> convolution_downscale(int out_c, int k, std::string name = "downscale");
+	std::function<Node<F>(Node<F>)> convolution_downscale_3D(int out_c, int k, std::string name = "downscale");
+	std::function<Node<F>(Node<F>)> convolution_upscale(int out_c, int k, std::string name = "upscale");
+	std::function<Node<F>(Node<F>)> convolution_upscale_3D(int out_c, int k, std::string name = "upscale");
 	std::function<Node<F>(Node<F>)> relu(std::string name = "relu");
 	std::function<Node<F>(Node<F>, Node<F>)> addition(std::string name = "addition");
 	// std::function<Node<F>(Node<F>)> pool(std::string name = "pool");

@@ -9,7 +9,7 @@ using namespace std;
 template <typename F>
 bool InputOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { 
 	if (!reference)
-		return false;
+		return true;
 	if (reference->shape.c() != n_channels) {
 		cerr << "input channels don't correspond data" << endl;
 		return false;
@@ -20,8 +20,9 @@ bool InputOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector
      
 
 template <typename F>
-void InputOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
-	out.from_tensor(*reference);
+void InputOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	if (reference)
+		out[0]->from_tensor(*reference);
 }
 
 template <typename F>
@@ -344,6 +345,7 @@ ConvolutionTransposeOperation<F>::ConvolutionTransposeOperation(std::vector<int>
 template <typename F>
 void ConvolutionTransposeOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out){
 	Tensor<F> dummy;
+	cout << in[0]->shape << " " << out[0]->shape << endl;
 	ConvolutionOperation<F>::backward(dummy, dummy, *out[0], *in[0]); //we use ConvolutionOperation in reverse to get the transpose
 }
 
