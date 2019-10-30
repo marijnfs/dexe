@@ -493,7 +493,8 @@ void SplitOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &out_g
 
 template <typename F>
 LocalNormalisationOperation<F>::LocalNormalisationOperation(int w) {
-	handle_error( cudnnSetLRNDescriptor( lrn_desc, w, 1.0, 0.0, 2.0) );
+	handle_error( cudnnCreateLRNDescriptor( &lrn_desc ) );
+	// handle_error( cudnnSetLRNDescriptor( lrn_desc, w, 1.0, 1.0e-4, 0.75) );
 }
 
 template <typename F>

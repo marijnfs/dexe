@@ -210,7 +210,7 @@ struct SplitOperation : public Operation<F> {
 
 
 template <typename F>
-struct LocalNormalisationOperation : public Operation<F> {
+struct LocalNormalisationOperation : public DefaultOperation<F> {
   LocalNormalisationOperation(int w);
 
   TensorShape output_shape(TensorShape input);
