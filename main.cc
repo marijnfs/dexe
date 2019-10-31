@@ -49,8 +49,10 @@ void test3() {
 
 		Tensor<float> sample(TensorShape{1, 1, 64, 64, 64});
 
-
+		loss({sample});
 		net.new_forward(vector<int>{in1.index, target.index}, vector<int>{loss.index});
+
+
 	}
     cout << "deinit" << endl;
     Handler::deinit();

@@ -6,6 +6,7 @@
 #include <vector>
 #include <set>
 #include <functional>
+#include <initializer_list>
 
 #include "util.h"
 #include "tensor.h"
@@ -21,6 +22,8 @@ struct Node {
 
 	TensorShape shape();
 	TensorSet<F> &tensor_set();
+
+	void operator()(std::initializer_list<std::reference_wrapper<Tensor<F>>> inputs); //call to evaluation
 
 	int index = -1; //-1 means undefined
 	Network<F> *network = nullptr;
@@ -99,7 +102,9 @@ struct Network {
 	std::vector<std::string> names;
 	std::vector<std::unique_ptr<Operation<F>>> operations;
 	std::vector<TensorSet<F>> tensors;
-	std::vector<std::vector<int>> input_indices;
+	std::vector<std::vector<int>> input_indices; //inputs to every node
+
+	std::vector<int> inputs; //indices to nodes that function as inputs
 
 	std::vector<Parametrised<F>*> parameters;
 

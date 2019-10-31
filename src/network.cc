@@ -22,6 +22,22 @@ TensorSet<F> &Node<F>::tensor_set() {
 }
 
 template <typename F>
+void Node<F>::operator()(std::initializer_list<std::reference_wrapper<Tensor<F>>> input_tensors) {
+	if (input_tensors.size() != network->inputs.size()) {
+		cerr << "Number of inputs doesn't correspond";
+		return;
+	}
+
+	auto input_tensor_it = input_tensors.begin();
+	for (auto idx : network->inputs) {
+		network->tensors[idx].x->from_tensor(*input_tensor_it);
+		++input_tensor_it;
+	}
+
+	network->new_forward(network->inputs, {index});
+}
+
+template <typename F>
 Network<F>::Network(TensorShape in) : n_params(0), finished(false) {
 	tensors.emplace_back(in);
 }
@@ -280,12 +296,14 @@ int Network<F>::add_operation(Operation<F> *op, vector<int> inputs, TensorShape 
 template <typename F>
 Node<F> Network<F>::input(int n_channels, std::string name) {
 	auto index = add_operation(new InputOperation<F>(n_channels), vector<int>{}, TensorShape{0, n_channels, 0, 0}, name);
+	inputs.emplace_back(index);
 	return Node<F>(index, this);
 }
 
 template <typename F>
 Node<F> Network<F>::input_3D(int n_channels, std::string name) {
 	auto index = add_operation(new InputOperation<F>(n_channels), vector<int>{}, TensorShape{0, n_channels, 0, 0, 0}, name);
+	inputs.emplace_back(index);
 	return Node<F>(index, this);
 }
 
