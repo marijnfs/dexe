@@ -121,7 +121,6 @@ void Tensor<F>::allocate() {
 	if (shape.n_elements() != 0) {
 		cout << "allocating: " << shape << " " << shape.n_elements() << endl;
 		handle_error( cudaMalloc( (void**)&data, sizeof(F) * shape.n_elements()));
-		cout << data << endl;
 		if (ZERO_ON_INIT)
 		  zero();
 	}
@@ -171,7 +170,6 @@ void Tensor<F>::zero() {
 template <typename F>
 vector<F> Tensor<F>::to_vector() {
 	vector<F> vec(shape.n_elements());
-	cout << shape << " " << shape.n_elements() << " " << data << endl;
 	handle_error( cudaMemcpy(&vec[0], data, vec.size() * sizeof(F), cudaMemcpyDeviceToHost));
 	return vec;
 }
@@ -196,9 +194,6 @@ void Tensor<F>::from_tensor(Tensor &in) {
 	}
 	float alpha(1);
 	float beta(0);
-	cout << in.shape << " " << shape << endl;
-	cout << in.format << " " << format << endl;
-	cout << in.td << " " << in.data << " " << td << " " << data << endl;
 	handle_error( cudnnTransformTensor(Handler::cudnn(), &alpha, in.td, in.data, &beta, td, data) );
 }
 
@@ -234,11 +229,15 @@ void Tensor<F>::init_uniform(F var) {
   */
 }
 
-template <>
-void Tensor<float>::add(Tensor<float> &other, float alpha) {
-	handle_error( cublasSaxpy(Handler::cublas(), size(), &alpha, other.data, 1, data, 1) );
+template <typename T>
+void Tensor<T>::add(Tensor<T> &other, T alpha) {
+	add_cuda(other.data, data, shape.n_elements(), alpha);
 }
 
+template <typename T>
+void Tensor<T>::scale(T alpha) {
+	scale_cuda(data, shape.n_elements(), alpha);
+}
 
 template <typename F>
 void Tensor<F>::fill(F val) {
@@ -298,11 +297,13 @@ double Tensor<double>::sum() {
 template <typename F>
 TensorSet<F>::TensorSet(TensorShape shape_) {
 	alloc_x(shape_);
+	alloc_grad(TensorShape()); //always start with empty grad, we might just be doing forward
 }
 
 template <typename F>
 TensorSet<F>::TensorSet() {
 	alloc_x(TensorShape());
+	alloc_grad(TensorShape());
 }
 
 template <typename F>
@@ -321,11 +322,11 @@ void TensorSet<F>::alloc_x(TensorShape shape) {
 }
 
 template <typename F>
-void TensorSet<F>::alloc_grad() {
+void TensorSet<F>::alloc_grad(TensorShape shape) {
 	if (grad)
-		grad->reshape(shape());
+		grad->reshape(shape);
 	else
-		grad.reset(new Tensor<F>(shape()));
+		grad.reset(new Tensor<F>(shape));
 }
 
 template <>

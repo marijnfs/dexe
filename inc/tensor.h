@@ -41,6 +41,7 @@ struct Tensor {
 	Tensor(TensorShape shape, cudnnTensorFormat_t format = CUDNN_TENSOR_NCHW);
 	Tensor(TensorShape shape, F *data, cudnnTensorFormat_t format = CUDNN_TENSOR_NCHW);
 
+
 	~Tensor();
 
 	void allocate();
@@ -74,6 +75,7 @@ struct Tensor {
     F *ptr(int n_, int c_ = 0, int y_ = 0, int x_ = 0) {return data + shape.offset(n_, c_, y_, x_); }
    
    	void add(Tensor<F> &other, F alpha);
+   	void scale(F alpha);
 
     TensorShape shape;
 	bool owning = false;
@@ -97,7 +99,7 @@ struct TensorSet {
 	TensorSet();
 
 	void alloc_x(TensorShape shape);
-	void alloc_grad();
+	void alloc_grad(TensorShape shape);
 	TensorShape shape();
 
 	std::unique_ptr<Tensor<F>> x, grad;
@@ -114,7 +116,8 @@ struct FilterBank {
 
 	F *weights = nullptr;
 
-	int n_weights() { return calculate_product(dimensions); }	void init_normal(F mean, F std);
+	int n_weights() { return calculate_product(dimensions); }	
+	void init_normal(F mean, F std);
 	void init_uniform(F var);
 
 	int in_c();

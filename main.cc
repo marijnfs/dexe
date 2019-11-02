@@ -16,8 +16,8 @@ using namespace std;
 void test3() {
 
 	cout << "start" << endl;
+	Handler::set_device(0);
 	Handler::cudnn();
-	
 	cout << "Test 3" << endl;
 
 	{
@@ -44,13 +44,28 @@ void test3() {
 		auto target = net.input_3D(in_c);
 		auto loss = net.squared_loss()(c2, target);
 
-		in1.tensor_set().alloc_x(TensorShape{1, 1, 64, 64, 64});
-		target.tensor_set().alloc_x(TensorShape{1, 1, 64, 64, 64});
+		//allocate input and target
+		//remove need for this
+		// in1.tensor_set().alloc_x(TensorShape{1, 1, 64, 64, 64});
+		// target.tensor_set().alloc_x(TensorShape{1, 1, 64, 64, 64});
 
 		Tensor<float> sample(TensorShape{1, 1, 64, 64, 64});
+		Tensor<float> y(TensorShape{1, 1, 64, 64, 64});
+		
+		net.init_normal(0.0, 0.05);
+		sample.init_normal(0.0, 1.0);
+		y.init_normal(0.0, 1.0);
+		y.from_tensor(sample);
 
-		loss({sample});
-		net.new_forward(vector<int>{in1.index, target.index}, vector<int>{loss.index});
+		for (int i(0); i < 100000; ++i) {
+			cout << "it: " << i << endl;
+			loss({sample, y});
+			net.zero_grad();
+
+			cout << "loss vec: " << loss.tensor_set().x->to_vector() << endl;
+			loss.backward();
+			net.update(0.01);
+		}
 
 
 	}

@@ -16,7 +16,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(CXX_STANDARD 17)
 set(CUDA_PROPAGATE_HOST_FLAGS ON)
-set(CUDA_NVCC_FLAGS "-arch=sm_60 -std=c++14 --compiler-options -fPIC")
+set(CUDA_NVCC_FLAGS "-arch=sm_61 -std=c++14 --compiler-options -fPIC")
 
 
 

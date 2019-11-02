@@ -24,6 +24,7 @@ struct Node {
 	TensorSet<F> &tensor_set();
 
 	void operator()(std::initializer_list<std::reference_wrapper<Tensor<F>>> inputs); //call to evaluation
+	void backward() { network->new_backward(); }
 
 	int index = -1; //-1 means undefined
 	Network<F> *network = nullptr;
@@ -32,7 +33,6 @@ struct Node {
 template <typename F>
 struct Network {
 	Network(){}
-	Network(TensorShape in);
 	~Network();
 
  	int add_operation(Operation<F> *op, std::vector<int> inputs, TensorShape shape, std::string name);
@@ -55,8 +55,10 @@ struct Network {
 	Node<F> input_3D(int n_channels, std::string name = "input");
 
 	void new_forward(std::vector<int> inputs, std::vector<int> outputs);
+	void new_backward();
 
 	void zero_x();
+	void zero_grad();
 
 	void finish();
 	void assert_finished();
@@ -99,6 +101,8 @@ struct Network {
 	std::string get_unique_name(std::string name);
 
 
+	std::vector<int> sequence;
+
 	std::vector<std::string> names;
 	std::vector<std::unique_ptr<Operation<F>>> operations;
 	std::vector<TensorSet<F>> tensors;
@@ -114,8 +118,8 @@ struct Network {
 
 	std::set<std::string> names_set;
 
-	int n_params;
-	bool finished;
+	int n_params = 0;
+	bool finished = true; //for now we keep it at true
 };
 
 #endif

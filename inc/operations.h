@@ -80,6 +80,8 @@ struct InputOperation : public Operation<F> {
 
     bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
     void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
 
     int n_channels = 0;
 };
@@ -170,6 +172,8 @@ struct SquaredLossOperation : public Operation<F> {
   virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
   
   void describe(std::ostream &out) { out << "squared_loss"; }
+
+  Tensor<F> tmp; // temporary tensor for computation
 };
 
 template <typename F>

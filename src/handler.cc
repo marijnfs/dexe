@@ -19,7 +19,7 @@ void Handler::init_handler() {
 
   //handle_error( curandCreateGenerator(&h_curand, CURAND_RNG_PSEUDO_XORWOW));
   handle_error( curandCreateGenerator(&h_curand,CURAND_RNG_PSEUDO_DEFAULT));
-  handle_error( curandSetPseudoRandomGeneratorSeed(h_curand, 1234ULL));
+  handle_error( curandSetPseudoRandomGeneratorSeed(h_curand, 13131ULL));
   //handle_error( curandSetQuasiRandomGeneratorDimensions(h_curand, 1) );
   handle_error( cublasCreate(&h_cublas));
 }
@@ -45,6 +45,10 @@ void Handler::deinit() {
 }
 
 void Handler::set_device(int n) {
+  if (s_handler) {
+    cerr << "Warning, setting device after Handler was initialized. Some handles do not deal well with that." << endl;
+  }
+  
   handle_error( cudaSetDevice(n) );
   cudaDeviceProp prop;
   handle_error(cudaGetDeviceProperties(&prop, n));

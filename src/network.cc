@@ -25,11 +25,13 @@ template <typename F>
 void Node<F>::operator()(std::initializer_list<std::reference_wrapper<Tensor<F>>> input_tensors) {
 	if (input_tensors.size() != network->inputs.size()) {
 		cerr << "Number of inputs doesn't correspond";
+	throw "";
 		return;
 	}
 
 	auto input_tensor_it = input_tensors.begin();
 	for (auto idx : network->inputs) {
+		network->tensors[idx].x->reshape(input_tensor_it->get().shape);
 		network->tensors[idx].x->from_tensor(*input_tensor_it);
 		++input_tensor_it;
 	}
@@ -37,10 +39,7 @@ void Node<F>::operator()(std::initializer_list<std::reference_wrapper<Tensor<F>>
 	network->new_forward(network->inputs, {index});
 }
 
-template <typename F>
-Network<F>::Network(TensorShape in) : n_params(0), finished(false) {
-	tensors.emplace_back(in);
-}
+
 template <typename F>
 void Network<F>::finish() {
 	align_params();
@@ -58,6 +57,16 @@ void Network<F>::zero_x() {
 	for (auto &tensor : tensors)
 		if (tensor.x)
 			tensor.x->zero();
+}
+
+template <typename F>
+void Network<F>::zero_grad() {
+	for (auto &tensor : tensors)
+		if (tensor.grad)
+			tensor.grad->zero();
+
+	for (auto &param : parameters)
+		param->zero_grad();
 }
 
 /*
@@ -420,10 +429,50 @@ std::function<Node<F>(Node<F>, Node<F>)> Network<F>::addition(string name) {
 	};
 }
 
+template <typename F>
+void Network<F>::new_backward() {
+	if (sequence.empty()) {
+		cerr << "No sequence available, did you run forward?" << endl;
+		return;
+	}
+
+	for (auto it = sequence.rbegin(); it != sequence.rend(); ++it) {
+		int s = *it;
+
+		vector<Tensor<F>*> tmp_inputs, tmp_outputs, tmp_input_grads, tmp_output_grads;
+		for (auto idx : input_indices[s]) {
+			tmp_inputs.push_back(tensors[idx].x.get());
+			tmp_input_grads.push_back(tensors[idx].grad.get());
+				
+		}
+
+		tmp_outputs.push_back(tensors[s].x.get());
+		tmp_output_grads.push_back(tensors[s].grad.get());
+
+		operations[s]->backward_dry_run(tmp_inputs, tmp_outputs, tmp_input_grads, tmp_output_grads);
+ 	}
+
+	for (auto it = sequence.rbegin(); it != sequence.rend(); ++it) {
+		int s = *it;
+
+		vector<Tensor<F>*> tmp_inputs, tmp_outputs, tmp_input_grads, tmp_output_grads;
+		for (auto idx : input_indices[s]) {
+			tmp_inputs.push_back(tensors[idx].x.get());
+			tmp_input_grads.push_back(tensors[idx].grad.get());
+				
+		}
+
+		tmp_outputs.push_back(tensors[s].x.get());
+		tmp_output_grads.push_back(tensors[s].grad.get());
+		operations[s]->backward(tmp_inputs, tmp_outputs, tmp_input_grads, tmp_output_grads);
+ 	}
+
+ 		
+}
 
 template <typename F>
 void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) {
-	vector<int> sequence;
+	sequence.clear();
 	set<int> input_set(inputs.begin(), inputs.end());
 
 	for (auto i : inputs)
@@ -458,7 +507,6 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 
 		node_stack.pop();
 		resolved_nodes.insert(cur);
-		cout << endl << "cur :" << cur << " " << names[cur] << endl;
 
 		//don't add leaf nodes to calculation sequence
 		sequence.push_back(cur);
@@ -471,11 +519,7 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 	cout << "DryRun " << sequence << endl;
 	for (auto s : sequence) {
 		vector<Tensor<F>*> tmp_inputs, tmp_outputs;
-		cout << "seq: " << s << "op: " << names[s] << endl;
 		for (auto idx : input_indices[s]) {
-			cout << "idx: " << idx << endl;
-			cout << "input: " << names[idx] << endl;
-			cout << "in: " << tensors[idx].x->shape << endl;
 			tmp_inputs.push_back(tensors[idx].x.get());
 		}
 
