@@ -37,9 +37,17 @@ void test3() {
 		// auto in2 = net.input3D(in_c);
 		int next_c = 16;
 		int k = 3;
-		auto c1 = net.convolution_3D(next_c, k)(in1);
-		auto c1f = net.relu()(c1);
-		auto c2 = net.convolution_3D(1, k)(c1f);
+		auto node = net.convolution_3D(next_c, k)(in1);
+		node = net.relu()(node);
+		node = net.convolution_3D(next_c, k)(in1);
+		auto node1 = node = net.relu()(node);
+		node = net.convolution_3D(next_c, k)(in1);
+		node = net.relu()(node);
+		node = net.addition()(node, node1);
+		node = net.convolution_3D(next_c, k)(in1);
+		node = net.relu()(node);
+
+		auto c2 = net.convolution_3D(1, k)(node);
 		
 		auto target = net.input_3D(in_c);
 		auto loss = net.squared_loss()(c2, target);
@@ -64,7 +72,7 @@ void test3() {
 
 			cout << "loss vec: " << loss.tensor_set().x->to_vector() << endl;
 			loss.backward();
-			net.update(0.01);
+			net.update(0.2);
 		}
 
 
