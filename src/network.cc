@@ -454,9 +454,10 @@ void Network<F>::new_backward() {
 
 	for (auto it = sequence.rbegin(); it != sequence.rend(); ++it) {
 		int s = *it;
-		cout << "back step: " << names[s] << endl;
+		// cout << "back step: " << names[s] << endl;
 		vector<Tensor<F>*> tmp_inputs, tmp_outputs, tmp_input_grads, tmp_output_grads;
 		for (auto idx : input_indices[s]) {
+			// cout << "input: " << names[idx] << " " << tensors[idx].x->shape << endl;
 			tmp_inputs.push_back(tensors[idx].x.get());
 			tmp_input_grads.push_back(tensors[idx].grad.get());
 				
