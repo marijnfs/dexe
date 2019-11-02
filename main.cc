@@ -21,7 +21,7 @@ void test3() {
 	cout << "Test 3" << endl;
 
 	{
-		Network<float> net;
+		Network<double> net;
 
 
 		// int in_c = 1;
@@ -38,8 +38,8 @@ void test3() {
 		int next_c = 1;
 		int k = 3;
 		auto node = net.convolution_3D(next_c, k)(in1);
-		auto node2 = net.convolution_3D(next_c, k)(in1);
-		node = net.addition()(node, node2);		
+		// auto node2 = net.convolution_3D(next_c, k)(in1);
+		// node = net.addition()(node, node2);		
 		// node = net.relu()(node);
 		// node = net.convolution_3D(next_c, k)(node);
 		// auto node1 = net.relu()(node);
@@ -59,23 +59,31 @@ void test3() {
 		// in1.tensor_set().alloc_x(TensorShape{1, 1, 64, 64, 64});
 		// target.tensor_set().alloc_x(TensorShape{1, 1, 64, 64, 64});
 
-		Tensor<float> sample(TensorShape{1, 1, 4, 4, 4});
-		Tensor<float> y(TensorShape{1, 1, 4, 4, 4});
+		Tensor<double> sample(TensorShape{1, 1, 4, 4, 4});
+		Tensor<double> y(TensorShape{1, 1, 4, 4, 4});
 		
 		sample.init_normal(0.0, 0.1);
 		net.init_normal(0.0, 0.1);
 		y.init_normal(0.0, 0.1);
 
+		cout << net.to_vector() << endl;
+		cout << sample.to_vector() << endl;
 		loss({sample, y});
+
+		// int l = 1;
+		// cout << "next: " << net.names[l] << " " << net.tensors[l].x->to_vector() << endl;
+
 		net.new_backward();
 		auto grad = net.gradient();
 		// y.from_tensor(sample);
 
-		auto fd_grad = net.fd_gradient(0.00001);
+		auto fd_grad = net.fd_gradient(0.0000001);
 		cout << fd_grad.size() << " " << grad.size() << endl;
 		for (int n(0); n < fd_grad.size(); ++n) {
 			cout << "[" << fd_grad[n] << " " << grad[n] << " " << (fd_grad[n] / grad[n]) << "] ";
 		}
+
+
 		// for (int i(0); i < 100000; ++i) {
 		// 	cout << "it: " << i << endl;
 		// 	loss({sample, y});

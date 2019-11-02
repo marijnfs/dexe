@@ -793,10 +793,19 @@ template struct ReluOperation<float>;
 template struct SoftmaxOperation<float>;
 template struct SquaredLossOperation<float>;
 
-// template struct ConvolutionOperation<double>;
-// template struct SquashOperation<double>;
-// template struct PoolingOperation<double>;
-// template struct TanhOperation<double>;
-// template struct SigmoidOperation<double>;
-// template struct ReluOperation<double>;
-// template struct SoftmaxOperation<double>;
+
+template struct InputOperation<double>;
+template struct ConvolutionOperation<double>;
+template struct ConvolutionTransposeOperation<double>;
+template struct LocalNormalisationOperation<double>;
+template struct SquashOperation<double>;
+template struct UnsquashOperation<double>;
+template struct MergeOperation<double>;
+template struct SplitOperation<double>;
+template struct AdditionOperation<double>;
+template struct PoolingOperation<double>;
+template struct TanhOperation<double>;
+template struct SigmoidOperation<double>;
+template struct ReluOperation<double>;
+template struct SoftmaxOperation<double>;
+template struct SquaredLossOperation<double>;

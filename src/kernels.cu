@@ -16,6 +16,22 @@ __global__ void split_kernelf(int const N, int const C, int const X, int const Y
     
 }
 
+__global__ void split_kerneld(int const N, int const C, int const X, int const Y, double const *input, double *out) {
+	int const i = threadIdx.x + blockIdx.x * blockDim.x;
+    if (i >= N)
+		return;
+
+    int xdiff = i % 2;
+    int x = (i % X) / 2;
+    int ii = i / X;
+    int ydiff = ii % 2;
+    int y = (ii % Y) / 2;
+    ii /= Y;
+    
+	out[ii * X * Y + (ydiff * 2 + xdiff) * (X * Y / 4) + y * X / 2 + x] = input[i];
+    
+}
+
 void split(Tensor<float> &a, Tensor<float> &out) {
 	int s = a.size();
 	int const BLOCKSIZE(1024);
@@ -27,7 +43,32 @@ void split(Tensor<float> &a, Tensor<float> &out) {
     split_kernelf<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.data, out.data);
 }
 
+void split(Tensor<double> &a, Tensor<double> &out) {
+	int s = a.size();
+	int const BLOCKSIZE(1024);
+
+	int dimBlock( BLOCKSIZE );
+	int dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
+
+    auto shape = a.shape;
+    split_kerneld<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.data, out.data);
+}
+
 __global__ void merge_kernelf(int const N, int const C, int const X, int const Y, float const *input, float *out) {
+	int const i = threadIdx.x + blockIdx.x * blockDim.x;
+    if (i >= N)
+		return;
+
+    int x = i % X;
+    int y = (i / X) % Y;
+    int c = i / X / Y;
+    int xdiff = c % 2;
+    int ydiff = (c / 2) % 2;
+    int cc = c / 4;
+    out[cc * X * Y * 4 + (y * 2 + ydiff) * X * 2 + x * 2 + xdiff] = input[i];
+}
+
+__global__ void merge_kerneld(int const N, int const C, int const X, int const Y, double const *input, double *out) {
 	int const i = threadIdx.x + blockIdx.x * blockDim.x;
     if (i >= N)
 		return;
@@ -52,6 +93,17 @@ void merge(Tensor<float> &a, Tensor<float> &out) {
     merge_kernelf<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.data, out.data);
 }
 
+
+void merge(Tensor<double> &a, Tensor<double> &out) {
+	int s = a.size();
+	int const BLOCKSIZE(1024);
+
+	int dimBlock( BLOCKSIZE );
+	int dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
+
+    auto shape = a.shape;
+    merge_kerneld<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.data, out.data);
+}
 
 __global__ void gate_kerneld(int N, double const *a, double const *b, double *out) {
 	int const i = threadIdx.x + blockIdx.x * blockDim.x;

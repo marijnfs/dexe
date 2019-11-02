@@ -192,8 +192,8 @@ void Tensor<F>::from_tensor(Tensor &in) {
 	if (size() != in.size()) {
  			throw StringException("sizes don't match");
 	}
-	float alpha(1);
-	float beta(0);
+	F alpha(1);
+	F beta(0);
 	handle_error( cudnnTransformTensor(Handler::cudnn(), &alpha, in.td, in.data, &beta, td, data) );
 }
 
@@ -202,21 +202,14 @@ void Tensor<F>::from_ptr(F const *in) {
 	handle_error( cudaMemcpy(data, in, size() * sizeof(F), cudaMemcpyHostToDevice));
 }
 
-template <>
-void Tensor<float>::init_normal(float mean, float std) {
+template <typename F>
+void Tensor<F>::init_normal(F mean, F std) {
 	//size_t even_size(((size() + 1) / 2) * 2);
 	::init_normal(data, size(), mean, std);
 	// size_t even_size(size());
 	// handle_error( curandGenerateNormal(Handler::curand(), data, even_size, mean, std) );
 }
 
-template <>
-void Tensor<double>::init_normal(double mean, double std) {
-	//size_t even_size(((size() + 1) / 2) * 2);
-	::init_normal(data, size(), mean, std);
-	// size_t even_size(size());
-	// handle_error( curandGenerateNormalDouble(Handler::curand(), data, even_size, mean, std) );
-}
 
 template <typename F>
 void Tensor<F>::init_uniform(F var) {

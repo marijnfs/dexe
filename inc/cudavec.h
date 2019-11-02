@@ -5,8 +5,9 @@
 #include <cuda.h>
 #include "util.h"
 
+template <typename F>
 struct CudaVec {
-	float *data = 0;
+	F *data = 0;
 	int n = 0;
 
 	CudaVec() : data(0), n(0) { }
@@ -17,6 +18,7 @@ struct CudaVec {
 	    cudaFree(data);
 	  }
 	}	  
+	
 	void resize(int n2) {
 		if (n != n2) {
           if (n) {
@@ -24,7 +26,7 @@ struct CudaVec {
             cudaFree(data);
           }
           std::cout <<"allocating " << n2 << std::endl;
-          handle_error( cudaMalloc( (void**)&data, sizeof(float) * n2));
+          handle_error( cudaMalloc( (void**)&data, sizeof(F) * n2));
           n = n2;
 		}
 		zero();
@@ -43,35 +45,38 @@ struct CudaVec {
     return *this;
   }
     
-	void rand_zero(float p);
+	void rand_zero(F p);
 
   void zero(int offset = 0) {
-		handle_error( cudaMemset(data + offset, 0, sizeof(float) * (n - offset) ) );
+		handle_error( cudaMemset(data + offset, 0, sizeof(F) * (n - offset) ) );
 	}
 
-	void init_normal(float mean, float std) {
-		::init_normal<float>(data, n, mean, std);
+	void init_normal(F mean, F std) {
+		::init_normal<F>(data, n, mean, std);
 	}
 
-  	void add_normal(float mean, float std) {
-		::add_normal<float>(data, n, mean, std);
+  	void add_normal(F mean, F std) {
+		::add_normal<F>(data, n, mean, std);
 	}
 
-	std::vector<float> to_vector() {
-		std::vector<float> vec(n);
-		handle_error( cudaMemcpy(&vec[0], data, n * sizeof(float), cudaMemcpyDeviceToHost));
+	std::vector<F> to_vector() {
+		std::vector<F> vec(n);
+		handle_error( cudaMemcpy(&vec[0], data, n * sizeof(F), cudaMemcpyDeviceToHost));
 		return vec;
 	}
 
-	void from_vector(std::vector<float> &vec) {
+	void from_vector(std::vector<F> &vec) {
 		if (vec.size() != n)
 			resize(vec.size());
-		handle_error( cudaMemcpy(data, &vec[0], n * sizeof(float), cudaMemcpyHostToDevice));
+		handle_error( cudaMemcpy(data, &vec[0], n * sizeof(F), cudaMemcpyHostToDevice));
 	}
 
-  float sum() {
-    float result(0);
-    handle_error( cublasSasum(Handler::cublas(), n, data, 1, &result) );
+  F sum() {
+    F result(0);
+    if (sizeof(F) == sizeof(float))
+	    handle_error( cublasSasum(Handler::cublas(), n, data, 1, &result) );
+    else
+    	handle_error( cublasDasum(Handler::cublas(), n, data, 1, &result) );
     return result;
   }
   
@@ -79,35 +84,35 @@ struct CudaVec {
   
 	CudaVec &sqrt();
 	CudaVec &abs();
-	CudaVec &pow(float e);
+	CudaVec &pow(F e);
 	CudaVec &exp();
-	CudaVec &clip(float limit);
-	CudaVec &add(int idx, float val);
+	CudaVec &clip(F limit);
+	CudaVec &add(int idx, F val);
 
 	CudaVec &operator-=(CudaVec &other);
 	CudaVec &operator+=(CudaVec &other);
 	CudaVec &operator*=(CudaVec &other);
   CudaVec &operator/=(CudaVec &other);
-  CudaVec &operator/=(float val);
+  CudaVec &operator/=(F val);
 
 
-	CudaVec &operator*=(float v);
-	CudaVec &operator+=(float v);
+	CudaVec &operator*=(F v);
+	CudaVec &operator+=(F v);
 
 
 
 };
 
-__global__ void sqrt_kernel(float *v, int n);
-__global__ void abs_kernel(float *v, int n);
-__global__ void pow_kernel(float *v, int n);
-__global__ void exp_kernel(float *v, int n);
-__global__ void clip_kernel(float *v, int n, float limit);
+// __global__ void sqrt_kernel(float *v, int n);
+// __global__ void abs_kernel(float *v, int n);
+// __global__ void pow_kernel(float *v, int n);
+// __global__ void exp_kernel(float *v, int n);
+// __global__ void clip_kernel(float *v, int n, float limit);
 
-__global__ void times_kernel(float *v, float *other, int n);
-__global__ void divide_kernel(float *v, float *other, int n);
-__global__ void times_scalarf(float *v, float other, int n);
-__global__ void add_scalarf(float *v, float other, int n);
+// __global__ void times_kernel(float *v, float *other, int n);
+// __global__ void divide_kernel(float *v, float *other, int n);
+// __global__ void times_scalarf(float *v, float other, int n);
+// __global__ void add_scalarf(float *v, float other, int n);
 
 
 

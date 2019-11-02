@@ -112,7 +112,7 @@ struct Network {
 
 	std::vector<Parametrised<F>*> parameters;
 
-	CudaVec param_vec, grad_vec;
+	CudaVec<F> param_vec, grad_vec;
 	std::vector<CudaPtr<F>> param_ptrs, grad_ptrs;
 	std::vector<CudaPtr<F>> fast_param_ptrs, fast_grad_ptrs;
 

@@ -548,6 +548,7 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 }
 
 template struct Node<float>;
+template struct Node<double>;
 
 template struct Network<float>;
-// template struct Network<double>;
+template struct Network<double>;

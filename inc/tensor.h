@@ -88,7 +88,7 @@ template <typename F>
 Tensor<F> &operator-=(Tensor<F> &in, Tensor<F> const &other);
 
 template <typename F>
-inline Tensor<F> &operator*=(Tensor<F> &in, float const other) {
+inline Tensor<F> &operator*=(Tensor<F> &in, F const other) {
   scale_cuda<F>(in.data, in.size(), other);
 	return in;
 }

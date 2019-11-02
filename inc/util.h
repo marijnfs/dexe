@@ -182,7 +182,7 @@ inline void add_cuda(float const *from, float *to, int n, float const alpha) {
 }
 
 template <>
-inline void add_cuda<double>(double const *from, double *to, int n, double const alpha) {
+inline void add_cuda(double const *from, double *to, int n, double const alpha) {
   handle_error(cublasDaxpy(Handler::cublas(), n, &alpha, from, 1, to, 1));
 }
 
