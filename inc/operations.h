@@ -88,7 +88,7 @@ struct InputOperation : public Operation<F> {
 
 template <typename F>
 struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
-	ConvolutionOperation(std::vector<int> dimensions, std::vector<int> strides, bool keep_, size_t workspace_limit_ = CONV_MAX_MEM);
+	ConvolutionOperation(std::vector<int> dimensions, std::vector<int> strides, bool keep_, bool has_bias = true, size_t workspace_limit_ = CONV_MAX_MEM);
 
 	~ConvolutionOperation();
 
@@ -147,6 +147,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	size_t workspace_size_bwd = 0;
 	size_t workspace_size_bwd_filter = 0;
 
+	bool has_bias = true;
 	bool keep = true;
 };
 
