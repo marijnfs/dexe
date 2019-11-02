@@ -515,7 +515,6 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 	reverse(sequence.begin(), sequence.end());
 
 	//Forward Dryrun
-	cout << "DryRun " << sequence << endl;
 	for (auto s : sequence) {
 		vector<Tensor<F>*> tmp_inputs, tmp_outputs;
 		for (auto idx : input_indices[s]) {
@@ -536,7 +535,6 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 	}
 
 	//Run Forward
-	cout << "Actual Run" << endl;
 	for (auto s : sequence) {
 		vector<Tensor<F>*> tmp_inputs, tmp_outputs;
 		for (auto idx : input_indices[s])
