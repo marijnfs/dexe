@@ -202,8 +202,6 @@ void ConvolutionOperation<F>::prepare_backward(Tensor<F> &in, Tensor<F> &out) { 
 
 template <typename F>
 void ConvolutionOperation<F>::update(F lr) {
-	cout << "update weights" << endl;
-
 	// cout << filter_bank_grad.to_vector() << endl;
 
 	// cout << filter_bank_grad.to_vector() << " " << bias_grad.to_vector() << endl;
@@ -270,8 +268,8 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
     // cout << dimensions << " " << strides << " " << paddings << " " << dilations << endl; 
 	handle_error( cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.data, filter_bank.fd, filter_bank.weights, conv, algo, workspace, workspace_size, &beta, output.td, output.data));
 	// handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_FEATURE_MAP, &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
-	auto v = bias.to_vector();
-	// handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
+	// auto v = bias.to_vector();
+	handle_error( cudnnAddTensor(Handler::cudnn(), &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
 }
 
 
@@ -286,8 +284,7 @@ void ConvolutionOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> 
 
 template <typename F>
 void ConvolutionOperation<F>::backward_weights(Tensor<F> &input, Tensor<F> &output_grad, F beta) {
-	cout << "backward weights" << endl;
-  F alpha_bias(1.0), beta_bias(beta / input.size());
+	F alpha_bias(1.0), beta_bias(beta / input.size());
 	handle_error( cudnnConvolutionBackwardBias(Handler::cudnn(), &alpha_bias, output_grad.td, output_grad.data, &beta_bias, bias_grad.td, bias_grad.data) );
 
 	F alpha(1.0);
@@ -416,7 +413,7 @@ void SquaredLossOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<T
 	//todo: prealloc tmp or make dedicated kernel
 	tmp.from_tensor(*in[0]);
 	tmp.add(*in[1], -1.0);
-	F loss = tmp.sum() / tmp.shape.n_elements();
+	F loss = tmp.norm2() / tmp.shape.n_elements() / 2.0;
 	out[0]->from_ptr(&loss);
 }
 
@@ -673,7 +670,6 @@ void AdditionOperation<F>::backward(std::vector<Tensor<F>*> &in, std::vector<Ten
 
 template <typename F>
 bool AdditionOperation<F>::backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) {
-	cout << "addition back dryrun: " << in[0]->shape << " " << in[1]->shape << endl;
 	in_grad[0]->reshape(in[0]->shape);
 	in_grad[1]->reshape(in[1]->shape);
 	return true;
@@ -741,7 +737,6 @@ void ReluOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
 template <typename F>
 void ReluOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta) {
   F alpha(1);
-  cout << " relu: " << in.shape << " " << out_grad.shape << " " << in_grad.shape << endl;
   //handle_error( cudnnActivationBackward(Handler::cudnn(), CUDNN_ACTIVATION_RELU, &alpha, in.td, in.data, out_grad.td, out_grad.data, out.td, out.data, &beta, in_grad.td, in_grad.data));
   handle_error( cudnnActivationBackward(Handler::cudnn(), desc, &alpha, out.td, out.data, out_grad.td, out_grad.data, in.td, in.data, &beta, in_grad.td, in_grad.data));
 }

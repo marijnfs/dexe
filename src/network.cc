@@ -148,39 +148,37 @@ void Network<F>::from_vector(vector<F> &vec) {
 	cout << "done from vector" << endl;
 }
 
-// template <typename F>
-// vector<F> Network<F>::fd_gradient(F const *cpu_data, int label, F e) {
-// 	vector<F> full_grad;
+template <typename F>
+vector<F> Network<F>::fd_gradient(F e) {
+	vector<F> full_grad;
 
-// 	for (size_t i(0); i < parameters.size(); ++i) {
-// 		cout << "params: " << i << "/" << parameters.size() << endl;
-// 		vector<F> vec = parameters[i]->to_vector();
+	vector<int> outputs({int(operations.size()) - 1});
 
-// 		vector<F> delta_vec(vec);
-// 		for (size_t n(0); n < vec.size(); ++n) {
-// 			delta_vec[n] = vec[n] + e;
-// 			parameters[i]->from_vector(delta_vec);
+	for (size_t i(0); i < parameters.size(); ++i) {
+		vector<F> vec = parameters[i]->to_vector();
 
-// 			forward(cpu_data);
-// 			calculate_loss(label);
-// 			F plus_loss = loss();
+		vector<F> delta_vec(vec);
+		for (size_t n(0); n < vec.size(); ++n) {
+			delta_vec[n] = vec[n] + e;
+			parameters[i]->from_vector(delta_vec);
 
-// 			delta_vec[n] = vec[n] - e;
-// 			parameters[i]->from_vector(delta_vec);
+			new_forward(inputs, outputs);
+			F plus_loss = tensors.back().x->to_vector()[0];
 
-// 			//throw "";
-// 			forward(cpu_data);
-// 			calculate_loss(label);
-// 			F min_loss = loss();
-// 			//cout << "+" << plus_loss << " " << min_loss << endl;
+			delta_vec[n] = vec[n] - e;
+			parameters[i]->from_vector(delta_vec);
+			//throw "";
+			new_forward(inputs, outputs);
 
-// 			full_grad.push_back((plus_loss - min_loss) / (2 * e));
-// 			delta_vec[n] = vec[n];
-// 		}
-// 		parameters[i]->from_vector(vec);
-// 	}
-// 	return full_grad;
-// }
+			F min_loss = tensors.back().x->to_vector()[0];
+
+			full_grad.push_back((plus_loss - min_loss) / (2 * e));
+			delta_vec[n] = vec[n];
+		}
+		parameters[i]->from_vector(vec);
+	}
+	return full_grad;
+}
 
 template <typename F>
 vector<F> Network<F>::gradient() {
@@ -540,7 +538,6 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 	//Run Forward
 	cout << "Actual Run" << endl;
 	for (auto s : sequence) {
-		cout << "running layer: " << names[s] << endl;
 		vector<Tensor<F>*> tmp_inputs, tmp_outputs;
 		for (auto idx : input_indices[s])
 			tmp_inputs.push_back(tensors[idx].x.get());
