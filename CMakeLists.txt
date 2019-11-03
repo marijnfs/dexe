@@ -9,6 +9,7 @@ if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
 	message(FATAL_ERROR "In-source builds are not permitted. Make a separate folder for building:\nmkdir build; cd build; cmake ..\nBefore that, remove the files already created:\nrm -rf CMakeCache.txt CMakeFiles")
 endif()
 
+find_package(cereal REQUIRED)
 find_package(CUDA QUIET REQUIRED)
 find_library(CUDNN cudnn HINTS /usr/local/cuda/lib64 /usr/local/cuda/lib)
 
@@ -39,6 +40,7 @@ file(GLOB CPP_HEADERS inc/*.h)
 
 
 cuda_add_library(DEXE ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
+add_dependencies(DEXE cereal)
 target_compile_options(DEXE PUBLIC "-fPIC")
 target_link_libraries( DEXE
 	 ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES}

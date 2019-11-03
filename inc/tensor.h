@@ -7,6 +7,8 @@
 #include "util.h"
 #include "normalise.h"
 
+#include <cereal/cereal.hpp>
+
 const bool ZERO_ON_INIT(true);
 
 struct TensorShape {
@@ -27,6 +29,13 @@ struct TensorShape {
   int n_dimensions();
 
   void set_c(int c);
+
+    template<class Archive>
+	void serialize(Archive & archive)
+  	{
+    	archive( dimensions ); // serialize things by passing them to the archive
+ 	}
+
 
   int n();
   int c();
@@ -77,6 +86,25 @@ struct Tensor {
    	void add(Tensor<F> &other, F alpha);
    	void scale(F alpha);
 
+   	template<class Archive>
+	void save(Archive & archive)
+  	{
+  		auto cpu_data = to_vector();
+    	archive( shape, format, cpu_data ); // serialize things by passing them to the archive
+ 	}
+
+   	template<class Archive>
+	void load(Archive & archive)
+  	{
+  		std::vector<F> data;
+    	archive( shape, data, format ); // serialize things by passing them to the archive
+		allocate();
+		set_descriptor();
+
+    	//init
+    	from_vector(data);
+ 	}
+
     TensorShape shape;
 	bool owning = false;
 	cudnnTensorDescriptor_t td = nullptr;
@@ -102,19 +130,23 @@ struct TensorSet {
 	void alloc_grad(TensorShape shape);
 	TensorShape shape();
 
+
 	std::unique_ptr<Tensor<F>> x, grad;
 };
 
 template <typename F>
 struct FilterBank {
+	FilterBank();
 	FilterBank(std::vector<int> dimensions);
 	~FilterBank();
 
 	std::vector<int> dimensions;
 
-	cudnnFilterDescriptor_t fd;
+	cudnnFilterDescriptor_t fd = 0;
 
 	F *weights = nullptr;
+
+	void init();
 
 	int n_weights() { return calculate_product(dimensions); }	
 	void init_normal(F mean, F std);
@@ -130,6 +162,22 @@ struct FilterBank {
 	void from_vector(std::vector<F> &in);
 	void fill(F val);
 	void zero();
+
+	template<class Archive>
+	void save(Archive & archive)
+  	{
+  		auto cpu_data = to_vector();
+    	archive( dimensions, cpu_data ); // serialize things by passing them to the archive
+ 	}
+
+   	template<class Archive>
+	void load(Archive & archive)
+  	{
+  		std::vector<F> cpu_data;
+  		archive(dimensions, cpu_data);
+  		init();
+  		from_vector(cpu_data);
+ 	}
 
 	F *ptr() { return weights; }
 };

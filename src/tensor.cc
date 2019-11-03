@@ -323,26 +323,20 @@ void TensorSet<F>::alloc_grad(TensorShape shape) {
 }
 
 template <>
+FilterBank<float>::FilterBank() {
+
+}
+
+template <>
 FilterBank<float>::FilterBank(std::vector<int> dimensions_) 
 	: dimensions(dimensions_) {
-	cout << "setting filter descriptor " << dimensions << " nweights: " << n_weights() << endl;
-	handle_error( cudnnCreateFilterDescriptor(&fd));
-	handle_error( cudnnSetFilterNdDescriptor(fd, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW, dimensions.size(), dimensions.data()) );
-
-	handle_error( cudaMalloc( (void**)&weights, sizeof(float) * n_weights()) );
-	if (ZERO_ON_INIT)
-	  zero();
+	init();
 }
 
 template <>
 FilterBank<double>::FilterBank(std::vector<int> dimensions_) 
 	: dimensions(dimensions_) {
-	handle_error( cudnnCreateFilterDescriptor(&fd));
-	handle_error( cudnnSetFilterNdDescriptor(fd, CUDNN_DATA_DOUBLE, CUDNN_TENSOR_NCHW, dimensions.size(), dimensions.data()) );
-
-	handle_error( cudaMalloc( (void**)&weights, sizeof(double) * n_weights()) );
-	if (ZERO_ON_INIT)
-	  zero();
+	init();
 }
 
 
@@ -350,6 +344,22 @@ template <typename F>
 FilterBank<F>::~FilterBank() {
 	cudnnDestroyFilterDescriptor(fd);
 	cudaFree(weights);
+}
+
+template <typename F>
+void FilterBank<F>::init() {
+	if (fd)
+		handle_error( cudnnDestroyFilterDescriptor(fd));
+
+	handle_error( cudnnCreateFilterDescriptor(&fd));
+	handle_error( cudnnSetFilterNdDescriptor(fd, (sizeof(F) == sizeof(float)) ? CUDNN_DATA_FLOAT : CUDNN_DATA_DOUBLE, CUDNN_TENSOR_NCHW, dimensions.size(), dimensions.data()) );
+
+	if (weights)
+		handle_error( cudaFree(weights) );
+
+	handle_error( cudaMalloc( (void**)&weights, sizeof(float) * n_weights()) );
+	if (ZERO_ON_INIT)
+	  zero();		
 }
 
 template <>
