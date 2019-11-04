@@ -157,9 +157,12 @@ void ConvolutionOperation<F>::prepare_forward(Tensor<F> &in, Tensor<F> &out) { /
 	// algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
 	// algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
 	size_t new_workspace_size = workspace_size;
+    cout << in.shape << " " << out.shape << " " << filter_bank << endl;
 	handle_error( cudnnGetConvolutionForwardAlgorithm(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, new_workspace_size, &algo) );
 	handle_error( cudnnGetConvolutionForwardWorkspaceSize(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, algo, &new_workspace_size) );
 
+    workspace = Handler::workspace();
+    /*
 	if (workspace_size != new_workspace_size) {
 		workspace_size = new_workspace_size;
 		cout << "Allocating workspace of size: " << workspace_size << endl;
@@ -168,7 +171,7 @@ void ConvolutionOperation<F>::prepare_forward(Tensor<F> &in, Tensor<F> &out) { /
 			workspace = nullptr;
 		}
 		handle_error( cudaMalloc( (void**)&workspace, workspace_size) );
-	}	
+	}*/	
 }
 
 template <typename F>
@@ -176,6 +179,9 @@ void ConvolutionOperation<F>::prepare_backward_weights(Tensor<F> &in, Tensor<F> 
 	size_t new_workspace_size = workspace_size_bwd_filter;
     handle_error( cudnnGetConvolutionBackwardFilterAlgorithm( Handler::cudnn(),in.td, out.td, conv, filter_bank.fd, CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT, new_workspace_size, &algo_bwd_filter) );
     handle_error( cudnnGetConvolutionBackwardFilterWorkspaceSize(Handler::cudnn(), in.td, out.td, conv, filter_bank_grad.fd, algo_bwd_filter, &new_workspace_size) );
+
+    workspace_bwd_filter = Handler::workspace();
+    /*
     if (workspace_size_bwd_filter != new_workspace_size) {
     	workspace_size_bwd_filter = new_workspace_size;
 		if (workspace_bwd_filter) {
@@ -183,7 +189,7 @@ void ConvolutionOperation<F>::prepare_backward_weights(Tensor<F> &in, Tensor<F> 
 			workspace_bwd_filter = nullptr;
 		}
 		handle_error( cudaMalloc( (void**)&workspace_bwd_filter, workspace_size_bwd_filter) );
-    }
+    }*/
 }
 
 template <typename F>
@@ -193,6 +199,8 @@ void ConvolutionOperation<F>::prepare_backward(Tensor<F> &in, Tensor<F> &out) { 
 	handle_error( cudnnGetConvolutionBackwardDataAlgorithm(Handler::cudnn(), filter_bank.fd, out.td, conv, in.td, CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT, new_workspace_size, &algo_bwd) );
 	handle_error( cudnnGetConvolutionBackwardDataWorkspaceSize(Handler::cudnn(), filter_bank.fd, out.td, conv, in.td, algo_bwd, &new_workspace_size) );
 
+    workspace_bwd = Handler::workspace();
+    /*
     if (workspace_size_bwd != new_workspace_size) {
     	workspace_size_bwd = new_workspace_size;
 		if (workspace_bwd) {
@@ -200,7 +208,7 @@ void ConvolutionOperation<F>::prepare_backward(Tensor<F> &in, Tensor<F> &out) { 
 			workspace_bwd = nullptr;
 		}
 		handle_error( cudaMalloc( (void**)&workspace_bwd, workspace_size_bwd) );
-    }
+    }*/
 }
 
 template <typename F>

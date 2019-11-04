@@ -351,8 +351,15 @@ void FilterBank<F>::init() {
 	if (fd)
 		handle_error( cudnnDestroyFilterDescriptor(fd));
 
+    auto dimensions_copy = dimensions;
+    // if (DEFAULT_TENSOR_FORMAT == CUDNN_TENSOR_NHWC) { //channel last filters have the input channels last, so we adjust
+    //     auto in_c = dimensions_copy[1];
+    //     dimensions_copy[1] = dimensions_copy.back();
+    //     dimensions_copy.back() = in_c;
+    // }
+    
 	handle_error( cudnnCreateFilterDescriptor(&fd));
-	handle_error( cudnnSetFilterNdDescriptor(fd, (sizeof(F) == sizeof(float)) ? CUDNN_DATA_FLOAT : CUDNN_DATA_DOUBLE, CUDNN_TENSOR_NCHW, dimensions.size(), dimensions.data()) );
+	handle_error( cudnnSetFilterNdDescriptor(fd, (sizeof(F) == sizeof(float)) ? CUDNN_DATA_FLOAT : CUDNN_DATA_DOUBLE, DEFAULT_TENSOR_FORMAT, dimensions_copy.size(), dimensions_copy.data()) );
 
 	if (weights)
 		handle_error( cudaFree(weights) );

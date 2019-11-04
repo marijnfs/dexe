@@ -22,6 +22,8 @@ void Handler::init_handler() {
   handle_error( curandSetPseudoRandomGeneratorSeed(h_curand, 13131ULL));
   //handle_error( curandSetQuasiRandomGeneratorDimensions(h_curand, 1) );
   handle_error( cublasCreate(&h_cublas));
+
+  handle_error( cudaMalloc( (void**)&_workspace, WORKSPACE_SIZE) );
 }
 
 void Handler::deinit() {
@@ -40,6 +42,11 @@ void Handler::deinit() {
         cublasDestroy(s_handler->h_cublas);
         s_handler->h_cublas = 0;
     }
+    if (s_handler->_workspace) {
+        handle_error( cudaFree(s_handler->_workspace) );
+        s_handler->_workspace = 0;
+    }
+
     delete s_handler;
     s_handler = 0;        
 }
@@ -78,4 +85,10 @@ cublasHandle_t &Handler::cublas() {
   if (!s_handler)
     s_handler->s_init();
   return s_handler->h_cublas;
+}
+
+char *Handler::workspace() {
+ if (!s_handler)
+    s_handler->s_init();
+  return s_handler->_workspace;
 }

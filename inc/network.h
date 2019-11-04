@@ -32,7 +32,7 @@ struct Node {
 
 template <typename F>
 struct Network {
-	Network(){}
+	Network();
 	~Network();
 
  	int add_operation(Operation<F> *op, std::vector<int> inputs, TensorShape shape, std::string name);

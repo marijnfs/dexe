@@ -39,6 +39,9 @@ void Node<F>::operator()(std::initializer_list<std::reference_wrapper<Tensor<F>>
 	network->new_forward(network->inputs, {index});
 }
 
+template <typename F>
+Network<F>::Network() {
+}
 
 template <typename F>
 void Network<F>::finish() {

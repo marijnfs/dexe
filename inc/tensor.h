@@ -10,6 +10,8 @@
 #include <cereal/cereal.hpp>
 
 const bool ZERO_ON_INIT(true);
+const cudnnTensorFormat_t DEFAULT_TENSOR_FORMAT = CUDNN_TENSOR_NCHW;
+// const cudnnTensorFormat_t DEFAULT_TENSOR_FORMAT = CUDNN_TENSOR_NHWC;
 
 struct TensorShape {
   std::vector<int> dimensions;
@@ -47,8 +49,8 @@ struct TensorShape {
 template <typename F>
 struct Tensor {
 	Tensor();
-	Tensor(TensorShape shape, cudnnTensorFormat_t format = CUDNN_TENSOR_NCHW);
-	Tensor(TensorShape shape, F *data, cudnnTensorFormat_t format = CUDNN_TENSOR_NCHW);
+	Tensor(TensorShape shape, cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT);
+	Tensor(TensorShape shape, F *data, cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT);
 
 
 	~Tensor();
@@ -109,7 +111,8 @@ struct Tensor {
 	bool owning = false;
 	cudnnTensorDescriptor_t td = nullptr;
 	F *data = nullptr;
-	cudnnTensorFormat_t format = CUDNN_TENSOR_NCHW;
+
+	cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT;
 };
 
 template <typename F>
