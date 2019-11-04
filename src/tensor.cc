@@ -357,22 +357,14 @@ void FilterBank<F>::init() {
 	if (weights)
 		handle_error( cudaFree(weights) );
 
-	handle_error( cudaMalloc( (void**)&weights, sizeof(float) * n_weights()) );
+	handle_error( cudaMalloc( (void**)&weights, sizeof(F) * n_weights()) );
 	if (ZERO_ON_INIT)
 	  zero();		
 }
 
-template <>
-void FilterBank<float>::init_normal(float mean, float std) {
+template <typename F>
+void FilterBank<F>::init_normal(F mean, F std) {
 	::init_normal(weights, n_weights(), mean, std);
-}
-
-template <>
-void FilterBank<double>::init_normal(double mean, double std) {
-	::init_normal(weights, n_weights(), mean, std);
-	// size_t even_size(((n_weights() + 1) / 2) * 2);
-	// size_t even_size(n_weights());
-	// handle_error( curandGenerateNormalDouble ( Handler::curand(), weights, even_size, mean, std) );
 }
 
 template <typename F>
