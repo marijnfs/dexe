@@ -13,6 +13,59 @@
 
 using namespace std;
 
+void unet_test() {
+
+	m_network = std::make_unique<Network<float>>();
+
+	auto in1 = m_network->input_3D(in_channels);
+	int next_c = 2;
+	int k = 3;
+
+	//auto node = m_network->local_normalisation_3D(9)(in1);
+//
+	auto node = m_network->convolution_3D(next_c, k)(in1);
+	node = m_network->relu()(node);
+	node = m_network->convolution_3D(next_c, k)(node);
+	node = m_network->relu()(node);
+
+	auto node_l1 = m_network->convolution_downscale_3D(next_c * 2, 2)(node);
+	node_l1 = m_network->relu()(node_l1);
+	node_l1 = m_network->convolution_3D(next_c * 2, k)(node_l1);
+	//node_l1 = m_network->local_normalisation_3D(5)(node_l1);
+	node_l1 = m_network->relu()(node_l1);
+
+	auto node_l2 = m_network->convolution_downscale_3D(next_c * 4, 2)(node_l1);
+	node_l2 = m_network->relu()(node_l2);
+	node_l2 = m_network->convolution_3D(next_c * 4, k)(node_l2);
+	//node_l2 = m_network->local_normalisation_3D(5)(node_l2);
+	node_l2 = m_network->relu()(node_l2);
+
+	auto node_l3 = m_network->convolution_downscale_3D(next_c * 8, 2)(node_l2);
+	node_l3 = m_network->relu()(node_l3);
+	node_l3 = m_network->convolution_3D(next_c * 8, k)(node_l3);
+	//node_l3 = m_network->local_normalisation_3D(5)(node_l3);
+	node_l3 = m_network->relu()(node_l3);
+
+	node_l3 = m_network->convolution_upscale_3D(next_c * 4, 2)(node_l3);
+	node_l2 = m_network->addition()(node_l2, node_l3);
+	node_l2 = m_network->convolution_3D(next_c * 4, k)(node_l2);
+
+	node_l2 = m_network->convolution_upscale_3D(next_c * 2, 2)(node_l2);
+	node_l1 = m_network->addition()(node_l1, node_l2);
+	node_l1 = m_network->convolution_3D(next_c * 2, k)(node_l1);
+
+	node_l1 = m_network->convolution_upscale_3D(next_c, 2)(node_l1);
+	node = m_network->addition()(node_l1, node);
+	node = m_network->convolution_3D(next_c, k)(node);
+
+	node = m_network->relu()(node);
+	node = m_network->convolution_3D(out_channels, k)(node);
+	node = m_network->sigmoid()(node);
+
+	auto targetNode = m_network->input_3D(out_channels);
+}
+
+
 void test3() {
 
 	cout << "start" << endl;
