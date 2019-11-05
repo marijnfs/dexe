@@ -15,7 +15,8 @@ struct Handler {
   static cudnnHandle_t &cudnn();
   static curandGenerator_t &curand();
   static cublasHandle_t &cublas();
-    static char *workspace();
+  static char *workspace();
+  static size_t workspace_size() { return WORKSPACE_SIZE; }
   static void set_device(int n);
 
   static void s_init();
@@ -25,7 +26,7 @@ struct Handler {
   curandGenerator_t h_curand;
   cublasHandle_t h_cublas;
      
-  char *_workspace = nullptr;
+  char *s_workspace;
     
     
   static Handler *s_handler;

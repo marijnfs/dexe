@@ -6,7 +6,7 @@ using namespace std;
 Handler *Handler::s_handler = 0;
 
 Handler::Handler():
-  h_cudnn(0), h_cublas(0), h_curand(0)
+  h_cudnn(0), h_cublas(0), h_curand(0), s_workspace(0)
 {}
 
 Handler::~Handler() {
@@ -23,7 +23,7 @@ void Handler::init_handler() {
   //handle_error( curandSetQuasiRandomGeneratorDimensions(h_curand, 1) );
   handle_error( cublasCreate(&h_cublas));
 
-  handle_error( cudaMalloc( (void**)&_workspace, WORKSPACE_SIZE) );
+  handle_error( cudaMalloc( (void**)&s_workspace, WORKSPACE_SIZE) );
 }
 
 void Handler::deinit() {
@@ -42,9 +42,9 @@ void Handler::deinit() {
         cublasDestroy(s_handler->h_cublas);
         s_handler->h_cublas = 0;
     }
-    if (s_handler->_workspace) {
-        handle_error( cudaFree(s_handler->_workspace) );
-        s_handler->_workspace = 0;
+    if (s_handler->s_workspace) {
+        handle_error( cudaFree(s_handler->s_workspace) );
+        s_handler->s_workspace = 0;
     }
 
     delete s_handler;
@@ -90,5 +90,5 @@ cublasHandle_t &Handler::cublas() {
 char *Handler::workspace() {
  if (!s_handler)
     s_handler->s_init();
-  return s_handler->_workspace;
+  return s_handler->s_workspace;
 }
