@@ -14,7 +14,7 @@
 using namespace std;
 
 void unet_test() {
-
+/*
 	m_network = std::make_unique<Network<float>>();
 
 	auto in1 = m_network->input_3D(in_channels);
@@ -63,6 +63,7 @@ void unet_test() {
 	node = m_network->sigmoid()(node);
 
 	auto targetNode = m_network->input_3D(out_channels);
+*/
 }
 
 

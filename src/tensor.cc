@@ -222,13 +222,17 @@ void Tensor<F>::init_uniform(F var) {
   */
 }
 
-template <typename T>
-void Tensor<T>::add(Tensor<T> &other, T alpha) {
-	add_cuda(other.data, data, shape.n_elements(), alpha);
+template <typename F>
+void Tensor<F>::add(Tensor<F> &in, F beta) {
+	if (size() != in.size()) {
+		throw StringException("sizes don't match");
+	}
+	F alpha(1);
+	handle_error( cudnnTransformTensor(Handler::cudnn(), &alpha, in.td, in.data, &beta, td, data) );
 }
 
-template <typename T>
-void Tensor<T>::scale(T alpha) {
+template <typename F>
+void Tensor<F>::scale(F alpha) {
 	scale_cuda(data, shape.n_elements(), alpha);
 }
 

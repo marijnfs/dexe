@@ -1,7 +1,6 @@
 #include "operations.h"
 #include "handler.h"
 #include "kernels.h"
-#include <cublas_v2.h>
 #include <cassert>
 
 using namespace std;
