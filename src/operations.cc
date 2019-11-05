@@ -448,7 +448,7 @@ void SquaredLossOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<T
 template <typename F>
 bool SquaredLossOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
 	if (in[0]->shape != in[1]->shape) {
-		cerr << "input shapes don't match" << endl;
+		cerr << "input shapes don't match, " << in[0]->shape << " != " << in[1]->shape << endl;
 		return false;
 	}
 

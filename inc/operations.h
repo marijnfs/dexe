@@ -14,6 +14,17 @@
 // int const CONV_MAX_MEM = 0;
 int const CONV_MAX_MEM = 1024 * 1024 * 1024;
 
+enum OperationCode {
+	NONE,
+	INPUT,
+	CONVOLUTION,
+	CONVOLUTION_TRANSPOSE,
+	TANH,
+	SIGMOID,
+	ADDITION,
+	LOCAL_NORMALISATION,
+	SQUARED_LOSS
+};
 
 template <typename F>
 struct Operation {
@@ -254,7 +265,7 @@ struct PoolingOperation : public Operation<F> {
 };
 
 template <typename F>
-struct TanhOperation : public Operation<F> {
+struct TanhOperation : public DefaultOperation<F> {
   TanhOperation(F scale = 1.0);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
@@ -271,7 +282,7 @@ struct TanhOperation : public Operation<F> {
 };
 
 template <typename F>
-struct SigmoidOperation : public Operation<F> {
+struct SigmoidOperation : public DefaultOperation<F> {
   SigmoidOperation(F scale = 1.0);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
@@ -304,7 +315,7 @@ struct AdditionOperation : public Operation<F> {
 };
 
 template <typename F>
-struct STanhOperation : public Operation<F> {
+struct STanhOperation : public DefaultOperation<F> {
 	STanhOperation(TensorShape s);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
@@ -329,7 +340,7 @@ struct ReluOperation : public DefaultOperation<F> {
 
 
 template <typename F>
-struct SoftmaxOperation : public Operation<F> {
+struct SoftmaxOperation : public DefaultOperation<F> {
 	SoftmaxOperation(bool matched = false);
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);

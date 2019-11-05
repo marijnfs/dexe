@@ -44,6 +44,7 @@ struct Network {
 	std::function<Node<F>(Node<F>)> convolution_upscale(int out_c, int k, std::string name = "upscale");
 	std::function<Node<F>(Node<F>)> convolution_upscale_3D(int out_c, int k, std::string name = "upscale");
 	std::function<Node<F>(Node<F>)> relu(std::string name = "relu");
+	std::function<Node<F>(Node<F>)> sigmoid(std::string name = "sigmoid");
 	std::function<Node<F>(Node<F>)> local_normalisation(int k, std::string name = "lnc");
 	std::function<Node<F>(Node<F>)> local_normalisation_3D(int k, std::string name = "lnc");
 	std::function<Node<F>(Node<F>, Node<F>)> squared_loss(std::string name = "squared_loss");
