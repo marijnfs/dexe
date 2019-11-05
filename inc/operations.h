@@ -14,17 +14,6 @@
 // int const CONV_MAX_MEM = 0;
 int const CONV_MAX_MEM = 1024 * 1024 * 1024;
 
-enum OperationCode {
-	NONE,
-	INPUT,
-	CONVOLUTION,
-	CONVOLUTION_TRANSPOSE,
-	TANH,
-	SIGMOID,
-	ADDITION,
-	LOCAL_NORMALISATION,
-	SQUARED_LOSS
-};
 
 template <typename F>
 struct Operation {
@@ -46,9 +35,10 @@ struct Operation {
 	virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { throw std::runtime_error("Not Implemented"); }
     virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { throw std::runtime_error("Not Implemented"); }
 	
-        // Write a readable string to the ostream
+    // Write a readable string to the ostream
 	virtual void describe(std::ostream &out){}
 
+	virtual OperationCode opcode() { throw std::runtime_error("Not Implemented"); }
 
 	// virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){ forward(in, out, beta); }
 	// virtual void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0){}
@@ -93,7 +83,7 @@ struct InputOperation : public Operation<F> {
     void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
 	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
     bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-
+	OperationCode opcode() { return INPUT; }
     int n_channels = 0;
 };
 
@@ -113,6 +103,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
     virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
 	virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+	virtual OperationCode opcode() { return CONVOLUTION; }
 
     // regular
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
@@ -182,7 +173,8 @@ struct SquaredLossOperation : public Operation<F> {
   virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
   virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
   virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-  
+  virtual OperationCode opcode() { return SQUARED_LOSS; }
+
   void describe(std::ostream &out) { out << "squared_loss"; }
 
   Tensor<F> tmp; // temporary tensor for computation
@@ -246,7 +238,8 @@ struct LocalNormalisationOperation : public DefaultOperation<F> {
   void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
   
   void describe(std::ostream &out) { out << "local_normalisation"; }
-	
+  virtual OperationCode opcode() { return LOCAL_NORMALISATION; }
+
 	cudnnLRNDescriptor_t lrn_desc = 0;
 };
 
@@ -270,6 +263,7 @@ struct TanhOperation : public DefaultOperation<F> {
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
 	void describe(std::ostream &out) { out << "tanh"; }
+	virtual OperationCode opcode() { return TANH; }
 
 	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
 	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
@@ -287,6 +281,7 @@ struct SigmoidOperation : public DefaultOperation<F> {
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
 	void describe(std::ostream &out) { out << "sigmoid"; }
+	virtual OperationCode opcode() { return SIGMOID; }
 
 	TensorShape output_shape(TensorShape input);
 	cudnnActivationDescriptor_t desc;
@@ -301,6 +296,7 @@ struct AdditionOperation : public Operation<F> {
 	void forward(Tensor<F> &in1, Tensor<F> &in2, Tensor<F> &out);
 	void backward(Tensor<F> &in_grad, Tensor<F> &out_grad1, Tensor<F> &in_grad2);
 	void describe(std::ostream &out) { out << "addition"; }
+	virtual OperationCode opcode() { return ADDITION; }
 
 	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
 	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
@@ -332,6 +328,7 @@ struct ReluOperation : public DefaultOperation<F> {
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
 	void describe(std::ostream &out) { out << "relu"; }
+	virtual OperationCode opcode() { return RELU; }
 
 	TensorShape output_shape(TensorShape input);
 	cudnnActivationDescriptor_t desc;
@@ -345,6 +342,7 @@ struct SoftmaxOperation : public DefaultOperation<F> {
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
 	void describe(std::ostream &out) { out << "softmax"; }
+	virtual OperationCode opcode() { return SOFTMAX; }
 
 	TensorShape output_shape(TensorShape input);
 	bool matched;

@@ -223,11 +223,11 @@ void Tensor<F>::init_uniform(F var) {
 }
 
 template <typename F>
-void Tensor<F>::add(Tensor<F> &in, F beta) {
+void Tensor<F>::add(Tensor<F> &in, F alpha) {
 	if (size() != in.size()) {
 		throw StringException("sizes don't match");
 	}
-	F alpha(1);
+	F beta(1);
 	handle_error( cudnnTransformTensor(Handler::cudnn(), &alpha, in.td, in.data, &beta, td, data) );
 }
 

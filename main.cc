@@ -14,56 +14,74 @@
 using namespace std;
 
 void unet_test() {
-/*
-	m_network = std::make_unique<Network<float>>();
+    int in_channels(2);
+    int out_channels(2);
 
-	auto in1 = m_network->input_3D(in_channels);
 	int next_c = 2;
 	int k = 3;
 
-	//auto node = m_network->local_normalisation_3D(9)(in1);
-//
-	auto node = m_network->convolution_3D(next_c, k)(in1);
-	node = m_network->relu()(node);
-	node = m_network->convolution_3D(next_c, k)(node);
-	node = m_network->relu()(node);
+	auto network = std::make_unique<Network<float>>();
+	auto in = network->input_3D(in_channels);
 
-	auto node_l1 = m_network->convolution_downscale_3D(next_c * 2, 2)(node);
-	node_l1 = m_network->relu()(node_l1);
-	node_l1 = m_network->convolution_3D(next_c * 2, k)(node_l1);
-	//node_l1 = m_network->local_normalisation_3D(5)(node_l1);
-	node_l1 = m_network->relu()(node_l1);
+	//in = network->local_normalisation_3D(9)(in);
+    
+	auto node = network->convolution_3D(next_c, k)(in);
+	node = network->relu()(node);
+	node = network->convolution_3D(next_c, k)(node);
+	node = network->relu()(node);
 
-	auto node_l2 = m_network->convolution_downscale_3D(next_c * 4, 2)(node_l1);
-	node_l2 = m_network->relu()(node_l2);
-	node_l2 = m_network->convolution_3D(next_c * 4, k)(node_l2);
-	//node_l2 = m_network->local_normalisation_3D(5)(node_l2);
-	node_l2 = m_network->relu()(node_l2);
+	auto node_l1 = network->convolution_downscale_3D(next_c * 2, 2)(node);
+	node_l1 = network->relu()(node_l1);
+	node_l1 = network->convolution_3D(next_c * 2, k)(node_l1);
+	//node_l1 = network->local_normalisation_3D(5)(node_l1);
+	node_l1 = network->relu()(node_l1);
 
-	auto node_l3 = m_network->convolution_downscale_3D(next_c * 8, 2)(node_l2);
-	node_l3 = m_network->relu()(node_l3);
-	node_l3 = m_network->convolution_3D(next_c * 8, k)(node_l3);
-	//node_l3 = m_network->local_normalisation_3D(5)(node_l3);
-	node_l3 = m_network->relu()(node_l3);
+	auto node_l2 = network->convolution_downscale_3D(next_c * 4, 2)(node_l1);
+	node_l2 = network->relu()(node_l2);
+	node_l2 = network->convolution_3D(next_c * 4, k)(node_l2);
+	//node_l2 = network->local_normalisation_3D(5)(node_l2);
+	node_l2 = network->relu()(node_l2);
 
-	node_l3 = m_network->convolution_upscale_3D(next_c * 4, 2)(node_l3);
-	node_l2 = m_network->addition()(node_l2, node_l3);
-	node_l2 = m_network->convolution_3D(next_c * 4, k)(node_l2);
+	auto node_l3 = network->convolution_downscale_3D(next_c * 8, 2)(node_l2);
+	node_l3 = network->relu()(node_l3);
+	node_l3 = network->convolution_3D(next_c * 8, k)(node_l3);
+	//node_l3 = network->local_normalisation_3D(5)(node_l3);
+	node_l3 = network->relu()(node_l3);
 
-	node_l2 = m_network->convolution_upscale_3D(next_c * 2, 2)(node_l2);
-	node_l1 = m_network->addition()(node_l1, node_l2);
-	node_l1 = m_network->convolution_3D(next_c * 2, k)(node_l1);
+	node_l3 = network->convolution_upscale_3D(next_c * 4, 2)(node_l3);
+	node_l2 = network->addition()(node_l2, node_l3);
+	node_l2 = network->convolution_3D(next_c * 4, k)(node_l2);
 
-	node_l1 = m_network->convolution_upscale_3D(next_c, 2)(node_l1);
-	node = m_network->addition()(node_l1, node);
-	node = m_network->convolution_3D(next_c, k)(node);
+	node_l2 = network->convolution_upscale_3D(next_c * 2, 2)(node_l2);
+	node_l1 = network->addition()(node_l1, node_l2);
+	node_l1 = network->convolution_3D(next_c * 2, k)(node_l1);
 
-	node = m_network->relu()(node);
-	node = m_network->convolution_3D(out_channels, k)(node);
-	node = m_network->sigmoid()(node);
+	node_l1 = network->convolution_upscale_3D(next_c, 2)(node_l1);
+	node = network->addition()(node_l1, node);
+	node = network->convolution_3D(next_c, k)(node);
 
-	auto targetNode = m_network->input_3D(out_channels);
-*/
+	node = network->relu()(node);
+	node = network->convolution_3D(out_channels, k)(node);
+	auto prediction = network->sigmoid()(node);
+
+	auto targetNode = network->input_3D(out_channels);
+    auto loss = network->squared_loss()(prediction, targetNode);
+    
+    //init shapes
+    Tensor<float> sample(TensorShape{1, in_channels, 64, 64, 64});
+    Tensor<float> y(TensorShape{1, out_channels, 64, 64, 64});
+	
+    network->init_normal(0.0, 0.1);
+    sample.init_normal(0.0, 0.1);
+    y.init_normal(0.0, 0.1);
+
+    while (true) {
+		loss({sample, y});
+        network->zero_grad();
+        loss.backward();
+        network->update(0.01);
+        
+    }
 }
 
 
@@ -159,6 +177,7 @@ void test3() {
 }
 
 int main() {
-	test3();
+    unet_test();
+	//test3();
 }
 

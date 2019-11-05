@@ -22,6 +22,20 @@
 #include "handler.h"    
 #include "normalise.h"
 
+enum OperationCode {
+  NONE,
+  INPUT,
+  CONVOLUTION,
+  CONVOLUTION_TRANSPOSE,
+  TANH,
+  SIGMOID,
+  RELU,
+  ADDITION,
+  SOFTMAX,
+  LOCAL_NORMALISATION,
+  SQUARED_LOSS
+};
+
 struct StringException : public std::exception {
 	StringException(std::string msg_): msg(msg_){}
 

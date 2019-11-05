@@ -1,6 +1,8 @@
 #include "network.h"
 #include "util.h"
 
+#include <cereal/archives/portable_binary.hpp>
+
 #include <algorithm>
 #include <iterator>
 #include <fstream>
@@ -115,7 +117,7 @@ void Network<F>::init_uniform(F var) {
 		parameters[i]->init_uniform(var);
 }
 
-template <typename F>
+/*template <typename F>
 void Network<F>::save(std::string path) {
 	ofstream of(path, ios::binary);
 	vector<F> data = to_vector();
@@ -127,7 +129,7 @@ void Network<F>::load(std::string path) {
 	ifstream in(path, ios::binary);
 	vector<F> data = byte_read_vec<F>(in);
 	from_vector(data);
-}
+}*/
 
 template <typename F>
 vector<F> Network<F>::to_vector() {
