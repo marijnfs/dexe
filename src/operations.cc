@@ -71,7 +71,8 @@ ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions_, vector<in
 template <typename F>
 void ConvolutionOperation<F>::init() {
 	filter_bank.reshape(dimensions);
-	
+	filter_bank_grad.reshape(dimensions);
+
 	if (has_bias) {
 		vector<int> bias_dims(dimensions.size(), 1); //number of filter dimensions is one more than output dim
 		bias_dims[1] = filter_bank.out_c(); //dimensions[1] corresponds to output channels

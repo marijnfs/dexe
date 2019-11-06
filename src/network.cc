@@ -188,9 +188,11 @@ template <typename F>
 
 
 void Network<F>::load(std::string path) {
-	reset();
 	ifstream in(path, ios::binary);
 	cereal::PortableBinaryInputArchive ar(in);
+
+	//reset current state
+	reset();
 
 	ar(sequence);
     ar(names);
@@ -233,8 +235,8 @@ void Network<F>::load(std::string path) {
 
 		operations.emplace_back(op);
 
-		auto param = dynamic_cast<Parametrised<F>*>(op);
-		parameters.emplace_back(param);
+		if (auto param = dynamic_cast<Parametrised<F>*>(op))
+			parameters.emplace_back(param);
 	}
 }
 

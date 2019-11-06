@@ -86,7 +86,6 @@ void unet_test() {
 	loss({sample, y});
 	cout << loss.tensor_set().x->to_vector() << endl;
 
-	return;
     while (true) {
 		loss({sample, y});
         network->zero_grad();
