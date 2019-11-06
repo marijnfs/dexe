@@ -30,16 +30,16 @@ TensorSet<F> &Node<F>::tensor_set() {
 template <typename F>
 void Node<F>::operator()(std::initializer_list<std::reference_wrapper<Tensor<F>>> input_tensors) {
 	if (input_tensors.size() != network->inputs.size()) {
-		cerr << "Number of inputs doesn't correspond";
-	throw "";
-		return;
+		cerr << "Warning: Number of inputs doesn't correspond";
 	}
 
-	auto input_tensor_it = input_tensors.begin();
-	for (auto idx : network->inputs) {
-		network->tensors[idx].x->reshape(input_tensor_it->get().shape);
-		network->tensors[idx].x->from_tensor(*input_tensor_it);
-		++input_tensor_it;
+	auto input_it = network->inputs.begin();
+
+	for (auto &input_tensor : input_tensors) {
+		auto idx = *input_it;
+		network->tensors[idx].x->reshape(input_tensor.get().shape);
+		network->tensors[idx].x->from_tensor(input_tensor);
+		++input_it;
 	}
 
 	network->new_forward(network->inputs, {index});
@@ -385,8 +385,11 @@ string Network<F>::get_unique_name(string name) {
 	int n(0);
 	while (true) {
 		ostringstream oss;
-		oss << name << "_" << n;
-		if (!names_set.count(oss.str())) 
+		if (!n)
+			oss << name;
+		else
+			oss << name << "_" << n;
+		if (!names_set.count(oss.str()))
 			return oss.str();
 		++n;
 	}
@@ -426,6 +429,14 @@ Node<F> Network<F>::input_3D(int n_channels, std::string name) {
 	auto index = add_operation(new InputOperation<F>(n_channels), vector<int>{}, TensorShape{0, n_channels, 0, 0, 0}, name);
 	inputs.emplace_back(index);
 	return Node<F>(index, this);
+}
+
+template <typename F>
+Node<F> Network<F>::get_node(std::string name) { 
+	for (int n(0); n < operations.size(); ++n)
+		if (names[n] == name)
+			return Node<F>(n, this);
+	return Node<F>(-1, this);
 }
 
 template <typename F>
@@ -594,14 +605,29 @@ void Network<F>::new_backward() {
 }
 
 template <typename F>
-void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) {
-	sequence.clear();
-	set<int> input_set(inputs.begin(), inputs.end());
+vector<int> Network<F>::find_sequence(std::vector<int> inputs, std::vector<int> outputs) {
+	vector<int> sequence;
 
+	//First mark which nodes are possible active, to avoid calculating too far
+	vector<bool> active(operations.size());
+	{
+		stack<int> node_stack;
+		for (auto o : outputs)
+			node_stack.push(o);
+
+		while (!node_stack.empty()) { 
+			auto cur = node_stack.top();
+			node_stack.pop();
+			active[cur] = true;
+			for (auto dep : input_indices[cur])
+				node_stack.push(dep);
+		}
+	}
+	
 	for (auto i : inputs)
 		if (!tensors[i].x) {
 			cerr << "Input tensor at index " << i << " is not set" << endl;
-			return;
+			return vector<int>();
 		}
 
 	//Build the forward dependency (resolution) graph
@@ -620,7 +646,7 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 		auto cur = node_stack.top();
 		bool resolved = true;
 		for (auto n : output_indices[cur])
-			if (!resolved_nodes.count(n)) {
+			if (!resolved_nodes.count(n) && active[n]) {
 				node_stack.push(n);
 				resolved = false;
 			}
@@ -637,6 +663,14 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 
 	//put calculation nodes in order
 	reverse(sequence.begin(), sequence.end());
+	return sequence;
+}
+
+template <typename F>
+void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) {
+	sequence = find_sequence(inputs, outputs);
+
+	set<int> input_set(inputs.begin(), inputs.end());
 
 	//Forward Dryrun
 	for (auto s : sequence) {
