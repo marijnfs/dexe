@@ -22,8 +22,10 @@ struct CudaVec {
 		if (N != n2) {
           if (N) {
             cudaFree(data);
+			data = 0;
           }
-          handle_error( cudaMalloc( (void**)&data, sizeof(F) * n2));
+		  if (n2)
+			  handle_error( cudaMalloc( (void**)&data, sizeof(F) * n2));
           N = n2;
 		}
 		zero();
@@ -45,7 +47,8 @@ struct CudaVec {
 	void rand_zero(F p);
 
   void zero(int offset = 0) {
-		handle_error( cudaMemset(data + offset, 0, sizeof(F) * (N - offset) ) );
+	  if (N)
+		  handle_error( cudaMemset(data + offset, 0, sizeof(F) * (N - offset) ) );
 	}
 
 	void init_normal(F mean, F std) {

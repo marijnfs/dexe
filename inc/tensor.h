@@ -151,6 +151,8 @@ struct FilterBank {
 
 	void init();
 
+	void reshape(std::vector<int> dimensions);
+
 	int n_weights() { return calculate_product(dimensions); }	
 	void init_normal(F mean, F std);
 	void init_uniform(F var);

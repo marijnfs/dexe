@@ -75,12 +75,24 @@ void unet_test() {
     sample.init_normal(0.0, 0.1);
     y.init_normal(0.0, 0.1);
 
+	network->save("test.dexe");
+	loss({sample, y});
+	cout << loss.tensor_set().x->to_vector() << endl;
+	network->init_normal(0.0, 0.1);
+	loss({sample, y});
+	cout << loss.tensor_set().x->to_vector() << endl;
+
+	network->load("test.dexe");
+	loss({sample, y});
+	cout << loss.tensor_set().x->to_vector() << endl;
+
+	return;
     while (true) {
 		loss({sample, y});
         network->zero_grad();
         loss.backward();
         network->update(0.01);
-        
+		cout << loss.tensor_set().x->to_vector() << endl;
     }
 }
 
@@ -157,8 +169,7 @@ void test3() {
 		// 	cout << "[" << fd_grad[n] << " " << grad[n] << " " << (fd_grad[n] / grad[n]) << "] ";
 		// }
 
-
-		for (int i(0); i < 100000; ++i) {
+		for (int i(0); i < 4; ++i) {
 			cout << "it: " << i << endl;
 			loss({sample, y});
 			net.zero_grad();

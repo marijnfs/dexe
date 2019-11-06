@@ -3,6 +3,12 @@
 #include "kernels.h"
 #include <cassert>
 
+#include <cereal/archives/portable_binary.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/set.hpp>
+
+
 using namespace std;
 
 template <typename F>
@@ -35,9 +41,20 @@ bool InputOperation<F>::backward_dry_run(std::vector<Tensor<F>*> &in, std::vecto
 }
 
 template <typename F>
+InputOperation<F>::InputOperation(cereal::PortableBinaryInputArchive &ar) {
+	ar(n_channels);
+}
+
+template <typename F>
+void InputOperation<F>::save(cereal::PortableBinaryOutputArchive &ar) {
+	ar(n_channels);
+}
+
+
+template <typename F>
 ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions_, vector<int> strides_, bool keep_, bool has_bias_, size_t workspace_limit_):
-	filter_bank(dimensions),
-	filter_bank_grad(dimensions),
+	//filter_bank(dimensions),
+	//filter_bank_grad(dimensions),
 	algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), //default algorithm
 	workspace(0),
 	workspace_size(workspace_limit_),
@@ -48,6 +65,13 @@ ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions_, vector<in
     strides(strides_),
     has_bias(has_bias_)
 {
+	init();
+}
+
+template <typename F>
+void ConvolutionOperation<F>::init() {
+	filter_bank.reshape(dimensions);
+	
 	if (has_bias) {
 		vector<int> bias_dims(dimensions.size(), 1); //number of filter dimensions is one more than output dim
 		bias_dims[1] = filter_bank.out_c(); //dimensions[1] corresponds to output channels
@@ -56,7 +80,7 @@ ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions_, vector<in
 		bias_grad.reshape(bias_dims);
 		cout << "done reshaping bias" << endl;
 	}
-
+	
 	vector<int> kernel_dims(dimensions.begin() + 2, dimensions.end());
 	paddings = vector<int>(kernel_dims.size());
     dilations = vector<int>(kernel_dims.size(), 1);
@@ -74,7 +98,7 @@ ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions_, vector<in
 	if (sizeof(F) == sizeof(float))
 		handle_error( cudnnSetConvolutionNdDescriptor(conv, kernel_dims.size(), paddings.data(), strides.data(), dilations.data(), CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
 	else
-		handle_error( cudnnSetConvolutionNdDescriptor(conv, kernel_dims.size(), paddings.data(), strides.data(), dilations.data(), CUDNN_CROSS_CORRELATION, CUDNN_DATA_DOUBLE));
+		handle_error( cudnnSetConvolutionNdDescriptor(conv, kernel_dims.size(), paddings.data(), strides.data(), dilations.data(), CUDNN_CROSS_CORRELATION, CUDNN_DATA_DOUBLE));	
 }
 
 
@@ -137,16 +161,11 @@ bool ConvolutionOperation<F>::forward_dry_run(vector<Tensor<F>*> &in, vector<Ten
 
 template <typename F>
 void ConvolutionOperation<F>::prepare_forward(Tensor<F> &in, Tensor<F> &out) { // allocates workspace
-	//reshape output tensor
+
+	//reshape output tensor, calculated from paddings, strides and dimensions of filters
 	auto target_shape = in.shape;
 	target_shape.set_c(filter_bank.out_c());
     for (int n(0); n < paddings.size(); ++n) {
-        // in = (out - 1) * stride + dim - 2 * paddings
-        // in + 2 * paddings = (out - 1) * stride + dim
-        // in + 2 * paddings - dim = (out - 1) * stride
-        // (in + 2 * paddings - dim) / stride = out - 1
-        // out = (in + 2 * paddings - dim) / stride + 1
-        
         target_shape[n + 2] = (in.shape[n + 2] + 2 * paddings[n] - dimensions[n + 2]) / strides[n] + 1;
     }
 	out.reshape(target_shape);
@@ -159,6 +178,7 @@ void ConvolutionOperation<F>::prepare_forward(Tensor<F> &in, Tensor<F> &out) { /
 	handle_error( cudnnGetConvolutionForwardAlgorithm(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, new_workspace_size, &algo) );
 	handle_error( cudnnGetConvolutionForwardWorkspaceSize(Handler::cudnn(), in.td, filter_bank.fd, conv, out.td, algo, &new_workspace_size) );
 
+	workspace_size = new_workspace_size;
     workspace = Handler::workspace();
     /*
 	if (workspace_size != new_workspace_size) {
@@ -180,6 +200,7 @@ void ConvolutionOperation<F>::prepare_backward_weights(Tensor<F> &in, Tensor<F> 
     handle_error( cudnnGetConvolutionBackwardFilterAlgorithm( Handler::cudnn(),in.td, out.td, conv, filter_bank.fd, CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT, new_workspace_size, &algo_bwd_filter) );
     handle_error( cudnnGetConvolutionBackwardFilterWorkspaceSize(Handler::cudnn(), in.td, out.td, conv, filter_bank_grad.fd, algo_bwd_filter, &new_workspace_size) );
 
+	workspace_size_bwd_filter = new_workspace_size;
     workspace_bwd_filter = Handler::workspace();
     /*
     if (workspace_size_bwd_filter != new_workspace_size) {
@@ -200,6 +221,7 @@ void ConvolutionOperation<F>::prepare_backward(Tensor<F> &in, Tensor<F> &out) { 
 	handle_error( cudnnGetConvolutionBackwardDataAlgorithm(Handler::cudnn(), filter_bank.fd, out.td, conv, in.td, CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT, new_workspace_size, &algo_bwd) );
 	handle_error( cudnnGetConvolutionBackwardDataWorkspaceSize(Handler::cudnn(), filter_bank.fd, out.td, conv, in.td, algo_bwd, &new_workspace_size) );
 
+	workspace_size_bwd = new_workspace_size;
     workspace_bwd = Handler::workspace();
     /*
     if (workspace_size_bwd != new_workspace_size) {
@@ -377,6 +399,44 @@ ConvolutionOperation<F>::~ConvolutionOperation() {
 }
 
 
+template <typename F>
+void ConvolutionOperation<F>::save(cereal::PortableBinaryOutputArchive &ar) {
+	ar(dimensions);
+	ar(strides);
+	ar(paddings);
+	ar(dilations);
+	ar(has_bias);
+	ar(keep);
+
+	ar(filter_bank.to_vector());
+	if (has_bias)
+		ar(bias.to_vector());
+	
+}
+
+template <typename F>
+ConvolutionOperation<F>::ConvolutionOperation(cereal::PortableBinaryInputArchive &ar) {
+	ar(dimensions);
+	ar(strides);
+	ar(paddings);
+	ar(dilations);
+	ar(has_bias);
+	ar(keep);
+	
+	init();
+	
+	vector<F> filter_bank_vec;
+	ar(filter_bank_vec);
+	filter_bank.from_vector(filter_bank_vec);
+
+	if (has_bias) {
+		vector<F> bias_vec;
+		ar(bias_vec);
+		bias.from_vector(bias_vec);
+	}
+}
+
+
 ///////////////////
 template <typename F>
 ConvolutionTransposeOperation<F>::ConvolutionTransposeOperation(std::vector<int> dimensions_, std::vector<int> strides_, bool keep_, size_t workspace_limit_) 
@@ -432,6 +492,14 @@ bool ConvolutionTransposeOperation<F>::backward_dry_run(std::vector<Tensor<F>*> 
 	return true;
 }
 
+template <typename F>
+ConvolutionTransposeOperation<F>::ConvolutionTransposeOperation(cereal::PortableBinaryInputArchive &ar) : ConvolutionOperation<F>(ar) {
+}
+
+template <typename F>
+void ConvolutionTransposeOperation<F>::save(cereal::PortableBinaryOutputArchive &ar) {
+	ConvolutionOperation<F>::save(ar);
+}
 
 /////////////////////
 template <typename F>
@@ -572,7 +640,7 @@ void SplitOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_gr
 /////////// LocalNormalisationOperation
 
 template <typename F>
-LocalNormalisationOperation<F>::LocalNormalisationOperation(int w) {
+LocalNormalisationOperation<F>::LocalNormalisationOperation(int w_) :  w(w_) {
 	handle_error( cudnnCreateLRNDescriptor( &lrn_desc ) );
 	// handle_error( cudnnSetLRNDescriptor( lrn_desc, w, 1.0, 1.0e-4, 0.75) );
 }
@@ -598,6 +666,18 @@ void LocalNormalisationOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Ten
  				&beta, in_grad.td, in_grad.data) );
 }
 	
+template <typename F>
+LocalNormalisationOperation<F>::LocalNormalisationOperation(cereal::PortableBinaryInputArchive &ar) {
+	ar(w);
+	handle_error( cudnnCreateLRNDescriptor( &lrn_desc ) );	
+}
+
+
+template <typename F>
+void LocalNormalisationOperation<F>::save(cereal::PortableBinaryOutputArchive &ar) {
+	ar(w);
+}
+
 /////////// PoolingOperation
 
 template <typename F>

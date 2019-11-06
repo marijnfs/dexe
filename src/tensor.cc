@@ -326,28 +326,29 @@ void TensorSet<F>::alloc_grad(TensorShape shape) {
 		grad.reset(new Tensor<F>(shape));
 }
 
-template <>
-FilterBank<float>::FilterBank() {
+template <typename F>
+FilterBank<F>::FilterBank() {
 
 }
 
-template <>
-FilterBank<float>::FilterBank(std::vector<int> dimensions_) 
+template <typename F>
+FilterBank<F>::FilterBank(std::vector<int> dimensions_) 
 	: dimensions(dimensions_) {
 	init();
 }
 
-template <>
-FilterBank<double>::FilterBank(std::vector<int> dimensions_) 
-	: dimensions(dimensions_) {
-	init();
-}
 
 
 template <typename F>
 FilterBank<F>::~FilterBank() {
 	cudnnDestroyFilterDescriptor(fd);
 	cudaFree(weights);
+}
+
+template <typename F>
+void FilterBank<F>::reshape(std::vector<int> dimensions_) {
+	dimensions = dimensions_;
+	init();
 }
 
 template <typename F>

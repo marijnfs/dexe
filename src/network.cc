@@ -2,6 +2,10 @@
 #include "util.h"
 
 #include <cereal/archives/portable_binary.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/set.hpp>
+
 
 #include <algorithm>
 #include <iterator>
@@ -43,6 +47,32 @@ void Node<F>::operator()(std::initializer_list<std::reference_wrapper<Tensor<F>>
 
 template <typename F>
 Network<F>::Network() {
+}
+
+
+template <typename F>
+void Network<F>::reset() {
+	sequence.clear();
+	names.clear();
+	operations.clear();
+	tensors.clear();
+	input_indices.clear(); //inputs to every node
+
+	inputs.clear(); //indices to nodes that function as inputs
+
+	parameters.clear();
+	
+	param_vec.resize(0);
+	grad_vec.resize(0);
+	param_ptrs.clear();
+	grad_ptrs.clear();
+
+	fast_param_ptrs.clear();
+	fast_grad_ptrs.clear();
+
+	names_set.clear();
+
+	n_params = 0;
 }
 
 template <typename F>
@@ -117,19 +147,96 @@ void Network<F>::init_uniform(F var) {
 		parameters[i]->init_uniform(var);
 }
 
-/*template <typename F>
+template <typename F>
 void Network<F>::save(std::string path) {
 	ofstream of(path, ios::binary);
-	vector<F> data = to_vector();
-	byte_write_vec(of, data);
+	cereal::PortableBinaryOutputArchive ar(of);
+	
+	ar(sequence);
+	ar(names);
+	ar(input_indices);
+	ar(inputs);
+
+	std::vector<TensorShape> shapes;
+	for (auto &t : tensors)
+		shapes.emplace_back(t.x->shape);
+	ar(shapes);
+
+	vector<OperationCode> opcodes;
+	for (auto &op : operations)
+		opcodes.emplace_back(op->opcode());
+	ar(opcodes);
+
+	for (auto &op : operations) {
+		op->save(ar);
+	} 
 }
 
+/*  NONE,
+  INPUT,
+  CONVOLUTION,
+  CONVOLUTION_TRANSPOSE,
+  TANH,
+  SIGMOID,
+  RELU,
+  ADDITION,
+  SOFTMAX,
+  LOCAL_NORMALISATION,
+  SQUARED_LOSS
+*/
 template <typename F>
+
+
 void Network<F>::load(std::string path) {
+	reset();
 	ifstream in(path, ios::binary);
-	vector<F> data = byte_read_vec<F>(in);
-	from_vector(data);
-}*/
+	cereal::PortableBinaryInputArchive ar(in);
+
+	ar(sequence);
+    ar(names);
+    ar(input_indices);
+    ar(inputs);
+	std::vector<TensorShape> shapes;
+	ar(shapes);
+	for (auto shape : shapes)
+		tensors.emplace_back(shape);
+
+	vector<OperationCode> opcodes;
+	ar(opcodes);
+
+	for (auto opcode : opcodes) {
+		Operation<F> *op = nullptr;
+
+		if (opcode == INPUT) {
+			op = new InputOperation<F>(ar);
+		} else if (opcode == CONVOLUTION) {
+			op = new ConvolutionOperation<F>(ar);
+		} else if (opcode == CONVOLUTION_TRANSPOSE) {
+			op = new ConvolutionTransposeOperation<F>(ar);
+		} else if (opcode == SQUARED_LOSS) {
+			op = new SquaredLossOperation<F>();
+		} else if (opcode == LOCAL_NORMALISATION) {
+			op = new LocalNormalisationOperation<F>(ar);
+		} else if (opcode == TANH) {
+			op = new TanhOperation<F>();
+		} else if (opcode == SIGMOID) {
+			op = new SigmoidOperation<F>();
+		} else if (opcode == ADDITION) {
+			op = new AdditionOperation<F>();
+		} else if (opcode == RELU) {
+			op = new ReluOperation<F>();
+		} else if (opcode == SOFTMAX) {
+			op = new SoftmaxOperation<F>();
+		} else {
+			throw std::runtime_error("Opcode not implemented");
+		}
+
+		operations.emplace_back(op);
+
+		auto param = dynamic_cast<Parametrised<F>*>(op);
+		parameters.emplace_back(param);
+	}
+}
 
 template <typename F>
 vector<F> Network<F>::to_vector() {

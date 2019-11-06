@@ -35,6 +35,8 @@ struct Network {
 	Network();
 	~Network();
 
+	void reset();
+	
  	int add_operation(Operation<F> *op, std::vector<int> inputs, TensorShape shape, std::string name);
 
 	std::function<Node<F>(Node<F>)> convolution(int out_c, int k, std::string name = "conv");

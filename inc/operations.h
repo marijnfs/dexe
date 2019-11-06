@@ -6,6 +6,7 @@
 #include <cublas_v2.h>
 #include <iostream>
 #include <string>
+#include <cereal/archives/portable_binary.hpp>
 
 #include "tensor.h"
 #include "util.h"
@@ -40,6 +41,8 @@ struct Operation {
 
 	virtual OperationCode opcode() { throw std::runtime_error("Not Implemented"); }
 
+	virtual void save(cereal::PortableBinaryOutputArchive &ar) {throw std::runtime_error("Not Implemented"); }
+	
 	// virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){ forward(in, out, beta); }
 	// virtual void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0){}
 	// virtual void backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, int t, F beta = 0.0){}
@@ -78,23 +81,28 @@ struct InputOperation : public Operation<F> {
     Tensor<F> *reference = nullptr;
     
     InputOperation(int n_channels_, Tensor<F> *reference_ = nullptr) : n_channels(n_channels_), reference(reference_) {}
+	InputOperation(cereal::PortableBinaryInputArchive &ar);
 
     bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
     void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
 	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
     bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
 	OperationCode opcode() { return INPUT; }
+
+	void save(cereal::PortableBinaryOutputArchive &ar);
     int n_channels = 0;
 };
 
 template <typename F>
 struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	ConvolutionOperation(std::vector<int> dimensions, std::vector<int> strides, bool keep_, bool has_bias = true, size_t workspace_limit_ = CONV_MAX_MEM);
+	ConvolutionOperation(cereal::PortableBinaryInputArchive &ar);
 
 	~ConvolutionOperation();
 
 	virtual void init_normal(F mean, F std);
 	virtual void init_uniform(F var);
+	void init();
 
 	bool check_fit(Tensor<F> &in_tensor, Tensor<F> &out_tensor);
 
@@ -104,6 +112,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
     virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
 	virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
 	virtual OperationCode opcode() { return CONVOLUTION; }
+	virtual void save(cereal::PortableBinaryOutputArchive &ar);
 
     // regular
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
@@ -156,6 +165,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 template <typename F>
 struct ConvolutionTransposeOperation : public ConvolutionOperation<F> {
 	ConvolutionTransposeOperation(std::vector<int> dimensions, std::vector<int> strides, bool keep_, size_t workspace_limit_ = CONV_MAX_MEM);
+	ConvolutionTransposeOperation(cereal::PortableBinaryInputArchive &ar);
 
     // API
 	virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
@@ -163,6 +173,9 @@ struct ConvolutionTransposeOperation : public ConvolutionOperation<F> {
     virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
 	virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
 
+	virtual void save(cereal::PortableBinaryOutputArchive &ar);
+
+    virtual OperationCode opcode() { return CONVOLUTION_TRANSPOSE; }
 };
 
 template <typename F>
@@ -174,6 +187,7 @@ struct SquaredLossOperation : public Operation<F> {
   virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
   virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
   virtual OperationCode opcode() { return SQUARED_LOSS; }
+	void save(cereal::PortableBinaryOutputArchive &ar){}
 
   void describe(std::ostream &out) { out << "squared_loss"; }
 
@@ -232,6 +246,7 @@ struct SplitOperation : public Operation<F> {
 template <typename F>
 struct LocalNormalisationOperation : public DefaultOperation<F> {
   LocalNormalisationOperation(int w);
+   LocalNormalisationOperation(cereal::PortableBinaryInputArchive &ar);
 
   TensorShape output_shape(TensorShape input);
   void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
@@ -239,8 +254,10 @@ struct LocalNormalisationOperation : public DefaultOperation<F> {
   
   void describe(std::ostream &out) { out << "local_normalisation"; }
   virtual OperationCode opcode() { return LOCAL_NORMALISATION; }
-
+	void save(cereal::PortableBinaryOutputArchive &ar);
 	cudnnLRNDescriptor_t lrn_desc = 0;
+	
+	int w = 0;
 };
 
 
@@ -267,6 +284,7 @@ struct TanhOperation : public DefaultOperation<F> {
 
 	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
 	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+	void save(cereal::PortableBinaryOutputArchive &ar) {}
 
 	TensorShape output_shape(TensorShape input);
 
@@ -282,6 +300,7 @@ struct SigmoidOperation : public DefaultOperation<F> {
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
 	void describe(std::ostream &out) { out << "sigmoid"; }
 	virtual OperationCode opcode() { return SIGMOID; }
+	void save(cereal::PortableBinaryOutputArchive &ar) {}
 
 	TensorShape output_shape(TensorShape input);
 	cudnnActivationDescriptor_t desc;
@@ -302,24 +321,12 @@ struct AdditionOperation : public Operation<F> {
 	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
 	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
     bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-
+	void save(cereal::PortableBinaryOutputArchive &ar) {}
 
 	TensorShape output_shape(TensorShape input);
 	cudnnActivationDescriptor_t desc;
-
-	F scale;
 };
 
-template <typename F>
-struct STanhOperation : public DefaultOperation<F> {
-	STanhOperation(TensorShape s);
-	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
-	void describe(std::ostream &out) { out << "stanh"; }
-
-	TensorShape output_shape(TensorShape input);
-	TensorSet<F> tmp;
-};
 
 template <typename F>
 struct ReluOperation : public DefaultOperation<F> {
@@ -329,6 +336,7 @@ struct ReluOperation : public DefaultOperation<F> {
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
 	void describe(std::ostream &out) { out << "relu"; }
 	virtual OperationCode opcode() { return RELU; }
+	void save(cereal::PortableBinaryOutputArchive &ar) {}
 
 	TensorShape output_shape(TensorShape input);
 	cudnnActivationDescriptor_t desc;
@@ -343,6 +351,7 @@ struct SoftmaxOperation : public DefaultOperation<F> {
 	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
 	void describe(std::ostream &out) { out << "softmax"; }
 	virtual OperationCode opcode() { return SOFTMAX; }
+	void save(cereal::PortableBinaryOutputArchive &ar) {}
 
 	TensorShape output_shape(TensorShape input);
 	bool matched;
