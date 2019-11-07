@@ -331,13 +331,23 @@ void Network<F>::align_params() {
 	param_vec.resize(n_params);
 	grad_vec.resize(n_params);
 
-	for (auto &p : param_ptrs)
+
+	F *ptr = param_vec.data;
+	for (auto &p : param_ptrs) {
+		handle_error( cudaMemcpy(ptr, *(p.ptr), p.n * sizeof(F), cudaMemcpyDeviceToDevice));
 		cudaFree(*(p.ptr));
+		*(p.ptr) = ptr;
+		ptr += p.n;
+	}
 
-	for (auto &g : grad_ptrs)
+	ptr = grad_vec.data;
+	for (auto &g : grad_ptrs) {
+		handle_error( cudaMemcpy(ptr, *(g.ptr), g.n * sizeof(F), cudaMemcpyDeviceToDevice));
 		cudaFree(*(g.ptr));
+		*(g.ptr) = ptr;
+		ptr += g.n;
+	}
 
-	position_params(param_vec.data, grad_vec.data);
 	cout << "n params: " << n_params << endl;
 	finished = true;
 	//throw "";
@@ -356,33 +366,6 @@ void Network<F>::register_params() {
  	n_params = 0;
 	for (auto &p : param_ptrs)
 		n_params += p.n;
-}
-
-template <typename F>
-void Network<F>::position_params(F *pos_param, F *pos_grad) {
-	F *ptr = pos_param;
-	for (auto &p : param_ptrs) {
-		*(p.ptr) = ptr;
-		ptr += p.n;
-	}
-
-	// ptr = pos_fast_param;
-	// for (auto &p : fast_params) {
-	// 	*(p.ptr) = ptr;
-	// 	ptr += p.n;
-	// }
-
-	ptr = pos_grad;
-	for (auto &g : grad_ptrs) {
-		*(g.ptr) = ptr;
-		ptr += g.n;
-	}
-
-	// ptr = pos_fast_grad;
-	// for (auto &g : fast_grads) {
-	// 	*(g.ptr) = ptr;
-	// 	ptr += g.n;
-	// }
 }
 
 

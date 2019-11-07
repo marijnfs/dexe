@@ -90,7 +90,6 @@ struct Network {
 
 	void register_params();
 	void align_params();
-	void position_params(F *pos_param, F *pos_grad);
 
 	std::vector<F> to_vector();
 	void from_vector(std::vector<F> &vec);
