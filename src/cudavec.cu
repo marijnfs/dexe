@@ -15,7 +15,7 @@ CudaVec<float> &CudaVec<float>::sqrt() {
 	dim3 dimBlock( BLOCKSIZE );
 	dim3 dimGrid( (N + BLOCKSIZE - 1) / BLOCKSIZE );
 
-		sqrt_kernel<<<dimGrid, dimBlock>>>(data, N);
+	sqrt_kernel<<<dimGrid, dimBlock>>>(data, N);
 	handle_error( cudaGetLastError() );
 	handle_error( cudaDeviceSynchronize());
 	return *this;
@@ -114,6 +114,12 @@ CudaVec<float> &CudaVec<float>::operator/=(CudaVec<float> &other) {
 
 	handle_error( cudaGetLastError() );
 	handle_error( cudaDeviceSynchronize());
+	return *this;
+}
+
+template <typename F>
+CudaVec<F> &CudaVec<F>::operator+=(CudaVec<F> &other) {
+	add_cuda<F>(other.data, data, N, 1);
 	return *this;
 }
 

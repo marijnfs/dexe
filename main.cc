@@ -90,7 +90,9 @@ void unet_test() {
 		loss({sample, y});
         network->zero_grad();
         loss.backward();
-        network->update(0.01);
+        // network->update(0.01);
+        network->grad_vec *= 0.01;
+        network->param_vec += network->grad_vec;
 		cout << loss.tensor_set().x->to_vector() << endl;
     }
 }
