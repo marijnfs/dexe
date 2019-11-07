@@ -33,6 +33,8 @@ void SGDOptimizer<F>::register_network(Network<F> &network_) {
 
 template <typename F>
 void SGDOptimizer<F>::update() {
+	if (!network)
+		throw std::runtime_error("No network registered");
 	tmp = network->grad_vec;
 	tmp *= lr;
 	network->param_vec += tmp;
@@ -60,6 +62,8 @@ void AdaOptimizer<F>::register_network(Network<F> &network_) {
 
 template <typename F>
 void AdaOptimizer<F>::update() {
+	if (!network)
+		throw std::runtime_error("No network registered");
 	tmp = network->grad_vec;
 	tmp.pow(2);
 	tmp *= (1.0 - beta);
