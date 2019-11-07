@@ -6,6 +6,7 @@
 #include "network.h"
 #include "img.h"
 #include "colour.h"
+#include "optimizer.h"
 
 #include <unistd.h>
 #include <ctime>
@@ -86,13 +87,16 @@ void unet_test() {
 	loss({sample, y});
 	cout << loss.tensor_set().x->to_vector() << endl;
 
+	// SGDOptimizer<float> optimizer(0.01);
+	AdaOptimizer<float> optimizer(0.01);
+	optimizer.register_network(*network);
+
     while (true) {
 		loss({sample, y});
         network->zero_grad();
         loss.backward();
         // network->update(0.01);
-        network->grad_vec *= 0.01;
-        network->param_vec += network->grad_vec;
+        optimizer.update();
 		cout << loss.tensor_set().x->to_vector() << endl;
     }
 }
