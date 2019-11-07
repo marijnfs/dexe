@@ -5,7 +5,7 @@
 #include <curand.h>
 #include <cublas_v2.h>
 
-size_t const WORKSPACE_SIZE = size_t(2) * 1024 * 1024;
+size_t const WORKSPACE_SIZE = size_t(128) * 1024 * 1024;
 
 struct Handler {
   Handler();

@@ -127,6 +127,6 @@ struct Network {
 	std::set<std::string> names_set;
 
 	int n_params = 0;
-	bool finished = true; //for now we keep it at true
+	bool finished = false; //for now we keep it at true
 };
 

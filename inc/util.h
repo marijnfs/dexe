@@ -487,8 +487,10 @@ template <typename T>
 void add_normal(T *data, int n, T mean, T std);
 
 __global__ void rand_init_kernel(int seed, curandStatePhilox4_32_10_t *states, int n);
-__global__ void rand_zero_kernel(float *data, int n, float p, curandStatePhilox4_32_10_t *states);
-void rand_zero(float *data, int n, float p);
+// __global__ void rand_zero_kernel(float *data, int n, float p, curandStatePhilox4_32_10_t *states);
+// void rand_zero(float *data, int n, float p);
+// __global__ void rand_zero_kernel(double *data, int n, double p, curandStatePhilox4_32_10_t *states);
+// void rand_zero(double *data, int n, double p);
 
 __global__ void shift_kernel(int X, int Y, int C, float const *in, float *out, int dx, int dy, float const beta);
 __global__ void unshift_kernel(int X, int Y, int C, float const *in, float *out, int dx, int dy, float const beta);

@@ -80,7 +80,7 @@ __global__ void rand_init_kernel(int seed, curandStatePhilox4_32_10_t *states, i
   if (x < n)
     curand_init(seed, x, 0, &states[x]);
 }
-
+/*
 __global__ void rand_zero_kernel(float *data, int n, float p, curandStatePhilox4_32_10_t *states) {
   int x(threadIdx.x + blockDim.x * blockIdx.x);
 
@@ -119,7 +119,7 @@ void rand_zero(float *data, int n, float p) {
   handle_error( cudaGetLastError() );
   handle_error( cudaDeviceSynchronize());
 }
-
+*/
 __global__ void shift_kernel(float const *in, float *out, int X, int Y, int C, int dx, int dy, float const beta) {
 	int x(threadIdx.x + blockDim.x * blockIdx.x);
 	int y(x / X);

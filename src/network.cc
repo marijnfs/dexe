@@ -73,11 +73,13 @@ void Network<F>::reset() {
 	names_set.clear();
 
 	n_params = 0;
+	finished = false;
 }
 
 template <typename F>
 void Network<F>::finish() {
-	align_params();
+	if (!finished)
+		align_params();
 }
 
 template <typename F>
@@ -137,12 +139,14 @@ void Network<F>::l2(F l) {
 
 template <typename F>
 void Network<F>::init_normal(F mean, F std) {
+	finish();
 	for (size_t i(0); i < parameters.size(); ++i)
 		parameters[i]->init_normal(mean, std);
 }
 
 template <typename F>
 void Network<F>::init_uniform(F var) {
+	finish();
 	for (size_t i(0); i < parameters.size(); ++i)
 		parameters[i]->init_uniform(var);
 }
@@ -238,6 +242,7 @@ void Network<F>::load(std::string path) {
 		if (auto param = dynamic_cast<Parametrised<F>*>(op))
 			parameters.emplace_back(param);
 	}
+	finish();
 }
 
 template <typename F>
@@ -334,6 +339,7 @@ void Network<F>::align_params() {
 
 	position_params(param_vec.data, grad_vec.data);
 	cout << "n params: " << n_params << endl;
+	finished = true;
 	//throw "";
 }
 
