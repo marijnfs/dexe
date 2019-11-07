@@ -1,5 +1,4 @@
-#ifndef __NETWORK_H__
-#define __NETWORK_H__
+#pragma once
 
 
 #include <iostream>
@@ -131,4 +130,3 @@ struct Network {
 	bool finished = true; //for now we keep it at true
 };
 
-#endif

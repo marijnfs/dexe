@@ -339,6 +339,11 @@ void Network<F>::align_params() {
 
 template <typename F>
 void Network<F>::register_params() {
+	param_ptrs.clear();
+	grad_ptrs.clear();
+	fast_param_ptrs.clear();
+	fast_grad_ptrs.clear();
+	
 	for (auto &p : parameters)
 		p->register_params(param_ptrs, fast_param_ptrs, grad_ptrs, fast_grad_ptrs);
 
@@ -576,15 +581,15 @@ void Network<F>::new_backward() {
 		for (auto idx : input_indices[s]) {
 			tmp_inputs.push_back(tensors[idx].x.get());
 			tmp_input_grads.push_back(tensors[idx].grad.get());
-				
 		}
 
 		tmp_outputs.push_back(tensors[s].x.get());
 		tmp_output_grads.push_back(tensors[s].grad.get());
 
 		operations[s]->backward_dry_run(tmp_inputs, tmp_outputs, tmp_input_grads, tmp_output_grads);
+		operations[s]->backward(tmp_inputs, tmp_outputs, tmp_input_grads, tmp_output_grads);
  	}
-
+	/*
 	for (auto it = sequence.rbegin(); it != sequence.rend(); ++it) {
 		int s = *it;
 		// cout << "back step: " << names[s] << endl;
@@ -599,7 +604,7 @@ void Network<F>::new_backward() {
 		tmp_outputs.push_back(tensors[s].x.get());
 		tmp_output_grads.push_back(tensors[s].grad.get());
 		operations[s]->backward(tmp_inputs, tmp_outputs, tmp_input_grads, tmp_output_grads);
- 	}
+ 	}*/
 
  		
 }

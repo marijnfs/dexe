@@ -110,15 +110,18 @@ void ConvolutionOperation<F>::forward(vector<Tensor<F>*> &in, vector<Tensor<F>*>
 
 template <typename F>
 bool ConvolutionOperation<F>::backward_dry_run(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out, vector<Tensor<F>*> &in_grad, vector<Tensor<F>*> &out_grad) {
-    in_grad[0]->reshape(in[0]->shape);
-    prepare_backward(*in[0], *out[0]);
+	if (in_grad.size()) {
+		in_grad[0]->reshape(in[0]->shape);
+		prepare_backward(*in[0], *out[0]);
+	}
     prepare_backward_weights(*in[0], *out[0]);
     return true;
 }
 
 template <typename F>
 void ConvolutionOperation<F>::backward(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out, vector<Tensor<F>*> &in_grad, vector<Tensor<F>*> &out_grad) {
-    backward(*in[0], *out[0], *in_grad[0], *out_grad[0]);
+	if (in_grad.size()) //allows us to prevent backward pass to inputs if unneeded
+		backward(*in[0], *out[0], *in_grad[0], *out_grad[0]);
     backward_weights(*in[0], *out_grad[0]);
 }
 
@@ -198,7 +201,7 @@ void ConvolutionOperation<F>::prepare_backward_weights(Tensor<F> &in, Tensor<F> 
 	//size_t new_workspace_size = workspace_size_bwd_filter;
 	size_t new_workspace_size = Handler::workspace_size();
 
-    handle_error( cudnnGetConvolutionBackwardFilterAlgorithm( Handler::cudnn(),in.td, out.td, conv, filter_bank.fd, CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT, new_workspace_size, &algo_bwd_filter) );
+    handle_error( cudnnGetConvolutionBackwardFilterAlgorithm( Handler::cudnn(), in.td, out.td, conv, filter_bank.fd, CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT, new_workspace_size, &algo_bwd_filter) );
     handle_error( cudnnGetConvolutionBackwardFilterWorkspaceSize(Handler::cudnn(), in.td, out.td, conv, filter_bank_grad.fd, algo_bwd_filter, &new_workspace_size) );
 
 	workspace_size_bwd_filter = new_workspace_size;
@@ -463,7 +466,6 @@ bool ConvolutionTransposeOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &
     output_shape.set_c(this->dimensions[1]);
     
     //Check and set the dimensions for every image dimension
-    cout << "shape: " << in_shape << endl;
     for (int n(0); n < this->paddings.size(); ++n) {
         // in = (out - 1) * stride + dim - 2 * paddings
         auto intermediate = (in_shape[n + 2] - 1) * this->strides[n] + this->dimensions[n + 2];
@@ -482,13 +484,15 @@ bool ConvolutionTransposeOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &
 
 template <typename F>
 void ConvolutionTransposeOperation<F>::backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad){
-	ConvolutionOperation<F>::forward(*out_grad[0], *in_grad[0]); //we use ConvolutionOperation in reverse to get the transpose	
+	if (in_grad.size())
+		ConvolutionOperation<F>::forward(*out_grad[0], *in_grad[0]); //we use ConvolutionOperation in reverse to get the transpose	
 	ConvolutionOperation<F>::backward_weights(*out_grad[0], *in[0]); //we use ConvolutionOperation in reverse to get the transpose	
 }
 
 template <typename F>
 bool ConvolutionTransposeOperation<F>::backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad){
-	ConvolutionOperation<F>::prepare_forward(*out_grad[0], *in_grad[0]);
+	if (in_grad.size())
+		ConvolutionOperation<F>::prepare_forward(*out_grad[0], *in_grad[0]);
 	ConvolutionOperation<F>::prepare_backward_weights(*out_grad[0], *in[0]); 
 	return true;
 }
