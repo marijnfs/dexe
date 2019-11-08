@@ -188,7 +188,7 @@ void Tensor<F>::from_vector(vector<F> &in) {
 }
 
 template <typename F>
-void Tensor<F>::from_tensor(Tensor &in, F alpha) {
+void Tensor<F>::from_tensor(Tensor<F> &in, F alpha) {
 	if (size() != in.size()) {
  			throw StringException("sizes don't match");
 	}

@@ -72,7 +72,7 @@ struct Tensor {
 	void to_ptr(F *ptr);
 	void from_vector(std::vector<F> &in);
 	void from_ptr(F const *in);
-	void from_tensor(Tensor &in, F alpha = 1.0);
+	void from_tensor(Tensor<F> &in, F alpha = 1.0);
 	void fill(F val);
    
 
