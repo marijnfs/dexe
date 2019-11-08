@@ -31,7 +31,7 @@ struct SGDOptimizer : public Optimizer<F> {
 
 template <typename F>
 struct AdaOptimizer : public Optimizer<F> {
-    AdaOptimizer(F lr_);
+    AdaOptimizer(F lr_, F beta_ = 0.95);
    	~AdaOptimizer() = default;
 
     virtual void register_network(Network<F> &network);
@@ -43,6 +43,26 @@ struct AdaOptimizer : public Optimizer<F> {
     CudaVec<F> std;
     CudaVec<F> tmp, tmp2;
     F lr = 0;
-	F beta = 0.9;
+	F beta = 0.0;
+    F eps = 0.01;
+};
+
+
+template <typename F>
+struct AdamOptimizer : public Optimizer<F> {
+    AdamOptimizer(F lr_, F beta_ = 0.9, F momentum_factor_ = 0.95);
+   	~AdamOptimizer() = default;
+
+    virtual void register_network(Network<F> &network);
+    virtual void update();
+
+    void set_lr(F lr);
+    
+    Network<F> *network = nullptr;
+    CudaVec<F> momentum, std;
+    CudaVec<F> tmp, tmp2;
+    F lr = 0;
+	F beta = 0.0;
+	F momentum_factor = 0.0;
     F eps = 0.01;
 };

@@ -552,6 +552,7 @@ template <typename F>
 SupportLossOperation<F>::SupportLossOperation(F support_) : support(support_) {
 
 }
+
 template <typename F>
 SupportLossOperation<F>::SupportLossOperation(cereal::PortableBinaryInputArchive &ar) {
 	ar(support);

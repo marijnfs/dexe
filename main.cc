@@ -91,7 +91,7 @@ void unet_test() {
 	cout << loss.tensor_set().x->to_vector() << endl;
 
 	// SGDOptimizer<float> optimizer(0.01);
-	AdaOptimizer<float> optimizer(0.01);
+	AdaOptimizer<float> optimizer(0.01, 0.90);
 	optimizer.register_network(*network);
 
 	int epoch(0);
