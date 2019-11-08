@@ -33,7 +33,8 @@ enum OperationCode {
   ADDITION,
   SOFTMAX,
   LOCAL_NORMALISATION,
-  SQUARED_LOSS
+  SQUARED_LOSS,
+  SUPPORT_LOSS
 };
 
 struct StringException : public std::exception {

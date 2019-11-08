@@ -188,11 +188,10 @@ void Tensor<F>::from_vector(vector<F> &in) {
 }
 
 template <typename F>
-void Tensor<F>::from_tensor(Tensor &in) {
+void Tensor<F>::from_tensor(Tensor &in, F alpha) {
 	if (size() != in.size()) {
  			throw StringException("sizes don't match");
 	}
-	F alpha(1);
 	F beta(0);
 	handle_error( cudnnTransformTensor(Handler::cudnn(), &alpha, in.td, in.data, &beta, td, data) );
 }
@@ -278,14 +277,14 @@ double Tensor<double>::norm2() {
 
 
 template <>
-float Tensor<float>::sum() {
+float Tensor<float>::asum() {
 	float result(0);
 	handle_error( cublasSasum(Handler::cublas(), size(), data, 1, &result) );
 	return result;
 }
 
 template <>
-double Tensor<double>::sum() {
+double Tensor<double>::asum() {
 	double result(0);
 	handle_error( cublasDasum(Handler::cublas(), size(), data, 1, &result) );
 	return result;

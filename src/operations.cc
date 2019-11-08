@@ -547,6 +547,57 @@ void SquaredLossOperation<F>::backward(std::vector<Tensor<F>*> &in, std::vector<
 	in_grad[0]->scale(1.0 / in[0]->shape.n_elements());	
 }
 
+//////////////////////////////////////
+template <typename F>
+SupportLossOperation<F>::SupportLossOperation(F support_) : support(support_) {
+
+}
+template <typename F>
+SupportLossOperation<F>::SupportLossOperation(cereal::PortableBinaryInputArchive &ar) {
+	ar(support);
+}
+
+
+template <typename F>
+void SupportLossOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	support_loss(in[0]->data, in[1]->data, tmp.data, in[0]->shape.n_elements(), support);
+	F avg = tmp.asum() / tmp.size();
+	vector<F> data = {avg};
+	out[0]->from_vector(data);
+}
+
+template <typename F>
+bool SupportLossOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	if (in.size() != 2) {
+		cerr << "SupportLossOperation needs two inputs" << endl;
+		return false;
+	}
+
+	if (in[0]->shape != in[1]->shape) {
+		cerr << "SupportLossOperation: input shapes don't match" << endl;
+		return false;
+	}
+	
+	out[0]->reshape(TensorShape({1, 1, 1}));
+	tmp.reshape(in[0]->shape);	
+	return true;
+}
+
+template <typename F>
+bool SupportLossOperation<F>::backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) {
+	in_grad[0]->reshape(in[0]->shape);
+	return true;
+}
+
+template <typename F>
+void SupportLossOperation<F>::backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) {
+	in_grad[0]->from_tensor(tmp, 1.0 / tmp.shape.n_elements());
+}
+template <typename F>
+void SupportLossOperation<F>::save(cereal::PortableBinaryOutputArchive &ar){
+	ar(support);
+}
+
 
 
 //////////////////////////////////////
@@ -908,6 +959,7 @@ template struct SigmoidOperation<float>;
 template struct ReluOperation<float>;
 template struct SoftmaxOperation<float>;
 template struct SquaredLossOperation<float>;
+template struct SupportLossOperation<float>;
 
 
 template struct InputOperation<double>;
@@ -925,3 +977,4 @@ template struct SigmoidOperation<double>;
 template struct ReluOperation<double>;
 template struct SoftmaxOperation<double>;
 template struct SquaredLossOperation<double>;
+template struct SupportLossOperation<double>;

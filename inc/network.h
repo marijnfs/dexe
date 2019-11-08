@@ -51,6 +51,7 @@ struct Network {
 	std::function<Node<F>(Node<F>)> local_normalisation(int k, std::string name = "lnc");
 	std::function<Node<F>(Node<F>)> local_normalisation_3D(int k, std::string name = "lnc");
 	std::function<Node<F>(Node<F>, Node<F>)> squared_loss(std::string name = "squared_loss");
+	std::function<Node<F>(Node<F>, Node<F>)> support_loss(F support, std::string name = "support_loss");
 
 	std::function<Node<F>(Node<F>, Node<F>)> addition(std::string name = "addition");
 	// std::function<Node<F>(Node<F>)> pool(std::string name = "pool");

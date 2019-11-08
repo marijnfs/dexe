@@ -195,6 +195,24 @@ struct SquaredLossOperation : public Operation<F> {
 };
 
 template <typename F>
+struct SupportLossOperation : public Operation<F> {
+  SupportLossOperation(F support);
+	SupportLossOperation(cereal::PortableBinaryInputArchive &ar);
+
+  virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+  virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+  virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+  virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+  virtual OperationCode opcode() { return SUPPORT_LOSS; }
+  void save(cereal::PortableBinaryOutputArchive &ar);
+
+  void describe(std::ostream &out) { out << "support_loss"; }
+
+  F support = 0;
+  Tensor<F> tmp; // temporary tensor for computation
+};
+
+template <typename F>
 struct SquashOperation : public ConvolutionOperation<F> {
 	SquashOperation(TensorShape s, int c);
 	TensorShape output_shape(TensorShape input);

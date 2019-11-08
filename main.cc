@@ -63,10 +63,13 @@ void unet_test() {
 
 	node = network->relu()(node);
 	node = network->convolution_3D(out_channels, k)(node);
-	auto prediction = network->sigmoid()(node);
 
+	// auto prediction = network->sigmoid()(node);
+	auto prediction = node;
 	auto targetNode = network->input_3D(out_channels);
-    auto loss = network->squared_loss()(prediction, targetNode);
+    // auto loss = network->squared_loss()(prediction, targetNode);
+	float support = 0.5;
+    auto loss = network->support_loss(support)(prediction, targetNode);
     
     //init shapes
     Tensor<float> sample(TensorShape{1, in_channels, 64, 64, 64});
@@ -91,6 +94,7 @@ void unet_test() {
 	AdaOptimizer<float> optimizer(0.01);
 	optimizer.register_network(*network);
 
+	int epoch(0);
     while (true) {
 		loss({sample, y});
         network->zero_grad();
@@ -98,7 +102,11 @@ void unet_test() {
         // network->update(0.01);
         optimizer.update();
 		cout << loss.tensor_set().x->to_vector() << endl;
+		if (epoch++ > 40)
+			break;
     }
+    cout << prediction.tensor_set().x->to_vector() << endl;
+    cout << loss.tensor_set().x->to_vector() << endl;
 }
 
 
