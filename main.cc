@@ -7,6 +7,7 @@
 #include "img.h"
 #include "colour.h"
 #include "optimizer.h"
+#include "io.h"
 #include <unistd.h>
 #include <ctime>
 #include <cuda.h>
@@ -31,41 +32,57 @@ function<Node<F>(Node<F>)> basic_layer(int c, int c_out, int k) {
            };
 }
 
-void unet_test() {
-    int in_channels(1);
-    int out_channels(1);
-
+template <typename F>
+Node<F> make_unet(Network<F> *network, int in_channels, int out_channels) {
 	int c = 2;
 	int k = 3;
     int norm_k = 5;
-	auto network = std::make_unique<Network<double>>();
 	auto in = network->input_3D(in_channels);
-	auto target = network->input_3D(out_channels);
     auto in_normalised = network->local_normalisation_3D(norm_k)(in);
 
-    auto l0 = basic_layer<double>(c, c, k)(in_normalised);
-    auto l1 = network->convolution_downscale_3D(c, 2)(l0);
-    l1 = basic_layer<double>(c, c, k)(l1);
-    auto l2 = network->convolution_downscale_3D(c, 2)(l1);
-    l2 = basic_layer<double>(c, c, k)(l2);
-	auto l3 = network->convolution_downscale_3D(c, 2)(l2);
-	l3 = basic_layer<double>(c, c, k)(l3);
-    auto l2_down = network->convolution_upscale_3D(c, 2)(l3);
-    l2_down = basic_layer<double>(c, c, k)(l2_down);
+    auto l0 = basic_layer<F>(c, c, k)(in_normalised);
+
+    // ^
+    int c1 = c << 1;
+    auto l1 = network->convolution_downscale_3D(c1, 2)(l0);
+    l1 = basic_layer<F>(c1, c1, k)(l1);
+
+    // ^
+    int c2 = c << 2;
+    auto l2 = network->convolution_downscale_3D(c2, 2)(l1);
+    l2 = basic_layer<F>(c2, c2, k)(l2);
+
+    // ^
+    int c3 = c << 3;
+	auto l3 = network->convolution_downscale_3D(c3, 2)(l2);
+	l3 = basic_layer<F>(c3, c3, k)(l3);
+
+    // 
+    auto l2_down = network->convolution_upscale_3D(c2, 2)(l3);
+    l2_down = basic_layer<F>(c2, c2, k)(l2_down);
     l2 = network->addition()(l2, l2_down);
-    auto l1_down = network->convolution_upscale_3D(c, 2)(l2_down);
-    l1_down = basic_layer<double>(c, c, k)(l1_down);
+
+    auto l1_down = network->convolution_upscale_3D(c1, 2)(l2_down);
+    l1_down = basic_layer<F>(c1, c1, k)(l1_down);
     l1 = network->addition()(l1, l1_down);
+
     auto l0_down = network->convolution_upscale_3D(c, 2)(l1_down);
-    l0_down = basic_layer<double>(c, c, k)(l0_down);
+    l0_down = basic_layer<F>(c, c, k)(l0_down);
     l0 = network->addition()(l0, l0_down);
 
-    auto prediction = network->convolution_3D(out_channels, k)(l0);
-    cout << "prediction shape: " << prediction.shape() << endl;
+    auto prediction = network->convolution_3D(out_channels, k)(l0);    
+    return prediction;
+}
+
+void unet_test(string path) {
+    auto network = make_unique<Network<double>>();
+    int in_channels = 1;
+    int out_channels = 1;
+    
+	auto target = network->input_3D(out_channels);
+    auto prediction = make_unet(network.get(), in_channels, out_channels);
 
 	float support = 0.5;
-    cout << "target shape: " << target.shape() << endl;
-    cout << RED << "names: " << prediction.name() << " " << target.name() << DEFAULT << endl;
     auto loss = network->support_loss(support)(prediction, target);
 
     //init shapes
@@ -78,10 +95,13 @@ void unet_test() {
     y.threshold(0.0);
     sample.from_tensor(y);
 
-	SGDOptimizer<double> optimizer(0.01);
-	//AdaOptimizer<float> optimizer(0.01, 0.95);
+	//SGDOptimizer<double> optimizer(0.01);
+	//AdaOptimizer<double> optimizer(0.01, 0.95);
+    AdamOptimizer<double> optimizer(0.01, 0.95, 0.99);
 	optimizer.register_network(*network);
 
+    auto nii_data = read_nifti<float>(path);
+    return;
 	int epoch(0);
     while (true) {
 		loss({sample, y});
@@ -89,7 +109,7 @@ void unet_test() {
         loss.backward();
         optimizer.update();
 		cout << loss.tensor_set().x->to_vector() << endl;
-		if (epoch++ > 100000)
+		if (epoch++ > 1000)
 			break;
     }
     cout << prediction.tensor_set().x->to_vector() << endl;
@@ -182,8 +202,10 @@ void test3() {
 	cout << "Done" << endl;
 }
 
-int main() {
-    unet_test();
+int main(int argc, char **argv) {
+    if (argc < 2)
+        throw std::runtime_error("need argument");
+    unet_test(argv[1]);
 	//test3();
 }
 

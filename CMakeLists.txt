@@ -42,9 +42,17 @@ file(GLOB CPP_HEADERS inc/*.h)
 cuda_add_library(DEXE ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
 add_dependencies(DEXE cereal)
 target_compile_options(DEXE PUBLIC "-fPIC")
+
+find_library(ZNZ znz HINTS /usr/local/lib /usr/local/lib64)
+find_library(niftiio niftiio HINTS /usr/local/lib /usr/local/lib64)
+find_library(nifticdf nifticdf HINTS /usr/local/lib /usr/local/lib64)
+include_directories( DEXE "/usr/local/include/nifti")
+
+
 target_link_libraries( DEXE
-	 ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES}
+	 ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES} nifticdf niftiio znz z
 )
+
 install(TARGETS DEXE EXPORT DEXE-targets LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(FILES ${CPP_HEADERS} DESTINATION include/DEXE)
 
