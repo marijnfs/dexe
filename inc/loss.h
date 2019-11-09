@@ -1,5 +1,4 @@
-#ifndef __LOSS_H__
-#define __LOSS_H__
+#pragma once
 
 #include "tensor.h"
 #include "util.h"
@@ -38,5 +37,3 @@ struct SquaredLoss : public Loss<F> {
 	
 	void calculate_loss(Tensor<F> &in, std::vector<int> answers, Tensor<F> &err);
 };
-
-#endif

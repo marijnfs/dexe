@@ -1,5 +1,4 @@
-#ifndef __CONNET_H__
-#define __CONNET_H__
+#pragma once
 
 #include "network.h"
 #include "tensor.h"
@@ -10,5 +9,3 @@ struct Connet {
 
 	std::vector<FilterBank> filters;
 };
-
-#endif

@@ -1,8 +1,4 @@
-#ifndef __IMG_H__
-#define __IMG_H__
+#pragma once
 
 #include <vector>
 #include <cassert>
-
-
-#endif

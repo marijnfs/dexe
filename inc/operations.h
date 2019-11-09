@@ -1,5 +1,4 @@
-#ifndef __OPERATIONS_H__
-#define __OPERATIONS_H__
+#pragma once
 
 #include <cudnn.h>
 #include <curand.h>
@@ -374,5 +373,3 @@ struct SoftmaxOperation : public DefaultOperation<F> {
 	TensorShape output_shape(TensorShape input);
 	bool matched;
 };
-
-#endif

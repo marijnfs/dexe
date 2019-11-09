@@ -1,11 +1,12 @@
-#ifndef __COLOUR_H__
-#define __COLOUR_H__
+#pragma once
 
 #include <ostream>
 enum Code {
 	FG_RED      = 31,
 	FG_GREEN    = 32,
+	FG_YELLOW   = 33,
 	FG_BLUE     = 34,
+	FG_PURPLE   = 35,
 	FG_DEFAULT  = 39,
 	BG_RED      = 41,
 	BG_GREEN    = 42,
@@ -25,7 +26,7 @@ class Colour {
 
 static Colour RED(FG_RED);
 static Colour GREEN(FG_GREEN);
+static Colour YELLOW(FG_YELLOW);
 static Colour BLUE(FG_BLUE);
+static Colour PURPLE(FG_PURPLE);
 static Colour DEFAULT(FG_DEFAULT);
-
-#endif

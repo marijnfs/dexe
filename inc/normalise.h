@@ -1,7 +1,3 @@
-#ifndef __NORMALISE_H__
-#define __NORMALISE_H__
-
+#pragma once
 
 void normalise_fast(float *ptr, int n);
-
-#endif

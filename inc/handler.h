@@ -1,5 +1,4 @@
-#ifndef __HANDLER_H__
-#define __HANDLER_H__
+#pragma once
 
 #include <cudnn.h>
 #include <curand.h>
@@ -31,5 +30,3 @@ struct Handler {
     
   static Handler *s_handler;
 };
-
-#endif

@@ -562,7 +562,7 @@ SupportLossOperation<F>::SupportLossOperation(cereal::PortableBinaryInputArchive
 template <typename F>
 void SupportLossOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
 	support_loss(in[0]->data, in[1]->data, tmp.data, in[0]->shape.n_elements(), support);
-	F avg = tmp.asum() / tmp.size();
+	F avg = tmp.norm2();
 	vector<F> data = {avg};
 	out[0]->from_vector(data);
 }

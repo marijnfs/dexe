@@ -1,5 +1,4 @@
-#ifndef __CUDAPTR_H__
-#define __CUDAPTR_H__
+#pragma once
 
 template <typename F>
 struct CudaPtr {
@@ -7,6 +6,3 @@ struct CudaPtr {
 	int n;
 
 };
-
-
-#endif

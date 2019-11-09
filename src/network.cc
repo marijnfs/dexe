@@ -394,6 +394,7 @@ string Network<F>::get_unique_name(string name) {
 
 template <typename F>
 int Network<F>::add_operation(Operation<F> *op, vector<int> inputs, TensorShape shape, string name) {
+    
 	int index = names.size();
 
 	auto unique_name = get_unique_name(name);
@@ -402,12 +403,10 @@ int Network<F>::add_operation(Operation<F> *op, vector<int> inputs, TensorShape 
 	names_set.insert(unique_name);
 
 	operations.emplace_back(op);
-	cout << "add operation, add tensor by shape " << shape << endl;
+	cout << "add operation: " << name << ", shape " << shape << endl;
 	tensors.emplace_back(shape);
-	cout << "done add operation, add tensor by shape " << shape << endl;
 
 	input_indices.emplace_back(inputs);
-	cout << "added: " << name << " N:" << names.size() << endl;
 	if (auto param = dynamic_cast<Parametrised<F>*>(op))
 		parameters.emplace_back(param);
 	return index;
@@ -683,8 +682,8 @@ void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) 
 		for (auto idx : input_indices[s]) {
 			tmp_inputs.push_back(tensors[idx].x.get());
 		}
-
 		tmp_outputs.push_back(tensors[s].x.get());
+
 		bool success = operations[s]->forward_dry_run(tmp_inputs, tmp_outputs);
 		if (!success) {
 			ostringstream oss;

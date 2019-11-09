@@ -1,5 +1,4 @@
-#ifndef __CUDAVEC_H__
-#define __CUDAVEC_H__
+#pragma once
 
 #include <vector>
 #include <cuda.h>
@@ -124,10 +123,3 @@ __global__ void divide_kerneld(double *v, double *other, int n);
 __global__ void abs_kerneld(double *v, int n);
 __global__ void exp_kerneld(double *v, int n);
 __global__ void clip_kerneld(double *v, int n, double limit);
-
-
-
-
-
-
-#endif

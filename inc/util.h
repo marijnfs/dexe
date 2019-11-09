@@ -1,5 +1,4 @@
-#ifndef __UTIL_H__
-#define __UTIL_H__
+#pragma once
 
 #include <sstream>
 #include <iostream>
@@ -497,7 +496,3 @@ __global__ void shift_kernel(int X, int Y, int C, float const *in, float *out, i
 __global__ void unshift_kernel(int X, int Y, int C, float const *in, float *out, int dx, int dy, float const beta);
 void shift(float const *in, float *out, int X, int Y, int C, int dx, int dy, float const beta);
 void unshift(float const *in, float *out, int X, int Y, int C, int dx, int dy, float const beta);
-
-
-
-#endif

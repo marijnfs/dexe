@@ -405,5 +405,36 @@ void support_loss(F *input, F *target, F *loss, size_t N, F support) {
 	support_kernel<<<dimGrid, dimBlock>>>(input, target, loss, N, support);
 }
 
+/// In-place threshold kernel
+/// sets values above threshold to 1, 0 otherwise
+template <typename F>
+__global__ void threshold_kernel(F *input, size_t N, F threshold) {
+	size_t i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i >= N)
+		return;
+
+	if (input[i] > threshold)
+		input[i] = 1.0;
+	else
+		input[i] = 0.0;
+}
+
+template <typename F>
+void threshold_cuda(F *input, size_t N, F threshold) {
+	size_t const BLOCKSIZE(1024);
+
+	size_t dimBlock( BLOCKSIZE );
+	size_t dimGrid( (N  + BLOCKSIZE - 1) / BLOCKSIZE);
+
+	threshold_kernel<<<dimGrid, dimBlock>>>(input, N, threshold);
+}
+
+
+
+
 template void support_loss<float>(float *input, float *target, float *loss, size_t N, float support);
 template void support_loss<double>(double *input, double *target, double *loss, size_t N, double support);
+
+
+template void threshold_cuda<float>(float *input, size_t N, float threshold);
+template void threshold_cuda<double>(double *input, size_t N, double threshold);

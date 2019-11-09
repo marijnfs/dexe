@@ -1,8 +1,6 @@
-#ifndef __RAND_H__
-#define __RAND_H__
+#pragma once
 
 #include <random>
-
 
 struct Rand {
 	std::random_device rd;
@@ -15,5 +13,3 @@ struct Rand {
 	static Rand &inst();
 	static Rand *s_rand;
 };
-
-#endif

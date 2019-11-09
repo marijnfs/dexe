@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <iostream>
 #include <vector>
 #include <set>
@@ -29,6 +28,7 @@ struct Node {
 
 	int index = -1; //-1 means undefined
 	Network<F> *network = nullptr;
+    std::string name() { return network->names[index]; }
 };
 
 template <typename F>

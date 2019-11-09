@@ -1,8 +1,5 @@
-#ifndef __OPTIONS_H__
-#define __OPTIONS_H__
+#pragma once
 
 struct Options {
 	Options(int argc, char **argv);
 };
-
-#endif

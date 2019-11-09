@@ -1,5 +1,4 @@
-#ifndef __BALANCER_H__
-#define __BALANCER_H__
+#pragma once
 
 #include "util.h"
 #include <vector>
@@ -21,5 +20,3 @@ struct Balancer {
 
 	static Balancer *b;
 };
-
-#endif

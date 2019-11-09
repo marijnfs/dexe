@@ -1,5 +1,4 @@
-#ifndef __TENSOR_H__
-#define __TENSOR_H__
+#pragma once
 
 #include <cudnn.h>
 #include <vector>
@@ -79,6 +78,7 @@ struct Tensor {
 	F asum();
 	F norm();
 	F norm2();
+	void threshold(F value);
 
   	int size();
 
@@ -195,6 +195,3 @@ template <typename F>
 inline std::ostream &operator<<(std::ostream &o, FilterBank<F> &f) {
   return o << "F:" << f.dimensions;
 }
-
-
-#endif

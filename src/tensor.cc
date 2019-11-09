@@ -5,6 +5,7 @@
 #include "util.h"
 #include "handler.h"
 #include "img.h"
+#include "kernels.h"
 
 using namespace std;
 
@@ -166,6 +167,10 @@ void Tensor<F>::zero() {
 	handle_error( cudaMemset(data, 0, sizeof(F) * size()));
 }
 
+template <typename F>
+void Tensor<F>::threshold(F value) {
+	threshold_cuda(data, size(), value);
+}
 
 template <typename F>
 vector<F> Tensor<F>::to_vector() {

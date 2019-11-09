@@ -1,5 +1,4 @@
-#ifndef __GATE_H__
-#define __GATE_H__
+#pragma once
 
 #include "tensor.h"
 
@@ -70,5 +69,8 @@ __global__ void support_kernel(F *prediction, F *target, F *loss, size_t N, F su
 template <typename F>
 void support_loss(F *input, F *target, F *loss, size_t N, F support);
 
+template <typename F>
+__global__ void threshold_kernel(F *input, size_t N, F threshold);
 
-#endif
+template <typename F>
+void threshold_cuda(F *input, size_t N, F threshold);
