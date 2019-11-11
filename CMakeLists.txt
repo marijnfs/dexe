@@ -69,3 +69,6 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DEXEConfig.cmake" DESTINATION "lib/cm
 ### Build the executable
 add_executable(main main.cc)
 target_link_libraries(main DEXE ${CUDNN})
+
+add_executable(train train.cc)
+target_link_libraries(train DEXE ${CUDNN})
