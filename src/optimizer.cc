@@ -113,12 +113,12 @@ void AdamOptimizer<F>::update() {
 	std *= beta;
 	std += tmp;
 
-	tmp = network->grad_vec;
 	tmp2 = std;
 	tmp2.sqrt();
 	tmp2 += eps;
-
+	tmp = network->grad_vec;
 	tmp /= tmp2;
+	
 	momentum *= momentum_factor;
 	tmp *= (1.0 - momentum_factor);
 	momentum += tmp;

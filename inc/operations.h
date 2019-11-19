@@ -299,8 +299,6 @@ struct TanhOperation : public DefaultOperation<F> {
 	void describe(std::ostream &out) { out << "tanh"; }
 	virtual OperationCode opcode() { return TANH; }
 
-	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
 	void save(cereal::PortableBinaryOutputArchive &ar) {}
 
 	TensorShape output_shape(TensorShape input);

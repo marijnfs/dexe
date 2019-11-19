@@ -176,18 +176,6 @@ void Network<F>::save(std::string path) {
 	} 
 }
 
-/*  NONE,
-  INPUT,
-  CONVOLUTION,
-  CONVOLUTION_TRANSPOSE,
-  TANH,
-  SIGMOID,
-  RELU,
-  ADDITION,
-  SOFTMAX,
-  LOCAL_NORMALISATION,
-  SQUARED_LOSS
-*/
 template <typename F>
 
 
@@ -229,6 +217,8 @@ void Network<F>::load(std::string path) {
 			op = new TanhOperation<F>();
 		} else if (opcode == SIGMOID) {
 			op = new SigmoidOperation<F>();
+		} else if (opcode == TANH) {
+			op = new TanhOperation<F>();
 		} else if (opcode == ADDITION) {
 			op = new AdditionOperation<F>();
 		} else if (opcode == RELU) {
@@ -512,6 +502,17 @@ std::function<Node<F>(Node<F>)> Network<F>::sigmoid(string name) {
 		return Node<F>(index, this);
 	};
 }
+
+template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::tanh(string name) {
+	return [this, name](Node<F> n) {
+		auto in_c = n.shape().c();
+		auto index = add_operation(new TanhOperation<F>(), vector<int>{n.index}, TensorShape{0, in_c, 0, 0}, name);
+
+		return Node<F>(index, this);
+	};
+}
+
 
 template <typename F>
 std::function<Node<F>(Node<F>)> Network<F>::local_normalisation(int k, string name) {

@@ -30,8 +30,16 @@ int TensorShape::n_elements() {
 		return 0;
 	return calculate_product(dimensions);
 }
+
 int TensorShape::n_dimensions() {
 	return dimensions.size();
+}
+
+int TensorShape::n_pixels() {
+	if (dimensions.size() <= 2)
+		return 1;
+	std::vector<int> pixelDims(dimensions.begin() + 2, dimensions.end());
+	return calculate_product(pixelDims);
 }
 
 void TensorShape::set_c(int c) {

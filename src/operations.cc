@@ -562,7 +562,7 @@ SupportLossOperation<F>::SupportLossOperation(cereal::PortableBinaryInputArchive
 template <typename F>
 void SupportLossOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
 	support_loss(in[0]->data, in[1]->data, tmp.data, in[0]->shape.n_elements(), support);
-	F avg = tmp.norm2();
+	F avg = tmp.norm2() / in[0]->shape.n_elements();
 	vector<F> data = {avg};
 	out[0]->from_vector(data);
 }
@@ -580,7 +580,7 @@ bool SupportLossOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::
 	}
 	
 	out[0]->reshape(TensorShape({1, 1, 1}));
-	tmp.reshape(in[0]->shape);	
+	tmp.reshape(in[0]->shape);
 	return true;
 }
 
@@ -594,6 +594,7 @@ template <typename F>
 void SupportLossOperation<F>::backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) {
 	in_grad[0]->from_tensor(tmp, 1.0 / tmp.shape.n_elements());
 }
+
 template <typename F>
 void SupportLossOperation<F>::save(cereal::PortableBinaryOutputArchive &ar){
 	ar(support);
@@ -768,17 +769,6 @@ template <typename F>
 TanhOperation<F>::TanhOperation(F scale_) : scale(scale_) {
 	cudnnCreateActivationDescriptor(&desc);
 	cudnnSetActivationDescriptor(desc, CUDNN_ACTIVATION_TANH, CUDNN_NOT_PROPAGATE_NAN, 0);
-}
-
-template <typename F>
-void TanhOperation<F>::forward(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out) {
-	forward(*in[0], *out[0]);
-}
-
-template <typename F>
-bool TanhOperation<F>::forward_dry_run(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out) {
-	out[0]->reshape(in[0]->shape);
-	return false;
 }
 
 template <typename F>

@@ -28,6 +28,7 @@ struct TensorShape {
   int offset(int n, int c, int y, int x);
   int n_elements();
   int n_dimensions();
+  int n_pixels();
 
   void set_c(int c);
 

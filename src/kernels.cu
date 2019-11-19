@@ -400,7 +400,7 @@ void support_loss(F *input, F *target, F *loss, size_t N, F support) {
 	size_t const BLOCKSIZE(1024);
 
 	size_t dimBlock( BLOCKSIZE );
-	size_t dimGrid( (N  + BLOCKSIZE - 1) / BLOCKSIZE);
+	size_t dimGrid( (N + BLOCKSIZE - 1) / BLOCKSIZE);
 
 	support_kernel<<<dimGrid, dimBlock>>>(input, target, loss, N, support);
 }

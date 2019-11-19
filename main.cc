@@ -205,7 +205,7 @@ void test3() {
 int main(int argc, char **argv) {
     if (argc < 2)
         throw std::runtime_error("need argument");
-    unet_test(argv[1]);
-	//test3();
+    //unet_test(argv[1]);
+	test3();
 }
 
