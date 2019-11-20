@@ -213,6 +213,8 @@ void Network<F>::load(std::string path) {
 			op = new SupportLossOperation<F>(ar);
 		} else if (opcode == LOCAL_NORMALISATION) {
 			op = new LocalNormalisationOperation<F>(ar);
+		} else if (opcode == INSTANCE_NORMALISATION) {
+			op = new InstanceNormalisationOperation<F>();
 		} else if (opcode == TANH) {
 			op = new TanhOperation<F>();
 		} else if (opcode == SIGMOID) {
