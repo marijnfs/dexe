@@ -74,8 +74,8 @@ void AdaOptimizer<F>::update() {
 	tmp2 = std;
 	tmp2.sqrt();
 	tmp2 += eps;
-
 	tmp /= tmp2;
+	
 	tmp *= lr;
 	network->param_vec += tmp;
 }
@@ -98,6 +98,7 @@ void AdamOptimizer<F>::register_network(Network<F> &network_) {
 
 	momentum.resize(network->param_vec.N);
 	std.resize(network->param_vec.N);
+	std += 0.1;
 
 	tmp.resize(network->param_vec.N);
 	tmp2.resize(network->param_vec.N);
@@ -113,12 +114,14 @@ void AdamOptimizer<F>::update() {
 	std *= beta;
 	std += tmp;
 
+	cout << "d:"<<tmp2.data << endl;
 	tmp2 = std;
+	cout << "d:"<<tmp2.data << endl;
 	tmp2.sqrt();
 	tmp2 += eps;
 	tmp = network->grad_vec;
 	tmp /= tmp2;
-	
+
 	momentum *= momentum_factor;
 	tmp *= (1.0 - momentum_factor);
 	momentum += tmp;

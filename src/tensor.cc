@@ -6,6 +6,7 @@
 #include "handler.h"
 #include "img.h"
 #include "kernels.h"
+#include "cudavec.h"
 
 using namespace std;
 
@@ -103,6 +104,14 @@ Tensor<F>::Tensor(TensorShape s, F *data_, cudnnTensorFormat_t format_):
   shape(s), owning(false), data(data_), format(format_) {
 	handle_error( cudnnCreateTensorDescriptor(&td) );
 	allocate();
+}
+
+
+template <typename F>
+Tensor<F>::Tensor(std::vector<F> data) : shape(TensorShape({1, 1, data.size()})), owning(true) {
+	handle_error( cudnnCreateTensorDescriptor(&td) );
+	allocate();
+	from_vector(data);
 }
 
 template <typename F>
@@ -303,6 +312,72 @@ double Tensor<double>::asum() {
 	return result;
 }
 
+template <>
+float Tensor<float>::sum() {
+	Tensor<float> one({1});
+	float result(0);
+	handle_error( cublasSdot(Handler::cublas(), size(), data, 1, one.data, 0, &result) );
+	return result;
+}
+
+template <typename F>
+F Tensor<F>::mean() {
+	return sum() / shape.n_elements();
+}
+
+template <>
+double Tensor<double>::sum() {
+	Tensor<double> one({1});
+	double result(0);
+	handle_error( cublasDdot(Handler::cublas(), size(), data, 1, one.data, 0, &result) );
+	return result;
+}
+
+template <typename F>
+Tensor<F> &Tensor<F>::operator*=(F val) {
+	CudaVec<F> vec(data, size());
+	vec *= val;
+	return *this;
+}
+
+template <typename F>
+Tensor<F> &Tensor<F>::operator/=(F val) {
+	CudaVec<F> vec(data, size());
+	vec /= val;
+	return *this;
+}
+
+template <typename F>
+Tensor<F> &Tensor<F>::operator-=(F val) {
+	CudaVec<F> vec(data, size());
+	vec += -val;
+	return *this;
+}
+
+template <typename F>
+Tensor<F> &Tensor<F>::operator+=(Tensor<F> &t) {
+	CudaVec<F> vec(data, size());
+	CudaVec<F> other(t.data, t.size());
+	vec += other;
+	return *this;
+}
+
+template <typename F>
+Tensor<F> &Tensor<F>::operator*=(Tensor<F> &t) {
+	CudaVec<F> vec(data, size());
+	CudaVec<F> other(t.data, t.size());
+	vec *= other;
+	return *this;
+}
+
+template <typename F>
+Tensor<F> &Tensor<F>::operator-=(Tensor<F> &t) {
+	CudaVec<F> vec(data, size());
+	CudaVec<F> other(t.data, t.size());
+	vec -= other;
+	return *this;
+}
+
 template <typename F>
 TensorSet<F>::TensorSet(TensorShape shape_) {
 	alloc_x(shape_);
@@ -460,22 +535,22 @@ void FilterBank<F>::fill(F val) {
 }
 
 
-template <typename F>
-Tensor<F> &operator-=(Tensor<F> &in, Tensor<F> &other) {
-	assert(in.size() == other.size());
-	add_cuda<F>(other.data, in.data, in.size(), -1);
-	return in;
-}
+// template <typename F>
+// Tensor<F> &operator-=(Tensor<F> &in, Tensor<F> &other) {
+// 	assert(in.size() == other.size());
+// 	add_cuda<F>(other.data, in.data, in.size(), -1);
+// 	return in;
+// }
 
 
 template struct Tensor<float>;
 template struct TensorSet<float>;
 template struct FilterBank<float>;
-template Tensor<float> &operator-=<float>(Tensor<float> &in, Tensor<float> &other);
+// template Tensor<float> &operator-=<float>(Tensor<float> &in, Tensor<float> &other);
 // template Tensor<float> &operator*=<float>(Tensor<float> &in, float const other);
 
 template struct Tensor<double>;
 template struct TensorSet<double>;
 template struct FilterBank<double>;
-template Tensor<double> &operator-=<double>(Tensor<double> &in, Tensor<double> &other);
+// template Tensor<double> &operator-=<double>(Tensor<double> &in, Tensor<double> &other);
 // template Tensor<double> &operator*=<double>(Tensor<double> &in, double const other);

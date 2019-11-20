@@ -64,5 +64,5 @@ struct AdamOptimizer : public Optimizer<F> {
     F lr = 0;
 	F beta = 0.0;
 	F momentum_factor = 0.0;
-    F eps = 0.01;
+    F eps = 0.0001;
 };

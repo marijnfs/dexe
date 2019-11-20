@@ -77,8 +77,8 @@ void ConvolutionOperation<F>::init() {
 		vector<int> bias_dims(dimensions.size(), 1); //number of filter dimensions is one more than output dim
 		bias_dims[1] = filter_bank.out_c(); //dimensions[1] corresponds to output channels
 		cout << "reshaping bias to " << bias_dims << endl;
-		bias.reshape(bias_dims);
-		bias_grad.reshape(bias_dims);
+		bias.reshape(TensorShape(bias_dims));
+		bias_grad.reshape(TensorShape(bias_dims));
 		cout << "done reshaping bias" << endl;
 	}
 	
@@ -614,7 +614,7 @@ TensorShape SquashOperation<F>::output_shape(TensorShape in) {
   vector<int> out_dimensions(in.n_dimensions(), 1);
   out_dimensions[0] = in.n();
   out_dimensions[1] = c;
-  return out_dimensions;
+  return TensorShape(out_dimensions);
 }
 
 template <typename F>
@@ -935,6 +935,76 @@ TensorShape SoftmaxOperation<F>::output_shape(TensorShape in) {
 	return in;
 }
 
+//////// Instance Norm
+template <typename F>
+InstanceNormalisationOperation<F>::InstanceNormalisationOperation() {
+
+}
+
+// Runs the forward step
+template <typename F>
+void InstanceNormalisationOperation<F>::forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	auto &in_tensor(*in[0]);
+	auto &out_tensor(*out[0]);
+
+	F result(0);
+	auto mean = in_tensor.mean();
+
+	F eps(0.000001);
+	out_tensor.from_tensor(in_tensor);
+	out_tensor -= mean;
+	variance = out_tensor.norm2() / out_tensor.size();
+
+	out_tensor /= sqrt(variance + eps);
+}
+
+// Responsible for both checking if sizes match, and making sure the memory is allocated
+template <typename F>
+bool InstanceNormalisationOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) {
+	out[0]->reshape(in[0]->shape);
+	tmp.reshape(in[0]->shape);
+	return true;
+}
+
+
+// Runs the backward step
+template <typename F>
+void InstanceNormalisationOperation<F>::backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { 
+	auto mean_dey = out_grad[0]->mean();
+	
+	tmp.from_tensor(*out_grad[0]);
+	tmp *= *out[0];
+	auto mean_deyy = tmp.mean();
+	
+	tmp.from_tensor(*out[0]);
+	tmp *= mean_deyy;
+
+	in_grad[0]->from_tensor(*out_grad[0]);
+	(*in_grad[0]) -= mean_dey;
+	(*in_grad[0]) -= tmp;
+
+	F eps(0.000001);
+	cout << "var: " << variance << endl;
+	(*in_grad[0]) /= sqrt(variance + eps);
+}
+
+template <typename F>
+bool InstanceNormalisationOperation<F>::backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) {
+	in_grad[0]->reshape(in[0]->shape);
+	return true;
+}
+
+// Write a readable string to the ostream
+template <typename F>
+void InstanceNormalisationOperation<F>::describe(std::ostream &out) {
+	out << "instance_norm";
+}
+
+template <typename F>
+void InstanceNormalisationOperation<F>::save(cereal::PortableBinaryOutputArchive &ar) {
+}
+
+
 template struct InputOperation<float>;
 template struct ConvolutionOperation<float>;
 template struct ConvolutionTransposeOperation<float>;
@@ -951,6 +1021,7 @@ template struct ReluOperation<float>;
 template struct SoftmaxOperation<float>;
 template struct SquaredLossOperation<float>;
 template struct SupportLossOperation<float>;
+template struct InstanceNormalisationOperation<float>;
 
 
 template struct InputOperation<double>;
@@ -969,3 +1040,4 @@ template struct ReluOperation<double>;
 template struct SoftmaxOperation<double>;
 template struct SquaredLossOperation<double>;
 template struct SupportLossOperation<double>;
+template struct InstanceNormalisationOperation<double>;

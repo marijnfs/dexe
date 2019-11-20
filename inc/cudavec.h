@@ -8,16 +8,22 @@ template <typename F>
 struct CudaVec {
 	F *data = 0;
 	int N = 0;
+	bool own = true;
 
 	CudaVec() : data(0), N(0) { }
 	CudaVec(int n_) : data(0), N(0) { resize(n_); }
+	CudaVec(F *data, int n_) : data(data), N(n_), own(false) {}
+	
 	~CudaVec() {
-	  if (N) {
+	  if (own && N) {
 	    cudaFree(data);
 	  }
 	}	  
 	
 	void resize(int n2) {
+		if (!own)
+			throw std::runtime_error("Can resize non-owning cudavec");
+
 		if (N != n2) {
           if (N) {
             cudaFree(data);

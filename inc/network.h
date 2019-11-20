@@ -51,6 +51,7 @@ struct Network {
 	std::function<Node<F>(Node<F>)> sigmoid(std::string name = "sigmoid");
 	std::function<Node<F>(Node<F>)> local_normalisation(int k, std::string name = "lnc");
 	std::function<Node<F>(Node<F>)> local_normalisation_3D(int k, std::string name = "lnc");
+	std::function<Node<F>(Node<F>)> instance_normalisation(std::string name = "instance_norm");
 	std::function<Node<F>(Node<F>, Node<F>)> squared_loss(std::string name = "squared_loss");
 	std::function<Node<F>(Node<F>, Node<F>)> support_loss(F support, std::string name = "support_loss");
 

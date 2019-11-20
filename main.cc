@@ -147,6 +147,7 @@ void test3() {
 		// auto prediction = net.convolution_upscale_3D(next_c, 2)(node);
 		
 		auto node = net.convolution_3D(next_c, k)(in1);
+		node = net.instance_normalisation()(node);
 		//auto node2 = net.convolution_3D(next_c, k)(in1);
 		//node = net.addition()(node, node2);		
         auto prediction = net.convolution_3D(1, k)(node);
@@ -203,8 +204,14 @@ void test3() {
 }
 
 int main(int argc, char **argv) {
-    if (argc < 2)
-        throw std::runtime_error("need argument");
+	// Tensor<double> bla(TensorShape({1, 1, 4}));
+	// bla.init_normal(0.0, 4.0);
+	// cout << bla.norm2() << endl;
+	// bla /= sqrt(bla.norm2() / bla.size());
+	// cout << bla.norm2() << endl;
+	// return 0;
+    // if (argc < 2)
+    //     throw std::runtime_error("need argument");
     //unet_test(argv[1]);
 	test3();
 }

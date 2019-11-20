@@ -86,6 +86,20 @@ CudaVec<float> &CudaVec<float>::add(int idx, float val) {
 	return *this;
 }
 
+template <>
+CudaVec<float> &CudaVec<float>::operator+=(float v) {
+	//primitive blocksize determination
+	int const BLOCKSIZE(1024);
+
+	dim3 dimBlock( BLOCKSIZE );
+	dim3 dimGrid( (N + BLOCKSIZE - 1) / BLOCKSIZE );
+
+	add_scalar<<<dimGrid, dimBlock>>>(data, v, N);
+	
+	handle_error( cudaGetLastError() );
+	handle_error( cudaDeviceSynchronize());
+	return *this;
+}
 
 template <>
 CudaVec<float> &CudaVec<float>::operator*=(CudaVec<float> &other) {
@@ -146,18 +160,23 @@ CudaVec<float> &CudaVec<float>::operator*=(float v) {
 }
 
 template <>
-CudaVec<float> &CudaVec<float>::operator+=(float v) {
+CudaVec<double> &CudaVec<double>::operator*=(double v) {
 	//primitive blocksize determination
 	int const BLOCKSIZE(1024);
 
 	dim3 dimBlock( BLOCKSIZE );
 	dim3 dimGrid( (N + BLOCKSIZE - 1) / BLOCKSIZE );
 
-	add_scalar<<<dimGrid, dimBlock>>>(data, v, N);
-	
+	times_scalard<<<dimGrid, dimBlock>>>(data, v, N);
+
 	handle_error( cudaGetLastError() );
 	handle_error( cudaDeviceSynchronize());
 	return *this;
+}
+
+template <typename F>
+CudaVec<F> &CudaVec<F>::operator/=(F v) {
+	return (*this) *= (1.0 / v);
 }
 
 ///////Double versions
@@ -279,20 +298,6 @@ CudaVec<double> &CudaVec<double>::operator/=(CudaVec<double> &other) {
 }
 
 
-template <>
-CudaVec<double> &CudaVec<double>::operator*=(double v) {
-	//primitive blocksize determination
-	int const BLOCKSIZE(1024);
-
-	dim3 dimBlock( BLOCKSIZE );
-	dim3 dimGrid( (N + BLOCKSIZE - 1) / BLOCKSIZE );
-
-	times_scalard<<<dimGrid, dimBlock>>>(data, v, N);
-
-	handle_error( cudaGetLastError() );
-	handle_error( cudaDeviceSynchronize());
-	return *this;
-}
 
 template <>
 CudaVec<double> &CudaVec<double>::operator+=(double v) {

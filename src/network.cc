@@ -535,6 +535,16 @@ std::function<Node<F>(Node<F>)> Network<F>::local_normalisation_3D(int k, string
 }
 
 template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::instance_normalisation(string name) {
+	return [this, name](Node<F> n) {
+		auto in_c = n.shape().c();
+		auto index = add_operation(new InstanceNormalisationOperation<F>(), vector<int>{n.index}, TensorShape{0, in_c, 0, 0, 0}, name);
+
+		return Node<F>(index, this);
+	};
+}
+
+template <typename F>
 std::function<Node<F>(Node<F>, Node<F>)> Network<F>::squared_loss(std::string name) {
 	return [this, name](Node<F> n1, Node<F> n2) {
 		auto in_c = n1.shape().c();

@@ -19,7 +19,7 @@ struct TensorShape {
   TensorShape(){}
   TensorShape(int n, int c, int h, int w);
   TensorShape(int n, int c, int d, int h, int w);
-  TensorShape(std::vector<int> dimensions);
+  explicit TensorShape(std::vector<int> dimensions);
 
   bool operator==(TensorShape const &other) const;
   bool operator!=(TensorShape const &other) const;
@@ -51,6 +51,7 @@ struct Tensor {
 	Tensor();
 	Tensor(TensorShape shape, cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT);
 	Tensor(TensorShape shape, F *data, cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT);
+	Tensor(std::vector<F> data); //creates a single dim tensor with c = len(data)
 
 
 	~Tensor();
@@ -77,9 +78,18 @@ struct Tensor {
    
 
 	F asum();
+	F sum();
+	F mean();
 	F norm();
 	F norm2();
 	void threshold(F value);
+
+	Tensor<F> &operator*=(F val);
+	Tensor<F> &operator/=(F val);
+	Tensor<F> &operator-=(F val);
+	Tensor<F> &operator+=(Tensor<F> &t);
+	Tensor<F> &operator*=(Tensor<F> &t);
+	Tensor<F> &operator-=(Tensor<F> &t);
 
   	int size();
 
@@ -115,9 +125,6 @@ struct Tensor {
 
 	cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT;
 };
-
-template <typename F>
-Tensor<F> &operator-=(Tensor<F> &in, Tensor<F> const &other);
 
 template <typename F>
 inline Tensor<F> &operator*=(Tensor<F> &in, F const other) {

@@ -371,3 +371,28 @@ struct SoftmaxOperation : public DefaultOperation<F> {
 	TensorShape output_shape(TensorShape input);
 	bool matched;
 };
+
+template <typename F>
+struct InstanceNormalisationOperation : public Operation<F> {
+	InstanceNormalisationOperation();
+
+	// Runs the forward step
+	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+
+	// Responsible for both checking if sizes match, and making sure the memory is allocated
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+
+	// Runs the backward step
+	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+	
+    // Write a readable string to the ostream
+	void describe(std::ostream &out);
+
+	OperationCode opcode() { return INSTANCE_NORMALISATION; }
+
+	void save(cereal::PortableBinaryOutputArchive &ar);
+
+	Tensor<F> tmp;
+	F variance = 0.0;
+};
