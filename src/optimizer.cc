@@ -75,7 +75,7 @@ void AdaOptimizer<F>::update() {
 	tmp2.sqrt();
 	tmp2 += eps;
 	tmp /= tmp2;
-	
+
 	tmp *= lr;
 	network->param_vec += tmp;
 }
@@ -114,9 +114,7 @@ void AdamOptimizer<F>::update() {
 	std *= beta;
 	std += tmp;
 
-	cout << "d:"<<tmp2.data << endl;
 	tmp2 = std;
-	cout << "d:"<<tmp2.data << endl;
 	tmp2.sqrt();
 	tmp2 += eps;
 	tmp = network->grad_vec;

@@ -314,7 +314,7 @@ double Tensor<double>::asum() {
 
 template <>
 float Tensor<float>::sum() {
-	Tensor<float> one({1});
+	static Tensor<float> one({1});
 	float result(0);
 	handle_error( cublasSdot(Handler::cublas(), size(), data, 1, one.data, 0, &result) );
 	return result;

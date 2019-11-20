@@ -984,7 +984,6 @@ void InstanceNormalisationOperation<F>::backward(std::vector<Tensor<F>*> &in, st
 	(*in_grad[0]) -= tmp;
 
 	F eps(0.000001);
-	cout << "var: " << variance << endl;
 	(*in_grad[0]) /= sqrt(variance + eps);
 }
 
