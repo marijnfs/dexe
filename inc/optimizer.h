@@ -12,8 +12,6 @@ struct Optimizer {
 
     virtual void register_network(Network<F> &network);
     virtual void update();
-
-    
 };
 
 template <typename F>

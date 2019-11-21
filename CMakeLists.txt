@@ -9,6 +9,9 @@ if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
 	message(FATAL_ERROR "In-source builds are not permitted. Make a separate folder for building:\nmkdir build; cd build; cmake ..\nBefore that, remove the files already created:\nrm -rf CMakeCache.txt CMakeFiles")
 endif()
 
+option(USE_NIFTI "Enable Nifti loading" false)
+option(BUILD_SHARED_LIBS "Build a shared library" true)
+
 find_package(cereal REQUIRED)
 find_package(CUDA QUIET REQUIRED)
 find_library(CUDNN cudnn HINTS /usr/local/cuda/lib64 /usr/local/cuda/lib)
@@ -32,12 +35,12 @@ include_directories(
 file(GLOB CPP_SOURCE src/*.cc)
 file(GLOB CU_SOURCE src/*.cu)
 file(GLOB CPP_HEADERS inc/*.h)
+set(EXT_HEADERS inc/network.h inc/optimizer.h inc/tensor.h)
 
 #set_property(SOURCE ${CPP_SOURCE} PROPERTY COMPILE_FLAGS -O3)
 #set_property(SOURCE ${CU_SOURCE} PROPERTY COMPILE_FLAGS -O3)
 #set_property(SOURCE ${CPP_HEADERS} PROPERTY COMPILE_FLAGS -O3)
 
-option(USE_NIFTI "Enable Nifti loading" false)
 if (USE_NIFTI)
    find_library(ZNZ znz HINTS /usr/local/lib /usr/local/lib64 REQUIRED)
    find_library(niftiio niftiio HINTS /usr/local/lib /usr/local/lib64 REQUIRED)
@@ -65,7 +68,7 @@ if (USE_NIFTI)
 endif()
 
 install(TARGETS DEXE EXPORT DEXE-targets LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
-install(FILES ${CPP_HEADERS} DESTINATION include/DEXE)
+install(FILES ${EXT_HEADERS} DESTINATION include/DEXE)
 
 # install export target and config for find_package
 install(EXPORT DEXE-targets DESTINATION lib/cmake/DEXE)
