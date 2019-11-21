@@ -100,8 +100,6 @@ void unet_test(string path) {
     AdamOptimizer<double> optimizer(0.01, 0.95, 0.99);
 	optimizer.register_network(*network);
 
-    auto nii_data = read_nifti<float>(path);
-    return;
 	int epoch(0);
     while (true) {
 		loss({sample, y});

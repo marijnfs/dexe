@@ -37,21 +37,32 @@ file(GLOB CPP_HEADERS inc/*.h)
 #set_property(SOURCE ${CU_SOURCE} PROPERTY COMPILE_FLAGS -O3)
 #set_property(SOURCE ${CPP_HEADERS} PROPERTY COMPILE_FLAGS -O3)
 
+option(USE_NIFTI "Enable Nifti loading" false)
+if (USE_NIFTI)
+   find_library(ZNZ znz HINTS /usr/local/lib /usr/local/lib64 REQUIRED)
+   find_library(niftiio niftiio HINTS /usr/local/lib /usr/local/lib64 REQUIRED)
+   find_library(nifticdf nifticdf HINTS /usr/local/lib /usr/local/lib64 REQUIRED)
+   add_definitions( -DUSE_NIFTI )
+endif()
+
 
 
 cuda_add_library(DEXE ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
 add_dependencies(DEXE cereal)
 target_compile_options(DEXE PUBLIC "-fPIC")
 
-find_library(ZNZ znz HINTS /usr/local/lib /usr/local/lib64)
-find_library(niftiio niftiio HINTS /usr/local/lib /usr/local/lib64)
-find_library(nifticdf nifticdf HINTS /usr/local/lib /usr/local/lib64)
+
+
+
 include_directories( DEXE "/usr/local/include/nifti")
 
-
 target_link_libraries( DEXE
-	 ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES} nifticdf niftiio znz z
+	 ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES}
 )
+
+if (USE_NIFTI)
+   target_link_libraries( DEXE nifticdf niftiio znz z)
+endif()
 
 install(TARGETS DEXE EXPORT DEXE-targets LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(FILES ${CPP_HEADERS} DESTINATION include/DEXE)
