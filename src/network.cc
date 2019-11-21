@@ -1,5 +1,6 @@
 #include "network.h"
 #include "util.h"
+#include "operations.h"
 
 #include <cereal/archives/portable_binary.hpp>
 #include <cereal/types/vector.hpp>

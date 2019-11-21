@@ -8,10 +8,16 @@
 
 #include "util.h"
 #include "tensor.h"
-#include "operations.h"
 #include "cudavec.h"
+#include "cudaptr.h"
 
 namespace dexe {
+
+template <typename F>
+struct Operation;
+
+template <typename F>
+struct Parametrised;
 
 template <typename F>
 struct Network;

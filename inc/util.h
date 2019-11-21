@@ -19,7 +19,6 @@
 #include <thread>
 
 #include "handler.h"    
-#include "normalise.h"
 
 namespace dexe {
 

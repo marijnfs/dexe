@@ -1,12 +1,15 @@
 #include <cassert>
 #include <cstdlib>
 
+#include <cereal/cereal.hpp>
+
 #include "tensor.h"
 #include "util.h"
 #include "handler.h"
 #include "img.h"
 #include "kernels.h"
 #include "cudavec.h"
+
 
 using namespace std;
 

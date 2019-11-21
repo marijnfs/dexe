@@ -35,7 +35,8 @@ include_directories(
 file(GLOB CPP_SOURCE src/*.cc)
 file(GLOB CU_SOURCE src/*.cu)
 file(GLOB CPP_HEADERS inc/*.h)
-set(EXT_HEADERS inc/network.h inc/optimizer.h inc/tensor.h)
+set(EXT_HEADERS inc/dexe.h inc/network.h inc/optimizer.h inc/tensor.h inc/util.h inc/cudavec.h inc/cudaptr.h inc/handler.h)
+
 
 #set_property(SOURCE ${CPP_SOURCE} PROPERTY COMPILE_FLAGS -O3)
 #set_property(SOURCE ${CU_SOURCE} PROPERTY COMPILE_FLAGS -O3)

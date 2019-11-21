@@ -4,9 +4,6 @@
 #include <vector>
 #include <iostream>
 #include "util.h"
-#include "normalise.h"
-
-#include <cereal/cereal.hpp>
 
 const bool ZERO_ON_INIT(true);
 const cudnnTensorFormat_t DEFAULT_TENSOR_FORMAT = CUDNN_TENSOR_NCHW;
