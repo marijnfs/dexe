@@ -11,6 +11,8 @@
 #include "operations.h"
 #include "cudavec.h"
 
+namespace dexe {
+
 template <typename F>
 struct Network;
 
@@ -132,3 +134,4 @@ struct Network {
 	bool finished = false; //for now we keep it at true
 };
 
+}

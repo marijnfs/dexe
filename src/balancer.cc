@@ -2,6 +2,8 @@
 
 using namespace std;
 
+namespace dexe {
+
 Balancer *Balancer::b = 0;
 
 Balancer::Balancer() : cur(-1) {
@@ -54,4 +56,6 @@ void Balancer::init(int n) {
 		b->time.resize(n);
 		b->factor.resize(n, 1.0);
 	}
+}
+
 }

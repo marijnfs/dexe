@@ -2,6 +2,8 @@
 
 using namespace std;
 
+namespace dexe {
+
 Rand *Rand::s_rand = 0;
 
 Rand::Rand() : engine(rd()) {
@@ -18,4 +20,6 @@ Rand &Rand::inst() {
 int Rand::randn(int n) {
 	uniform_int_distribution<int> uni(0, n - 1);
     return uni(Rand::inst().engine);
+}
+
 }

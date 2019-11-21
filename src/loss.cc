@@ -3,6 +3,8 @@
 
 using namespace std;
 
+namespace dexe {
+
 template <typename F>
 Loss<F>::Loss(int n_, int c_) : n(n_), c(c_), last_loss(0), last_correct(0) {
 
@@ -141,3 +143,5 @@ template struct SoftmaxLoss<float>;
 
 template struct SquaredLoss<double>;
 template struct SoftmaxLoss<double>;
+
+}

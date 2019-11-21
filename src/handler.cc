@@ -3,6 +3,8 @@
 
 using namespace std;
 
+namespace dexe {
+
 Handler *Handler::s_handler = 0;
 
 Handler::Handler():
@@ -91,4 +93,6 @@ char *Handler::workspace() {
  if (!s_handler)
     s_handler->s_init();
   return s_handler->s_workspace;
+}
+
 }

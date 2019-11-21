@@ -21,6 +21,8 @@
 #include "handler.h"    
 #include "normalise.h"
 
+namespace dexe {
+
 enum OperationCode {
   NONE,
   INPUT,
@@ -231,18 +233,6 @@ T calculate_product(std::vector<T> const &other) {
   return product;
 }
 
-
-template <typename T>
-inline std::ostream &operator<<(std::ostream &out, std::vector<T> in) {
-  out << "[";
-  typename std::vector<T>::const_iterator it = in.begin(), end = in.end();
-  for (; it != end; ++it)
-	  if (it == in.begin())
-		  out << *it;
-	  else
-		  out << " " << *it;
-  return out << "]";
-}
 
 template <typename T>
 inline bool operator==(std::vector<T> &v1, std::vector<T> &v2) {
@@ -497,3 +487,18 @@ __global__ void shift_kernel(int X, int Y, int C, float const *in, float *out, i
 __global__ void unshift_kernel(int X, int Y, int C, float const *in, float *out, int dx, int dy, float const beta);
 void shift(float const *in, float *out, int X, int Y, int C, int dx, int dy, float const beta);
 void unshift(float const *in, float *out, int X, int Y, int C, int dx, int dy, float const beta);
+
+}
+
+
+template <typename T>
+inline std::ostream &operator<<(std::ostream &out, std::vector<T> in) {
+  out << "[";
+  typename std::vector<T>::const_iterator it = in.begin(), end = in.end();
+  for (; it != end; ++it)
+    if (it == in.begin())
+      out << *it;
+    else
+      out << " " << *it;
+  return out << "]";
+}

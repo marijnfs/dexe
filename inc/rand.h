@@ -2,6 +2,8 @@
 
 #include <random>
 
+namespace dexe {
+
 struct Rand {
 	std::random_device rd;
 	std::default_random_engine engine;
@@ -13,3 +15,5 @@ struct Rand {
 	static Rand &inst();
 	static Rand *s_rand;
 };
+
+}

@@ -3,6 +3,7 @@
 #include "util.h"
 #include <vector>
 
+namespace dexe {
 struct Balancer {
 	Balancer();
 
@@ -20,3 +21,4 @@ struct Balancer {
 
 	static Balancer *b;
 };
+}

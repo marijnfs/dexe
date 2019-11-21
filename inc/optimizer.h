@@ -3,6 +3,8 @@
 #include "network.h"
 #include "cudavec.h"
 
+namespace dexe {
+
 template <typename F>
 struct Optimizer {
     Optimizer();
@@ -66,3 +68,5 @@ struct AdamOptimizer : public Optimizer<F> {
 	F momentum_factor = 0.0;
     F eps = 0.0001;
 };
+
+}

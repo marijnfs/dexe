@@ -2,6 +2,8 @@
 
 #include "tensor.h"
 
+namespace dexe {
+
 __global__ void split_kernelf(size_t const N, size_t const C, size_t const X, size_t const Y, float const *input, float *out);
 __global__ void split_kerneld(size_t const N, size_t const C, size_t const X, size_t const Y, double const *input, double *out);
 
@@ -74,3 +76,5 @@ __global__ void threshold_kernel(F *input, size_t N, F threshold);
 
 template <typename F>
 void threshold_cuda(F *input, size_t N, F threshold);
+
+}

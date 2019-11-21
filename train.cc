@@ -5,6 +5,7 @@
 #include <thread>
 
 using namespace std;
+using namespace dexe;
 
 typedef function<void(vector<unique_ptr<Tensor<float>>>*)> GrabSamplesFunc;
 

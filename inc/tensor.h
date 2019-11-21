@@ -12,6 +12,8 @@ const bool ZERO_ON_INIT(true);
 const cudnnTensorFormat_t DEFAULT_TENSOR_FORMAT = CUDNN_TENSOR_NCHW;
 // const cudnnTensorFormat_t DEFAULT_TENSOR_FORMAT = CUDNN_TENSOR_NHWC;
 
+namespace dexe {
+
 struct TensorShape {
   std::vector<int> dimensions;
 
@@ -195,11 +197,15 @@ struct FilterBank {
 	F *ptr() { return weights; }
 };
 
-inline std::ostream &operator<<(std::ostream &o, TensorShape s) {
+}
+
+inline std::ostream &operator<<(std::ostream &o, dexe::TensorShape s) {
 	return o << "T:" << s.dimensions;
 }
 
 template <typename F>
-inline std::ostream &operator<<(std::ostream &o, FilterBank<F> &f) {
+inline std::ostream &operator<<(std::ostream &o, dexe::FilterBank<F> &f) {
   return o << "F:" << f.dimensions;
 }
+
+

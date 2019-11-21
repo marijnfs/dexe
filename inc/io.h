@@ -4,6 +4,7 @@
 #include "tensor.h"
 
 #ifdef USE_NIFTI
+namespace dexe {
 
 #include <nifti1_io.h>
 template <typename F>
@@ -39,4 +40,5 @@ std::unique_ptr<Tensor<F>> read_nifti(std::string &path) {
 
 template std::unique_ptr<Tensor<float>> read_nifti(std::string &path);
 template std::unique_ptr<Tensor<double>> read_nifti(std::string &path);
+}
 #endif

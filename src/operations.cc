@@ -11,6 +11,8 @@
 
 using namespace std;
 
+namespace dexe {
+
 template <typename F>
 bool InputOperation<F>::forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { 
 	if (!reference)
@@ -1040,3 +1042,5 @@ template struct SoftmaxOperation<double>;
 template struct SquaredLossOperation<double>;
 template struct SupportLossOperation<double>;
 template struct InstanceNormalisationOperation<double>;
+
+}

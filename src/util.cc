@@ -1,6 +1,8 @@
 #include "util.h"
 #include "kernels.h"
 
+namespace dexe {
+
 
 template <>
 void init_uniform(float *data, int n, float std) {
@@ -22,4 +24,6 @@ void init_uniform(double *data, int n, double std) {
 	// handle_error( curandGenerateNormalDouble ( Handler::curand(), data, (n / 2 * 2), mean, std) );
 	// if (n % 2)
 	// 	handle_error( curandGenerateNormalDouble ( Handler::curand(), data + (n / 2 * 2) - 1, 2, mean, std) );
+}
+
 }

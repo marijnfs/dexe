@@ -6,6 +6,8 @@
 
 size_t const WORKSPACE_SIZE = size_t(128) * 1024 * 1024;
 
+namespace dexe {
+
 struct Handler {
   Handler();
   ~Handler();
@@ -30,3 +32,5 @@ struct Handler {
     
   static Handler *s_handler;
 };
+
+}

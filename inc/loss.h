@@ -4,6 +4,8 @@
 #include "util.h"
 #include <vector>
 
+namespace dexe {
+
 template <typename F>
 struct Loss {
 	Loss(int n, int c);
@@ -37,3 +39,5 @@ struct SquaredLoss : public Loss<F> {
 	
 	void calculate_loss(Tensor<F> &in, std::vector<int> answers, Tensor<F> &err);
 };
+
+}

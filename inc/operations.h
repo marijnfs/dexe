@@ -14,6 +14,7 @@
 // int const CONV_MAX_MEM = 0;
 int const CONV_MAX_MEM = 1024 * 1024 * 1024;
 
+namespace dexe {
 
 template <typename F>
 struct Operation {
@@ -396,3 +397,5 @@ struct InstanceNormalisationOperation : public Operation<F> {
 	Tensor<F> tmp;
 	F variance = 0.0;
 };
+
+}

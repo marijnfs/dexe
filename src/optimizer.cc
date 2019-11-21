@@ -2,6 +2,8 @@
 
 using namespace std;
 
+namespace dexe {
+
 template <typename F>
 Optimizer<F>::Optimizer() {
 }
@@ -141,3 +143,5 @@ template struct AdaOptimizer<float>;
 template struct AdaOptimizer<double>;
 template struct AdamOptimizer<float>;
 template struct AdamOptimizer<double>;
+
+}

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <ostream>
+namespace dexe {
+
 enum Code {
 	FG_RED      = 31,
 	FG_GREEN    = 32,
@@ -30,3 +32,5 @@ static Colour YELLOW(FG_YELLOW);
 static Colour BLUE(FG_BLUE);
 static Colour PURPLE(FG_PURPLE);
 static Colour DEFAULT(FG_DEFAULT);
+
+}

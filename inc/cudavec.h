@@ -4,6 +4,8 @@
 #include <cuda.h>
 #include "util.h"
 
+namespace dexe {
+
 template <typename F>
 struct CudaVec {
 	F *data = 0;
@@ -57,11 +59,11 @@ struct CudaVec {
 	}
 
 	void init_normal(F mean, F std) {
-		::init_normal<F>(data, N, mean, std);
+		dexe::init_normal<F>(data, N, mean, std);
 	}
 
   	void add_normal(F mean, F std) {
-		::add_normal<F>(data, N, mean, std);
+		dexe::add_normal<F>(data, N, mean, std);
 	}
 
 	std::vector<F> to_vector() {
@@ -129,3 +131,5 @@ __global__ void divide_kerneld(double *v, double *other, int n);
 __global__ void abs_kerneld(double *v, int n);
 __global__ void exp_kerneld(double *v, int n);
 __global__ void clip_kerneld(double *v, int n, double limit);
+
+}

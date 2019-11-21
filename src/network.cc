@@ -17,6 +17,8 @@
 
 using namespace std;
 
+namespace dexe {
+
 template <typename F>
 TensorShape Node<F>::shape() { 
 	return network->tensors[index].shape();
@@ -725,3 +727,5 @@ template struct Node<double>;
 
 template struct Network<float>;
 template struct Network<double>;
+
+}

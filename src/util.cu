@@ -4,6 +4,9 @@
 #include <curand_kernel.h>
 #include <math.h>
 
+namespace dexe {
+
+
 __device__ __forceinline__ int get_index(int X, int Y, int Z, int C, int x, int y, int z) {
   return z * (C * X * Y) + y * X + x;
 }
@@ -177,4 +180,6 @@ void unshift(float const *in, float *out, int X, int Y, int C, int dx, int dy, f
 	int dimGrid( (s  + BLOCKSIZE - 1) / BLOCKSIZE);
 
 	unshift_kernel<<<dimGrid, dimBlock>>>(in, out, X, Y, C, dx, dy, beta);
+}
+
 }

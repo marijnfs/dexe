@@ -1,5 +1,7 @@
 #include "kernels.h"
 
+namespace dexe {
+
 __global__ void split_kernelf(size_t const N, size_t const C, size_t const X, size_t const Y, float const *input, float *out) {
 	size_t const i = threadIdx.x + blockIdx.x * blockDim.x;
     if (i >= N)
@@ -438,3 +440,5 @@ template void support_loss<double>(double *input, double *target, double *loss, 
 
 template void threshold_cuda<float>(float *input, size_t N, float threshold);
 template void threshold_cuda<double>(double *input, size_t N, double threshold);
+
+}

@@ -10,6 +10,8 @@
 
 using namespace std;
 
+namespace dexe {
+
 TensorShape::TensorShape(int n, int c, int h, int w) 
 	: dimensions{n, c, h, w} {
 }
@@ -226,7 +228,7 @@ void Tensor<F>::from_ptr(F const *in) {
 template <typename F>
 void Tensor<F>::init_normal(F mean, F std) {
 	//size_t even_size(((size() + 1) / 2) * 2);
-	::init_normal(data, size(), mean, std);
+	dexe::init_normal(data, size(), mean, std);
 	// size_t even_size(size());
 	// handle_error( curandGenerateNormal(Handler::curand(), data, even_size, mean, std) );
 }
@@ -234,7 +236,7 @@ void Tensor<F>::init_normal(F mean, F std) {
 
 template <typename F>
 void Tensor<F>::init_uniform(F var) {
-  ::init_uniform(data, size(), var);
+  dexe::init_uniform(data, size(), var);
   /*
 	vector<F> vec = to_vector();
 	for (size_t i(0); i < vec.size(); ++i)
@@ -260,7 +262,7 @@ void Tensor<F>::scale(F alpha) {
 template <typename F>
 void Tensor<F>::fill(F val) {
 	vector<F> vals(size());
-	::fill<F>(vals, val);
+	dexe::fill<F>(vals, val);
 	from_vector(vals);
 }
 
@@ -463,12 +465,12 @@ void FilterBank<F>::init() {
 
 template <typename F>
 void FilterBank<F>::init_normal(F mean, F std) {
-	::init_normal(weights, n_weights(), mean, std);
+	dexe::init_normal(weights, n_weights(), mean, std);
 }
 
 template <typename F>
 void FilterBank<F>::init_uniform(F var) {
-	::init_uniform(weights, n_weights(), var);
+	dexe::init_uniform(weights, n_weights(), var);
 	// zero();
 	// vector<F> vec = to_vector();
 	// for (size_t i(0); i < vec.size(); ++i)
@@ -530,7 +532,7 @@ int FilterBank<F>::kw() {
 template <typename F>
 void FilterBank<F>::fill(F val) {
 	vector<F> vals(n_weights());
-	::fill<F>(vals, val);
+	dexe::fill<F>(vals, val);
 	from_vector(vals);
 }
 
@@ -554,3 +556,5 @@ template struct TensorSet<double>;
 template struct FilterBank<double>;
 // template Tensor<double> &operator-=<double>(Tensor<double> &in, Tensor<double> &other);
 // template Tensor<double> &operator*=<double>(Tensor<double> &in, double const other);
+
+}

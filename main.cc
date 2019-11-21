@@ -13,6 +13,7 @@
 #include <cuda.h>
 
 using namespace std;
+using namespace dexe;
 
 template <typename F>
 function<Node<F>(Node<F>)> basic_layer(int c, int c_out, int k) {

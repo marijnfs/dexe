@@ -1,10 +1,7 @@
 #include "util.h"
 #include "cudavec.h"
 
-// template <typename F>
-// void CudaVec<F>::rand_zero(F p) {
-// 	::rand_zero<F>(data, N, p);
-// }
+namespace dexe {
 
 /// Float versions
 template <>
@@ -347,14 +344,14 @@ __global__ void abs_kernel(float *v, int n) {
 	int x(threadIdx.x + blockDim.x * blockIdx.x);
 	if (x >= n) return;
 
-	v[x] = abs(v[x]);
+	v[x] = ::abs(v[x]);
 }
 
 __global__ void pow_kernel(float *v, int n, float e) {
 	int x(threadIdx.x + blockDim.x * blockIdx.x);
 	if (x >= n) return;
 
-	v[x] = pow(v[x], e);
+	v[x] = ::pow(v[x], e);
 }
 
 __global__ void exp_kernel(float *v, int n) {
@@ -411,14 +408,14 @@ __global__ void abs_kerneld(double *v, int n) {
 	int x(threadIdx.x + blockDim.x * blockIdx.x);
 	if (x >= n) return;
 
-	v[x] = abs(v[x]);
+	v[x] = ::abs(v[x]);
 }
 
 __global__ void pow_kerneld(double *v, int n, double e) {
 	int x(threadIdx.x + blockDim.x * blockIdx.x);
 	if (x >= n) return;
 
-	v[x] = pow(v[x], e);
+	v[x] = ::pow(v[x], e);
 }
 
 __global__ void exp_kerneld(double *v, int n) {
@@ -459,3 +456,5 @@ __global__ void add_scalard(double *v, double other, int n) {
 
 template struct CudaVec<float>;
 template struct CudaVec<double>;
+
+}
