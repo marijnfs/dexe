@@ -209,7 +209,7 @@ void Tensor<F>::to_ptr(F *ptr) {
 template <typename F>
 void Tensor<F>::from_vector(vector<F> &in) {
 	if (size() != in.size()) {
-		throw StringException("sizes don't match");
+		throw DexeException("sizes don't match");
 	}
  	handle_error( cudaMemcpy(data, &in[0], in.size() * sizeof(F), cudaMemcpyHostToDevice));
 }
@@ -217,7 +217,7 @@ void Tensor<F>::from_vector(vector<F> &in) {
 template <typename F>
 void Tensor<F>::from_tensor(Tensor<F> &in, F alpha) {
 	if (size() != in.size()) {
- 			throw StringException("sizes don't match");
+ 			throw DexeException("sizes don't match");
 	}
 	F beta(0);
 	handle_error( cudnnTransformTensor(Handler::cudnn(), &alpha, in.td, in.data, &beta, td, data) );
@@ -251,7 +251,7 @@ void Tensor<F>::init_uniform(F var) {
 template <typename F>
 void Tensor<F>::add(Tensor<F> &in, F alpha) {
 	if (size() != in.size()) {
-		throw StringException("sizes don't match");
+		throw DexeException("sizes don't match");
 	}
 	F beta(1);
 	handle_error( cudnnTransformTensor(Handler::cudnn(), &alpha, in.td, in.data, &beta, td, data) );

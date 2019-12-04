@@ -88,7 +88,7 @@ void Network<F>::finish() {
 template <typename F>
 void Network<F>::assert_finished() {
 	if (!finished)
-		throw StringException("call network.finish() before using network");
+		throw DexeException("call network.finish() before using network");
 }
 
 

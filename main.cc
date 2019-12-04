@@ -38,6 +38,7 @@ Node<F> make_unet(Network<F> *network, int in_channels, int out_channels) {
 	int c = 2;
 	int k = 3;
     int norm_k = 5;
+
 	auto in = network->input_3D(in_channels);
     auto in_normalised = network->local_normalisation_3D(norm_k)(in);
 
@@ -116,6 +117,13 @@ void unet_test(string path) {
     cout << sample.to_vector() << endl;
 }
 
+void new_test() {
+	auto network = make_unique<Network<float>>();
+
+	auto input = network->input_3D(1);
+	network->convolution_3D(4, 3)(input);
+	
+}
 
 void test3() {
 

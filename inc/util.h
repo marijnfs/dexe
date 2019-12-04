@@ -38,18 +38,18 @@ enum OperationCode {
   INSTANCE_NORMALISATION
 };
 
-struct StringException : public std::exception {
-	StringException(std::string msg_): msg(msg_){}
+struct DexeException : public std::exception {
+	DexeException(std::string msg_): msg(msg_){}
 
   template <typename T>
-  	StringException(std::string msg_, T t)  {
+  	DexeException(std::string msg_, T t)  {
     std::ostringstream oss;
     oss << msg_ << " " << t << std::endl;
     msg = oss.str();
   }
 
   char const* what() const throw() {return msg.c_str();}
-  ~StringException() throw() {}
+  ~DexeException() throw() {}
 
   std::string msg;
 };
@@ -87,29 +87,29 @@ inline void handle_error(cublasStatus_t status) {
       return;
 
     case CUBLAS_STATUS_NOT_INITIALIZED:
-      throw StringException("CUBLAS_STATUS_NOT_INITIALIZED");
+      throw DexeException("CUBLAS_STATUS_NOT_INITIALIZED");
 
     case CUBLAS_STATUS_ALLOC_FAILED:
-      throw StringException("CUBLAS_STATUS_ALLOC_FAILED");
+      throw DexeException("CUBLAS_STATUS_ALLOC_FAILED");
 
     case CUBLAS_STATUS_INVALID_VALUE:
-      throw StringException("CUBLAS_STATUS_INVALID_VALUE");
+      throw DexeException("CUBLAS_STATUS_INVALID_VALUE");
 
     case CUBLAS_STATUS_ARCH_MISMATCH:
-      throw StringException("CUBLAS_STATUS_ARCH_MISMATCH");
+      throw DexeException("CUBLAS_STATUS_ARCH_MISMATCH");
 
     case CUBLAS_STATUS_MAPPING_ERROR:
-      throw StringException("CUBLAS_STATUS_MAPPING_ERROR");
+      throw DexeException("CUBLAS_STATUS_MAPPING_ERROR");
 
     case CUBLAS_STATUS_EXECUTION_FAILED:
-      throw StringException("CUBLAS_STATUS_EXECUTION_FAILED");
+      throw DexeException("CUBLAS_STATUS_EXECUTION_FAILED");
 
     case CUBLAS_STATUS_INTERNAL_ERROR:
-      throw StringException("CUBLAS_STATUS_INTERNAL_ERROR");
+      throw DexeException("CUBLAS_STATUS_INTERNAL_ERROR");
 	case CUBLAS_STATUS_NOT_SUPPORTED:
-		throw StringException("CUBLAS_STATUS_NOT_SUPPORTED");
+		throw DexeException("CUBLAS_STATUS_NOT_SUPPORTED");
 	default:
-		throw StringException("SOME CUBLAS ERROR");
+		throw DexeException("SOME CUBLAS ERROR");
 
     }
 }
@@ -119,42 +119,42 @@ inline void handle_error(curandStatus_t status) {
   case CURAND_STATUS_SUCCESS:
     return;
   case CURAND_STATUS_VERSION_MISMATCH:
-    throw StringException("Header file and linked library version do not match");
+    throw DexeException("Header file and linked library version do not match");
 
   case CURAND_STATUS_NOT_INITIALIZED:
-    throw StringException("Generator not initialized");
+    throw DexeException("Generator not initialized");
   case CURAND_STATUS_ALLOCATION_FAILED:
-    throw StringException("Memory allocation failed");
+    throw DexeException("Memory allocation failed");
   case CURAND_STATUS_TYPE_ERROR:
-    throw StringException("Generator is wrong type");
+    throw DexeException("Generator is wrong type");
   case CURAND_STATUS_OUT_OF_RANGE:
-    throw StringException("Argument out of range");
+    throw DexeException("Argument out of range");
   case CURAND_STATUS_LENGTH_NOT_MULTIPLE:
-    throw StringException("Length requested is not a multple of dimension");
+    throw DexeException("Length requested is not a multple of dimension");
     // In CUDA >= 4.1 only
 #if CUDART_VERSION >= 4010
   case CURAND_STATUS_DOUBLE_PRECISION_REQUIRED:
-    throw StringException("GPU does not have double precision required by MRG32k3a");
+    throw DexeException("GPU does not have double precision required by MRG32k3a");
 #endif
   case CURAND_STATUS_LAUNCH_FAILURE:
-    throw StringException("Kernel launch failure");
+    throw DexeException("Kernel launch failure");
   case CURAND_STATUS_PREEXISTING_FAILURE:
-    throw StringException("Preexisting failure on library entry");
+    throw DexeException("Preexisting failure on library entry");
   case CURAND_STATUS_INITIALIZATION_FAILED:
-    throw StringException("Initialization of CUDA failed");
+    throw DexeException("Initialization of CUDA failed");
   case CURAND_STATUS_ARCH_MISMATCH:
-    throw StringException("Architecture mismatch, GPU does not support requested feature");
+    throw DexeException("Architecture mismatch, GPU does not support requested feature");
   case CURAND_STATUS_INTERNAL_ERROR:
-    throw StringException("Internal library error");
+    throw DexeException("Internal library error");
   default:
-	  throw StringException("SOME CURAND ERROR");
+	  throw DexeException("SOME CURAND ERROR");
   }
 }
 
 inline void handle_error(cudaError_t err) {
 	if (err != cudaSuccess) {
 		std::cerr << cudaGetErrorString(err) << std::endl;
-		throw StringException(cudaGetErrorString(err));
+		throw DexeException(cudaGetErrorString(err));
 	}
 }
 
@@ -164,28 +164,28 @@ inline void handle_error(cudnnStatus_t status) {
   case CUDNN_STATUS_SUCCESS:
     break;
   case CUDNN_STATUS_NOT_INITIALIZED:
-    throw StringException("CUDNN_STATUS_NOT_INITIALIZED");
+    throw DexeException("CUDNN_STATUS_NOT_INITIALIZED");
   case CUDNN_STATUS_ALLOC_FAILED:
-    throw StringException("CUDNN_STATUS_ALLOC_FAILED");
+    throw DexeException("CUDNN_STATUS_ALLOC_FAILED");
   case CUDNN_STATUS_BAD_PARAM:
-    throw StringException("CUDNN_STATUS_BAD_PARAM");
+    throw DexeException("CUDNN_STATUS_BAD_PARAM");
   case CUDNN_STATUS_INTERNAL_ERROR:
-    throw StringException("CUDNN_STATUS_INTERNAL_ERROR");
+    throw DexeException("CUDNN_STATUS_INTERNAL_ERROR");
   case CUDNN_STATUS_INVALID_VALUE:
-    throw StringException("CUDNN_STATUS_INVALID_VALUE");
+    throw DexeException("CUDNN_STATUS_INVALID_VALUE");
   case CUDNN_STATUS_ARCH_MISMATCH:
-    throw StringException("CUDNN_STATUS_ARCH_MISMATCH");
+    throw DexeException("CUDNN_STATUS_ARCH_MISMATCH");
   case CUDNN_STATUS_MAPPING_ERROR:
-    throw StringException("CUDNN_STATUS_MAPPING_ERROR");
+    throw DexeException("CUDNN_STATUS_MAPPING_ERROR");
   case CUDNN_STATUS_EXECUTION_FAILED:
-    throw StringException("CUDNN_STATUS_EXECUTION_FAILED");
+    throw DexeException("CUDNN_STATUS_EXECUTION_FAILED");
   case CUDNN_STATUS_NOT_SUPPORTED:
-    throw StringException("CUDNN_STATUS_NOT_SUPPORTED");
+    throw DexeException("CUDNN_STATUS_NOT_SUPPORTED");
   case CUDNN_STATUS_LICENSE_ERROR:
-    throw StringException("CUDNN_STATUS_LICENSE_ERROR");
+    throw DexeException("CUDNN_STATUS_LICENSE_ERROR");
   default:
     std::cerr << "err: " << status << std::endl;
-    throw StringException("SOME CUDNN ERROR");
+    throw DexeException("SOME CUDNN ERROR");
   }
 }
 
