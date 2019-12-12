@@ -1,8 +1,8 @@
 # CMakeLists files in this project can
 # refer to the root source directory of the project as ${MCDNN_SOURCE_DIR} and
 
-cmake_minimum_required (VERSION 3.0.0)
-project (DEXE)
+cmake_minimum_required (VERSION 3.5)
+project(DEXE LANGUAGES CXX)
 #SET(CMAKE_BUILD_TYPE CACHE RELEASE STRING "Build Type")
 
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
@@ -12,35 +12,10 @@ endif()
 option(USE_NIFTI "Enable Nifti loading" false)
 option(BUILD_SHARED_LIBS "Build a shared library" true)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(cereal REQUIRED)
 find_package(CUDA QUIET REQUIRED)
-find_library(CUDNN cudnn HINTS /usr/local/cuda/lib64 /usr/local/cuda/lib)
-
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-set(CXX_STANDARD 17)
-set(CUDA_PROPAGATE_HOST_FLAGS ON)
-set(CUDA_NVCC_FLAGS "-arch=sm_61 -std=c++14 --compiler-options -fPIC")
-
-
-
-# Specify include directories
-include_directories(
-    inc
-)
-
-#add_subdirectory (inc)
-#add_subdirectory (src)
-
-file(GLOB CPP_SOURCE src/*.cc)
-file(GLOB CU_SOURCE src/*.cu)
-file(GLOB CPP_HEADERS inc/*.h)
-set(EXT_HEADERS inc/dexe.h inc/network.h inc/optimizer.h inc/tensor.h inc/util.h inc/cudavec.h inc/cudaptr.h inc/handler.h)
-
-
-#set_property(SOURCE ${CPP_SOURCE} PROPERTY COMPILE_FLAGS -O3)
-#set_property(SOURCE ${CU_SOURCE} PROPERTY COMPILE_FLAGS -O3)
-#set_property(SOURCE ${CPP_HEADERS} PROPERTY COMPILE_FLAGS -O3)
+find_package(CUDNN REQUIRED)
 
 if (USE_NIFTI)
    find_library(ZNZ znz HINTS /usr/local/lib /usr/local/lib64 REQUIRED)
@@ -49,24 +24,51 @@ if (USE_NIFTI)
    add_definitions( -DUSE_NIFTI )
 endif()
 
+set(CXX_STANDARD 17)
+set(CUDA_PROPAGATE_HOST_FLAGS ON)
+if(WIN32)
+	set(CUDA_NVCC_FLAGS "-arch=sm_30")
+else()
+	set(CUDA_NVCC_FLAGS "-arch=sm_30 -std=c++14 --compiler-options -fPIC")
+endif()
 
+file(GLOB CPP_SOURCE src/*.cc)
+file(GLOB CU_SOURCE src/*.cu)
+file(GLOB CPP_HEADERS inc/*.h)
+set(EXT_HEADERS inc/dexe.h inc/network.h inc/optimizer.h inc/tensor.h inc/util.h inc/cudavec.h inc/cudaptr.h inc/handler.h)
 
+#set_property(SOURCE ${CPP_SOURCE} PROPERTY COMPILE_FLAGS -O3)
+#set_property(SOURCE ${CU_SOURCE} PROPERTY COMPILE_FLAGS -O3)
+#set_property(SOURCE ${CPP_HEADERS} PROPERTY COMPILE_FLAGS -O3)
+
+set(CUDA_LINK_LIBRARIES_KEYWORD "PUBLIC")
 cuda_add_library(DEXE ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
-add_dependencies(DEXE cereal)
-target_compile_options(DEXE PUBLIC "-fPIC")
-
-
-
-
-include_directories( DEXE "/usr/local/include/nifti")
+if(UNIX)
+    target_compile_options(DEXE PRIVATE "-fPIC")
+endif()
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(DEXE PRIVATE DEXE_DLL)
+else()
+    target_compile_definitions(DEXE PRIVATE DEXE_STATIC)
+endif()
+target_include_directories(DEXE
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
+        $<BUILD_INTERFACE:${CUDNN_INCLUDE_DIR}>
+)
+if (USE_NIFTI)
+    target_compile_definitions(DEXE PRIVATE USE_NIFTI)
+    target_include_directories(DEXE PRIVATE ${NIFTI_INCLUDE_DIR})
+    target_link_libraries(DEXE PRIVATE nifticdf niftiio znz z)
+endif()
 
 target_link_libraries( DEXE
-	 ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES}
+    PUBLIC 
+        ${CUDA_curand_LIBRARY}
+        ${CUDA_CUBLAS_LIBRARIES}
+        ${CUDNN_LIBRARIES}
+        cereal
 )
-
-if (USE_NIFTI)
-   target_link_libraries( DEXE nifticdf niftiio znz z)
-endif()
 
 install(TARGETS DEXE EXPORT DEXE-targets LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 install(FILES ${EXT_HEADERS} DESTINATION include/DEXE)
@@ -75,15 +77,14 @@ install(FILES ${EXT_HEADERS} DESTINATION include/DEXE)
 install(EXPORT DEXE-targets DESTINATION lib/cmake/DEXE)
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
-	"DEXEConfig.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/DEXEConfig.cmake"
+	"cmake/DEXEConfig.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/DEXEConfig.cmake"
 	INSTALL_DESTINATION "lib/cmake/DEXE"
 )
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DEXEConfig.cmake" DESTINATION "lib/cmake/DEXE")
 
-
 ### Build the executable
 add_executable(main main.cc)
-target_link_libraries(main DEXE ${CUDNN})
+target_link_libraries(main PRIVATE DEXE)
 
 add_executable(train train.cc)
-target_link_libraries(train DEXE ${CUDNN})
+target_link_libraries(train PRIVATE DEXE)

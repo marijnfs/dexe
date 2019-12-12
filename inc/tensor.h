@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include "util.h"
+#include "config.h"
 
 const bool ZERO_ON_INIT(true);
 const cudnnTensorFormat_t DEFAULT_TENSOR_FORMAT = CUDNN_TENSOR_NCHW;
@@ -11,7 +12,7 @@ const cudnnTensorFormat_t DEFAULT_TENSOR_FORMAT = CUDNN_TENSOR_NCHW;
 
 namespace dexe {
 
-struct TensorShape {
+struct DEXE_API TensorShape {
   std::vector<int> dimensions;
 
 
@@ -46,7 +47,7 @@ struct TensorShape {
 };
 
 template <typename F>
-struct Tensor {
+struct DEXE_API Tensor {
 	Tensor();
 	Tensor(TensorShape shape, cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT);
 	Tensor(TensorShape shape, F *data, cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT);

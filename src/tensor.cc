@@ -113,7 +113,7 @@ Tensor<F>::Tensor(TensorShape s, F *data_, cudnnTensorFormat_t format_):
 
 
 template <typename F>
-Tensor<F>::Tensor(std::vector<F> data) : shape(TensorShape({1, 1, data.size()})), owning(true) {
+Tensor<F>::Tensor(std::vector<F> data) : shape(TensorShape({1, 1, (int)data.size()})), owning(true) {
 	handle_error( cudnnCreateTensorDescriptor(&td) );
 	allocate();
 	from_vector(data);

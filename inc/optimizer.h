@@ -2,11 +2,12 @@
 
 #include "network.h"
 #include "cudavec.h"
+#include "config.h"
 
 namespace dexe {
 
 template <typename F>
-struct Optimizer {
+struct DEXE_API Optimizer {
     Optimizer();
     virtual ~Optimizer();
 
@@ -15,7 +16,7 @@ struct Optimizer {
 };
 
 template <typename F>
-struct SGDOptimizer : public Optimizer<F> {
+struct DEXE_API SGDOptimizer : public Optimizer<F> {
     SGDOptimizer(F lr_);
    	~SGDOptimizer() = default;
 
@@ -30,7 +31,7 @@ struct SGDOptimizer : public Optimizer<F> {
 };
 
 template <typename F>
-struct AdaOptimizer : public Optimizer<F> {
+struct DEXE_API AdaOptimizer : public Optimizer<F> {
     AdaOptimizer(F lr_, F beta_ = 0.95);
    	~AdaOptimizer() = default;
 
@@ -49,7 +50,7 @@ struct AdaOptimizer : public Optimizer<F> {
 
 
 template <typename F>
-struct AdamOptimizer : public Optimizer<F> {
+struct DEXE_API AdamOptimizer : public Optimizer<F> {
     AdamOptimizer(F lr_, F beta_ = 0.9, F momentum_factor_ = 0.95);
    	~AdamOptimizer() = default;
 

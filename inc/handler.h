@@ -4,11 +4,13 @@
 #include <curand.h>
 #include <cublas_v2.h>
 
+#include "config.h"
+
 size_t const WORKSPACE_SIZE = size_t(128) * 1024 * 1024;
 
 namespace dexe {
 
-struct Handler {
+struct DEXE_API Handler {
   Handler();
   ~Handler();
   void init_handler();

@@ -1,4 +1,3 @@
-#include <cudnn.h>
 #include <iostream>
 #include <stdint.h>
 #include "operations.h"
@@ -8,7 +7,7 @@
 #include "colour.h"
 #include "optimizer.h"
 #include "io.h"
-#include <unistd.h>
+//#include <unistd.h>
 #include <ctime>
 #include <cuda.h>
 

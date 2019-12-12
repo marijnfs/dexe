@@ -6,6 +6,7 @@
 #include <functional>
 #include <initializer_list>
 
+#include "config.h"
 #include "util.h"
 #include "tensor.h"
 #include "cudavec.h"
@@ -23,7 +24,7 @@ template <typename F>
 struct Network;
 
 template <typename F>
-struct Node {
+struct DEXE_API Node {
 	Node(int index_, Network<F> *network_) : index(index_), network(network_) {}
 
 	TensorShape shape();
@@ -40,7 +41,7 @@ struct Node {
 };
 
 template <typename F>
-struct Network {
+struct DEXE_API Network {
 	Network();
 	~Network();
 
