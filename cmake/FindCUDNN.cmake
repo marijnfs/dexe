@@ -1,7 +1,7 @@
 include("SelectLibraryConfigurations")
 include("FindPackageHandleStandardArgs")
 
-find_path(CUDNN_INCLUDE_DIR cudnn.h)
+find_path(CUDNN_INCLUDE_DIR cudnn.h HINTS ${CUDA_TOOLKIT_ROOT_DIR}/include)
 
 find_library(CUDNN_LIBRARY_RELEASE NAMES cudnn cudnn7_64 PATH_SUFFIXES Release HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
 find_library(CUDNN_LIBRARY_DEBUG NAMES cudnn cudnn7_64 PATH_SUFFIXES Debug HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
