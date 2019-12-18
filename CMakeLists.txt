@@ -13,7 +13,6 @@ option(USE_NIFTI "Enable Nifti loading" false)
 option(BUILD_SHARED_LIBS "Build a shared library" true)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-find_package(cereal REQUIRED)
 find_package(CUDA QUIET REQUIRED)
 find_package(CUDNN REQUIRED)
 
@@ -67,7 +66,6 @@ target_link_libraries( DEXE
         ${CUDA_curand_LIBRARY}
         ${CUDA_CUBLAS_LIBRARIES}
         ${CUDNN_LIBRARIES}
-        cereal
 )
 
 install(TARGETS DEXE EXPORT DEXE-targets LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)

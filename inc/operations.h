@@ -5,7 +5,7 @@
 #include <cublas_v2.h>
 #include <iostream>
 #include <string>
-#include <cereal/archives/portable_binary.hpp>
+#include "external/cereal/archives/portable_binary.hpp"
 
 #include "tensor.h"
 #include "util.h"
