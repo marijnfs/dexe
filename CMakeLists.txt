@@ -53,8 +53,11 @@ endif()
 target_include_directories(DEXE
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/external>
         $<BUILD_INTERFACE:${CUDNN_INCLUDE_DIR}>
+
 )
+
 if (USE_NIFTI)
     target_compile_definitions(DEXE PRIVATE USE_NIFTI)
     target_include_directories(DEXE PRIVATE ${NIFTI_INCLUDE_DIR})

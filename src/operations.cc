@@ -4,10 +4,10 @@
 #include <cassert>
 
 
-#include "external/cereal/archives/portable_binary.hpp"
-#include "external/cereal/types/vector.hpp"
-#include "external/cereal/types/string.hpp"
-#include "external/cereal/types/set.hpp"
+#include "cereal/archives/portable_binary.hpp"
+#include "cereal/types/vector.hpp"
+#include "cereal/types/string.hpp"
+#include "cereal/types/set.hpp"
 
 
 using namespace std;

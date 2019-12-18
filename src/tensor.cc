@@ -1,7 +1,7 @@
 #include <cassert>
 #include <cstdlib>
 
-#include "external/cereal/cereal.hpp"
+#include "cereal/cereal.hpp"
 
 #include "tensor.h"
 #include "util.h"
