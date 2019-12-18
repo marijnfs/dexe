@@ -2,7 +2,7 @@
 # refer to the root source directory of the project as ${MCDNN_SOURCE_DIR} and
 
 cmake_minimum_required (VERSION 3.5)
-project(DEXE LANGUAGES CXX)
+project(dexe LANGUAGES CXX)
 #SET(CMAKE_BUILD_TYPE CACHE RELEASE STRING "Build Type")
 
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
@@ -11,6 +11,8 @@ endif()
 
 option(USE_NIFTI "Enable Nifti loading" false)
 option(BUILD_SHARED_LIBS "Build a shared library" true)
+
+set(CMAKE_DEBUG_POSTFIX "d")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(CUDA QUIET REQUIRED)
@@ -41,51 +43,52 @@ set(EXT_HEADERS inc/dexe/dexe.h inc/dexe/network.h inc/dexe/optimizer.h inc/dexe
 #set_property(SOURCE ${CPP_HEADERS} PROPERTY COMPILE_FLAGS -O3)
 
 set(CUDA_LINK_LIBRARIES_KEYWORD "PUBLIC")
-cuda_add_library(DEXE ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
+cuda_add_library(dexe ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
 if(UNIX)
-    target_compile_options(DEXE PRIVATE "-fPIC")
+    target_compile_options(dexe PRIVATE "-fPIC")
 endif()
 if(BUILD_SHARED_LIBS)
-    target_compile_definitions(DEXE PRIVATE DEXE_DLL)
+    target_compile_definitions(dexe PRIVATE DEXE_DLL)
 else()
-    target_compile_definitions(DEXE PRIVATE DEXE_STATIC)
+    target_compile_definitions(dexe PRIVATE DEXE_STATIC)
 endif()
-target_include_directories(DEXE
+target_include_directories(dexe
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/external>
         $<BUILD_INTERFACE:${CUDNN_INCLUDE_DIR}>
+		$<INSTALL_INTERFACE:include>
 
 )
 
 if (USE_NIFTI)
-    target_compile_definitions(DEXE PRIVATE USE_NIFTI)
-    target_include_directories(DEXE PRIVATE ${NIFTI_INCLUDE_DIR})
-    target_link_libraries(DEXE PRIVATE nifticdf niftiio znz z)
+    target_compile_definitions(dexe PRIVATE USE_NIFTI)
+    target_include_directories(dexe PRIVATE ${NIFTI_INCLUDE_DIR})
+    target_link_libraries(dexe PRIVATE nifticdf niftiio znz z)
 endif()
 
-target_link_libraries( DEXE
+target_link_libraries( dexe
     PUBLIC 
         ${CUDA_curand_LIBRARY}
         ${CUDA_CUBLAS_LIBRARIES}
         ${CUDNN_LIBRARIES}
 )
 
-install(TARGETS DEXE EXPORT DEXE-targets LIBRARY DESTINATION dexe/lib ARCHIVE DESTINATION dexe/lib)
-install(FILES ${EXT_HEADERS} DESTINATION dexe/include/dexe)
+install(TARGETS dexe EXPORT dexe-targets RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+install(FILES ${EXT_HEADERS} DESTINATION include/dexe)
 
 # install export target and config for find_package
-install(EXPORT DEXE-targets DESTINATION dexe/lib/cmake)
+install(EXPORT dexe-targets DESTINATION lib/cmake)
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
-	"cmake/DEXEConfig.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/DEXEConfig.cmake"
-	INSTALL_DESTINATION "dexe/lib/cmake"
+	"cmake/dexeConfig.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/dexeConfig.cmake"
+	INSTALL_DESTINATION "lib/cmake"
 )
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DEXEConfig.cmake" DESTINATION "dexe/lib/cmake")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/dexeConfig.cmake" DESTINATION "lib/cmake")
 
 ### Build the executable
 add_executable(main main.cc)
-target_link_libraries(main PRIVATE DEXE)
+target_link_libraries(main PRIVATE dexe)
 
 add_executable(train train.cc)
-target_link_libraries(train PRIVATE DEXE)
+target_link_libraries(train PRIVATE dexe)
