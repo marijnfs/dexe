@@ -1,4 +1,4 @@
-#include "normalise.h"
+#include "dexe/normalise.h"
 
 #include <thrust/functional.h>
 #include <thrust/host_vector.h>

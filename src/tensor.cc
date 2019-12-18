@@ -3,12 +3,12 @@
 
 #include "cereal/cereal.hpp"
 
-#include "tensor.h"
-#include "util.h"
-#include "handler.h"
-#include "img.h"
-#include "kernels.h"
-#include "cudavec.h"
+#include "dexe/tensor.h"
+#include "dexe/util.h"
+#include "dexe/handler.h"
+#include "dexe/img.h"
+#include "dexe/kernels.h"
+#include "dexe/cudavec.h"
 
 
 using namespace std;

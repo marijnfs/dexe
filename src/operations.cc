@@ -1,6 +1,6 @@
-#include "operations.h"
-#include "handler.h"
-#include "kernels.h"
+#include "dexe/operations.h"
+#include "dexe/handler.h"
+#include "dexe/kernels.h"
 #include <cassert>
 
 

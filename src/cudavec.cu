@@ -1,5 +1,5 @@
-#include "util.h"
-#include "cudavec.h"
+#include "dexe/util.h"
+#include "dexe/cudavec.h"
 
 namespace dexe {
 

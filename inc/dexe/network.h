@@ -6,11 +6,11 @@
 #include <functional>
 #include <initializer_list>
 
-#include "config.h"
-#include "util.h"
-#include "tensor.h"
-#include "cudavec.h"
-#include "cudaptr.h"
+#include "dexe/config.h"
+#include "dexe/util.h"
+#include "dexe/tensor.h"
+#include "dexe/cudavec.h"
+#include "dexe/cudaptr.h"
 
 namespace dexe {
 

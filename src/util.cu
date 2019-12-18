@@ -1,5 +1,5 @@
-#include "util.h"
-#include "handler.h"
+#include "dexe/util.h"
+#include "dexe/handler.h"
 #include <cuda.h>
 #include <curand_kernel.h>
 #include <math.h>

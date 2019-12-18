@@ -1,4 +1,4 @@
-#include "kernels.h"
+#include "dexe/kernels.h"
 
 namespace dexe {
 

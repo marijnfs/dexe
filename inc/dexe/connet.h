@@ -1,9 +1,7 @@
 #pragma once
 
-namespace dexe {
-
-#include "dexe/network.h"
-#include "dexe/tensor.h"
+#include "network.h"
+#include "tensor.h"
 #include <vector>
 
 struct Connet {
@@ -11,5 +9,3 @@ struct Connet {
 
 	std::vector<FilterBank> filters;
 };
-
-}

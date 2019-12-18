@@ -33,8 +33,8 @@ endif()
 
 file(GLOB CPP_SOURCE src/*.cc)
 file(GLOB CU_SOURCE src/*.cu)
-file(GLOB CPP_HEADERS inc/*.h)
-set(EXT_HEADERS inc/dexe.h inc/network.h inc/optimizer.h inc/tensor.h inc/util.h inc/cudavec.h inc/cudaptr.h inc/handler.h)
+file(GLOB CPP_HEADERS inc/dexe/*.h)
+set(EXT_HEADERS inc/dexe/dexe.h inc/dexe/network.h inc/dexe/optimizer.h inc/dexe/tensor.h inc/dexe/util.h inc/dexe/cudavec.h inc/dexe/cudaptr.h inc/dexe/handler.h inc/dexe/config.h)
 
 #set_property(SOURCE ${CPP_SOURCE} PROPERTY COMPILE_FLAGS -O3)
 #set_property(SOURCE ${CU_SOURCE} PROPERTY COMPILE_FLAGS -O3)
@@ -71,17 +71,17 @@ target_link_libraries( DEXE
         ${CUDNN_LIBRARIES}
 )
 
-install(TARGETS DEXE EXPORT DEXE-targets LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
-install(FILES ${EXT_HEADERS} DESTINATION include/DEXE)
+install(TARGETS DEXE EXPORT DEXE-targets LIBRARY DESTINATION dexe/lib ARCHIVE DESTINATION dexe/lib)
+install(FILES ${EXT_HEADERS} DESTINATION dexe/include/dexe)
 
 # install export target and config for find_package
-install(EXPORT DEXE-targets DESTINATION lib/cmake/DEXE)
+install(EXPORT DEXE-targets DESTINATION dexe/lib/cmake)
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
 	"cmake/DEXEConfig.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/DEXEConfig.cmake"
-	INSTALL_DESTINATION "lib/cmake/DEXE"
+	INSTALL_DESTINATION "dexe/lib/cmake"
 )
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DEXEConfig.cmake" DESTINATION "lib/cmake/DEXE")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DEXEConfig.cmake" DESTINATION "dexe/lib/cmake")
 
 ### Build the executable
 add_executable(main main.cc)

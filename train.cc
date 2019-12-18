@@ -1,6 +1,6 @@
-#include "network.h"
+#include "dexe/network.h"
 
-#include "tensor.h"
+#include "dexe/tensor.h"
 #include <vector>
 #include <thread>
 

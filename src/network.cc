@@ -1,6 +1,6 @@
-#include "network.h"
-#include "util.h"
-#include "operations.h"
+#include "dexe/network.h"
+#include "dexe/util.h"
+#include "dexe/operations.h"
 
 #include "cereal/archives/portable_binary.hpp"
 #include "cereal/types/vector.hpp"

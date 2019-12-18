@@ -1,4 +1,4 @@
-#include "rand.h"
+#include "dexe/rand.h"
 
 using namespace std;
 
