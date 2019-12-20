@@ -20,6 +20,7 @@ template <typename F>
 struct Operation {
 	// virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0){}
 
+    virtual ~Operation() = default;
 	// virtual void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0){}
 	// virtual void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0){}
 
