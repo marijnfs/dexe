@@ -31,6 +31,10 @@ void Handler::init_handler() {
 void Handler::deinit() {
     if (!s_handler)
         return;
+    if (s_handler->s_workspace) {
+        handle_error( cudaFree(s_handler->s_workspace) );
+        s_handler->s_workspace = 0;
+    }
     if (s_handler->h_cudnn) {
         cerr << "destroying cudnn" << endl;
         handle_error( cudnnDestroy(s_handler->h_cudnn) );
@@ -43,10 +47,6 @@ void Handler::deinit() {
     if (s_handler->h_cublas) {
         cublasDestroy(s_handler->h_cublas);
         s_handler->h_cublas = 0;
-    }
-    if (s_handler->s_workspace) {
-        handle_error( cudaFree(s_handler->s_workspace) );
-        s_handler->s_workspace = 0;
     }
 
     delete s_handler;
