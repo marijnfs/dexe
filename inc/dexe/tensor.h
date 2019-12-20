@@ -11,8 +11,8 @@ const cudnnTensorFormat_t DEFAULT_TENSOR_FORMAT = CUDNN_TENSOR_NCHW;
 // const cudnnTensorFormat_t DEFAULT_TENSOR_FORMAT = CUDNN_TENSOR_NHWC;
 
 namespace dexe {
-
-struct DEXE_API TensorShape {
+	
+	struct DEXE_API TensorShape {
   std::vector<int> dimensions;
 
 
