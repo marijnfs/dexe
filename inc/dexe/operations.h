@@ -18,6 +18,7 @@ namespace dexe {
 
 template <typename F>
 struct Operation {
+	virtual ~Operation() = default;
 	// virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0){}
 
     virtual ~Operation() = default;
