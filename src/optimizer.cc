@@ -58,6 +58,7 @@ void AdaOptimizer<F>::register_network(Network<F> &network_) {
 	network->finish();
 
 	std.resize(network->param_vec.N);
+	std += 0.1;
 	tmp.resize(network->param_vec.N);
 	tmp2.resize(network->param_vec.N);
 }
