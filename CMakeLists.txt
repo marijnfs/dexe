@@ -42,7 +42,7 @@ set(EXT_HEADERS inc/dexe/dexe.h inc/dexe/network.h inc/dexe/optimizer.h inc/dexe
 #set_property(SOURCE ${CU_SOURCE} PROPERTY COMPILE_FLAGS -O3)
 #set_property(SOURCE ${CPP_HEADERS} PROPERTY COMPILE_FLAGS -O3)
 
-set(CUDA_LINK_LIBRARIES_KEYWORD "PUBLIC")
+set(CUDA_LINK_LIBRARIES_KEYWORD "PRIVATE")
 cuda_add_library(dexe ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
 if(UNIX)
     target_compile_options(dexe PRIVATE "-fPIC")
@@ -69,9 +69,9 @@ endif()
 
 target_link_libraries( dexe
     PUBLIC 
-        ${CUDA_curand_LIBRARY}
-        ${CUDA_CUBLAS_LIBRARIES}
-        ${CUDNN_LIBRARIES}
+        $<BUILD_INTERFACE:${CUDA_curand_LIBRARY}>
+        $<BUILD_INTERFACE:${CUDA_CUBLAS_LIBRARIES}>
+        $<BUILD_INTERFACE:${CUDNN_LIBRARIES}>
 )
 
 install(TARGETS dexe EXPORT dexe-targets RUNTIME DESTINATION bin LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
