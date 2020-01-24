@@ -142,7 +142,7 @@ void Tensor<F>::allocate() {
 		return;
 
 	if (shape.n_elements() != 0) {
-		cout << "allocating: " << shape << " " << shape.n_elements() << endl;
+		//cout << "allocating: " << shape << " " << shape.n_elements() << endl;
 		handle_error( cudaMalloc( (void**)&data, sizeof(F) * shape.n_elements()));
 		if (ZERO_ON_INIT)
 		  zero();
@@ -161,7 +161,7 @@ void Tensor<F>::reshape(TensorShape new_shape) {
 		return;
 
 	//If sizes match but shapes don't, we don't want to deallocate
-	cout << "Reshape : " << shape << " to " << new_shape << " elements: " << shape.n_elements() << " " << new_shape.n_elements() << endl;
+	//cout << "Reshape : " << shape << " to " << new_shape << " elements: " << shape.n_elements() << " " << new_shape.n_elements() << endl;
 	if (new_shape.n_elements() != shape.n_elements())
 	{
 		if (data) {
