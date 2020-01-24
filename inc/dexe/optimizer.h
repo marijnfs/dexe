@@ -45,7 +45,7 @@ struct DEXE_API AdaOptimizer : public Optimizer<F> {
     CudaVec<F> tmp, tmp2;
     F lr = 0;
 	F beta = 0.0;
-    F eps = 0.01;
+    F eps = 0.0001;
 };
 
 

@@ -18,6 +18,7 @@ namespace dexe {
 
 template <typename F>
 struct Operation {
+	virtual ~Operation() = default;
 	// virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0){}
 
     virtual ~Operation() = default;
@@ -39,24 +40,24 @@ struct Operation {
 	
     // Write a readable string to the ostream
 	virtual void describe(std::ostream &out){}
-
+	
 	virtual OperationCode opcode() { throw std::runtime_error("Not Implemented"); }
 
 	virtual void save(cereal::PortableBinaryOutputArchive &ar) {throw std::runtime_error("Not Implemented"); }
 	
-	// virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){ forward(in, out, beta); }
+	// Virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){ forward(in, out, beta); }
 	// virtual void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0){}
 	// virtual void backward_timed(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, int t, F beta = 0.0){}
 };
 
 template <typename F>
 struct DefaultOperation : public Operation<F> {
-	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { forward(*in[0], *out[0]); }
-	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) { backward(*in[0], *out[0], *in_grad[0], *out_grad[0]); }
-	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) { out[0]->reshape(output_shape(in[0]->shape) ); return true; }
-    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_) { in_grad[0]->reshape(in[0]->shape); return true; }
+	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override { forward(*in[0], *out[0]); }
+	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override { backward(*in[0], *out[0], *in_grad[0], *out_grad[0]); }
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override { out[0]->reshape(output_shape(in[0]->shape) ); return true; }
+    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_) override { in_grad[0]->reshape(in[0]->shape); return true; }
 
-    virtual TensorShape output_shape(TensorShape input) = 0;
+    virtual TensorShape output_shape(TensorShape input) override = 0;
 	virtual void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) = 0;
 	virtual void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0) = 0;
 };
@@ -68,7 +69,7 @@ struct Parametrised {
 	virtual void update(F lr) {}
 	virtual void l2(F l) {}
 	virtual void zero_grad() {}
-	virtual void scale_grad(float val) {}
+	virtual void scale_grad(F val) {}
 	virtual void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F>> &grads, std::vector<CudaPtr<F> > &fast_grads) {}
 
 	virtual std::vector<F> to_vector() { return std::vector<F>(); }
@@ -84,13 +85,13 @@ struct InputOperation : public Operation<F> {
     InputOperation(int n_channels_, Tensor<F> *reference_ = nullptr) : n_channels(n_channels_), reference(reference_) {}
 	InputOperation(cereal::PortableBinaryInputArchive &ar);
 
-    bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-    void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-	OperationCode opcode() { return INPUT; }
+    bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+    void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+	OperationCode opcode() override { return INPUT; }
 
-	void save(cereal::PortableBinaryOutputArchive &ar);
+	void save(cereal::PortableBinaryOutputArchive &ar) override;
     int n_channels = 0;
 };
 
@@ -101,19 +102,19 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 
 	~ConvolutionOperation();
 
-	virtual void init_normal(F mean, F std);
-	virtual void init_uniform(F var);
+	virtual void init_normal(F mean, F std) override;
+	virtual void init_uniform(F var) override;
 	void init();
 
 	bool check_fit(Tensor<F> &in_tensor, Tensor<F> &out_tensor);
 
     // API
-	virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-	virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-    virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-	virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-	virtual OperationCode opcode() { return CONVOLUTION; }
-	virtual void save(cereal::PortableBinaryOutputArchive &ar);
+	virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+	virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+    virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+	virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+	virtual OperationCode opcode() override { return CONVOLUTION; }
+	virtual void save(cereal::PortableBinaryOutputArchive &ar) override;
 
     // regular
 	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
@@ -124,22 +125,22 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
     void prepare_backward(Tensor<F> &in, Tensor<F> &out);
 	void backward_weights(Tensor<F> &in, Tensor<F> &out_grad, F beta = 0.0);
 
-	void update(F lr);
-	void l2(F l);
-	void zero_grad();
-	void scale_grad(F val);
+	void update(F lr) override;
+	void l2(F l) override;
+	void zero_grad() override;
+	void scale_grad(F val) override;
 	void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F>> &grads, std::vector<CudaPtr<F> > &fast_grads) override;
 	void share(ConvolutionOperation<F> &other);
 
 
 
-	std::vector<F> to_vector();
-	void from_vector(std::vector<F> &v);
-	std::vector<F> grad_to_vector();
-	virtual int size();
+	std::vector<F> to_vector() override;
+	void from_vector(std::vector<F> &v) override;
+	std::vector<F> grad_to_vector() override;
+	virtual int size() override;
 
-	TensorShape output_shape(TensorShape input);
-	void describe(std::ostream &out) { out << filter_bank.dimensions; }
+	TensorShape output_shape(TensorShape input) override;
+	void describe(std::ostream &out) override { out << filter_bank.dimensions; }
 
     std::vector<int> dimensions, strides, paddings, dilations;
 
@@ -169,28 +170,28 @@ struct ConvolutionTransposeOperation : public ConvolutionOperation<F> {
 	ConvolutionTransposeOperation(cereal::PortableBinaryInputArchive &ar);
 
     // API
-	virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-	virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-    virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-	virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+	virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+	virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+    virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+	virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
 
-	virtual void save(cereal::PortableBinaryOutputArchive &ar);
+	virtual void save(cereal::PortableBinaryOutputArchive &ar) override;
 
-    virtual OperationCode opcode() { return CONVOLUTION_TRANSPOSE; }
+    virtual OperationCode opcode() override { return CONVOLUTION_TRANSPOSE; }
 };
 
 template <typename F>
 struct SquaredLossOperation : public Operation<F> {
   SquaredLossOperation();
 
-  virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-  virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-  virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-  virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-  virtual OperationCode opcode() { return SQUARED_LOSS; }
-	void save(cereal::PortableBinaryOutputArchive &ar){}
+  virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+  virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+  virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+  virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+  virtual OperationCode opcode() override { return SQUARED_LOSS; }
+	void save(cereal::PortableBinaryOutputArchive &ar) override{}
 
-  void describe(std::ostream &out) { out << "squared_loss"; }
+  void describe(std::ostream &out) override { out << "squared_loss"; }
 
   Tensor<F> tmp; // temporary tensor for computation
 };
@@ -200,14 +201,14 @@ struct SupportLossOperation : public Operation<F> {
   SupportLossOperation(F support);
 	SupportLossOperation(cereal::PortableBinaryInputArchive &ar);
 
-  virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-  virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-  virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-  virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-  virtual OperationCode opcode() { return SUPPORT_LOSS; }
-  void save(cereal::PortableBinaryOutputArchive &ar);
+  virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+  virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+  virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+  virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+  virtual OperationCode opcode() override { return SUPPORT_LOSS; }
+  void save(cereal::PortableBinaryOutputArchive &ar) override;
 
-  void describe(std::ostream &out) { out << "support_loss"; }
+  void describe(std::ostream &out) override { out << "support_loss"; }
 
   F support = 0;
   Tensor<F> tmp; // temporary tensor for computation
@@ -216,49 +217,49 @@ struct SupportLossOperation : public Operation<F> {
 template <typename F>
 struct SquashOperation : public ConvolutionOperation<F> {
 	SquashOperation(TensorShape s, int c);
-	TensorShape output_shape(TensorShape input);
+	TensorShape output_shape(TensorShape input) override;
 
 	int c;
 
-	void describe(std::ostream &out) { out << "squash"; }
-    void init_normal(F mean, F std);
-    void init_uniform(F var);
+	void describe(std::ostream &out) override { out << "squash"; }
+    void init_normal(F mean, F std) override;
+    void init_uniform(F var) override;
 
 };
 
 template <typename F>
-struct UnsquashOperation : public Operation<F> {
+struct UnsquashOperation : public DefaultOperation<F> {
   UnsquashOperation(TensorShape s);
 
-  TensorShape output_shape(TensorShape input);
-  void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-  void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
+  TensorShape output_shape(TensorShape input) override;
+  void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) override;
+  void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0) override;
   
-  void describe(std::ostream &out) { out << "unsquash"; }
+  void describe(std::ostream &out) override { out << "unsquash"; }
   
   TensorShape s;
 };
 
 template <typename F>
-struct MergeOperation : public Operation<F> {
+struct MergeOperation : public DefaultOperation<F> {
   MergeOperation();
 
-  TensorShape output_shape(TensorShape input);
-  void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-  void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
+  TensorShape output_shape(TensorShape input) override;
+  void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) override;
+  void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0) override;
   
-  void describe(std::ostream &out) { out << "merge"; }
+  void describe(std::ostream &out) override { out << "merge"; }
 };
 
 template <typename F>
-struct SplitOperation : public Operation<F> {
+struct SplitOperation : public DefaultOperation<F> {
   SplitOperation();
 
-  TensorShape output_shape(TensorShape input);
-  void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-  void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
+  TensorShape output_shape(TensorShape input) override;
+  void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) override;
+  void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0) override;
   
-  void describe(std::ostream &out) { out << "split"; }
+  void describe(std::ostream &out) override { out << "split"; }
 };
 
 
@@ -267,13 +268,13 @@ struct LocalNormalisationOperation : public DefaultOperation<F> {
   LocalNormalisationOperation(int w);
    LocalNormalisationOperation(cereal::PortableBinaryInputArchive &ar);
 
-  TensorShape output_shape(TensorShape input);
-  void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-  void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
+  TensorShape output_shape(TensorShape input) override;
+  void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) override;
+  void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0) override;
   
-  void describe(std::ostream &out) { out << "local_normalisation"; }
-  virtual OperationCode opcode() { return LOCAL_NORMALISATION; }
-	void save(cereal::PortableBinaryOutputArchive &ar);
+  void describe(std::ostream &out) override { out << "local_normalisation"; }
+  virtual OperationCode opcode() override { return LOCAL_NORMALISATION; }
+	void save(cereal::PortableBinaryOutputArchive &ar) override;
 	cudnnLRNDescriptor_t lrn_desc = 0;
 	
 	int w = 0;
@@ -281,13 +282,13 @@ struct LocalNormalisationOperation : public DefaultOperation<F> {
 
 
 template <typename F>
-struct PoolingOperation : public Operation<F> {
+struct PoolingOperation : public DefaultOperation<F> {
   PoolingOperation(int kw, int kh, cudnnPoolingMode_t mode = CUDNN_POOLING_MAX);
-	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
-	void describe(std::ostream &out) { out << "pool " << kw << "x" << kh; }
+	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) override;
+	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0) override;
+	void describe(std::ostream &out) override { out << "pool " << kw << "x" << kh; }
 
-	TensorShape output_shape(TensorShape input);
+	TensorShape output_shape(TensorShape input) override;
 
 	int kw, kh;
 	cudnnPoolingDescriptor_t pool;
@@ -296,14 +297,14 @@ struct PoolingOperation : public Operation<F> {
 template <typename F>
 struct TanhOperation : public DefaultOperation<F> {
   TanhOperation(F scale = 1.0);
-	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
-	void describe(std::ostream &out) { out << "tanh"; }
-	virtual OperationCode opcode() { return TANH; }
+	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) override;
+	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0) override;
+	void describe(std::ostream &out) override { out << "tanh"; }
+	virtual OperationCode opcode() override { return TANH; }
 
-	void save(cereal::PortableBinaryOutputArchive &ar) {}
+	void save(cereal::PortableBinaryOutputArchive &ar) override {}
 
-	TensorShape output_shape(TensorShape input);
+	TensorShape output_shape(TensorShape input) override;
 
 	cudnnActivationDescriptor_t desc;
 
@@ -313,13 +314,13 @@ struct TanhOperation : public DefaultOperation<F> {
 template <typename F>
 struct SigmoidOperation : public DefaultOperation<F> {
   SigmoidOperation(F scale = 1.0);
-	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
-	void describe(std::ostream &out) { out << "sigmoid"; }
-	virtual OperationCode opcode() { return SIGMOID; }
-	void save(cereal::PortableBinaryOutputArchive &ar) {}
+	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) override;
+	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0) override;
+	void describe(std::ostream &out) override { out << "sigmoid"; }
+	virtual OperationCode opcode() override { return SIGMOID; }
+	void save(cereal::PortableBinaryOutputArchive &ar) override {}
 
-	TensorShape output_shape(TensorShape input);
+	TensorShape output_shape(TensorShape input) override;
 	cudnnActivationDescriptor_t desc;
 
 	F scale;
@@ -331,16 +332,16 @@ struct AdditionOperation : public Operation<F> {
 
 	void forward(Tensor<F> &in1, Tensor<F> &in2, Tensor<F> &out);
 	void backward(Tensor<F> &in_grad, Tensor<F> &out_grad1, Tensor<F> &in_grad2);
-	void describe(std::ostream &out) { out << "addition"; }
-	virtual OperationCode opcode() { return ADDITION; }
+	void describe(std::ostream &out) override { out << "addition"; }
+	virtual OperationCode opcode() override { return ADDITION; }
 
-	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
-	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-	void save(cereal::PortableBinaryOutputArchive &ar) {}
+	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+	void save(cereal::PortableBinaryOutputArchive &ar) override {}
 
-	TensorShape output_shape(TensorShape input);
+	TensorShape output_shape(TensorShape input) override;
 	cudnnActivationDescriptor_t desc;
 };
 
@@ -349,13 +350,13 @@ template <typename F>
 struct ReluOperation : public DefaultOperation<F> {
     ReluOperation();
 
-	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
-	void describe(std::ostream &out) { out << "relu"; }
-	virtual OperationCode opcode() { return RELU; }
-	void save(cereal::PortableBinaryOutputArchive &ar) {}
+	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) override;
+	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0) override;
+	void describe(std::ostream &out) override { out << "relu"; }
+	virtual OperationCode opcode() override { return RELU; }
+	void save(cereal::PortableBinaryOutputArchive &ar) override {}
 
-	TensorShape output_shape(TensorShape input);
+	TensorShape output_shape(TensorShape input) override;
 	cudnnActivationDescriptor_t desc;
 
 };
@@ -364,13 +365,13 @@ struct ReluOperation : public DefaultOperation<F> {
 template <typename F>
 struct SoftmaxOperation : public DefaultOperation<F> {
 	SoftmaxOperation(bool matched = false);
-	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0);
-	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0);
-	void describe(std::ostream &out) { out << "softmax"; }
-	virtual OperationCode opcode() { return SOFTMAX; }
-	void save(cereal::PortableBinaryOutputArchive &ar) {}
+	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) override;
+	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0) override;
+	void describe(std::ostream &out) override { out << "softmax"; }
+	virtual OperationCode opcode() override { return SOFTMAX; }
+	void save(cereal::PortableBinaryOutputArchive &ar) override {}
 
-	TensorShape output_shape(TensorShape input);
+	TensorShape output_shape(TensorShape input) override;
 	bool matched;
 };
 
@@ -379,21 +380,21 @@ struct InstanceNormalisationOperation : public Operation<F> {
 	InstanceNormalisationOperation();
 
 	// Runs the forward step
-	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+	void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
 
 	// Responsible for both checking if sizes match, and making sure the memory is allocated
-	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out);
+	bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
 
 	// Runs the backward step
-	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
-    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad);
+	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+    bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
 	
     // Write a readable string to the ostream
-	void describe(std::ostream &out);
+	void describe(std::ostream &out) override;
 
-	OperationCode opcode() { return INSTANCE_NORMALISATION; }
+	OperationCode opcode() override { return INSTANCE_NORMALISATION; }
 
-	void save(cereal::PortableBinaryOutputArchive &ar);
+	void save(cereal::PortableBinaryOutputArchive &ar) override;
 
 	Tensor<F> tmp;
 	F variance = 0.0;
