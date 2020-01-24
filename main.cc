@@ -209,6 +209,7 @@ void test3() {
 	cout << "Done" << endl;
 }
 
+
 int main(int argc, char **argv) {
 	// Tensor<double> bla(TensorShape({1, 1, 4}));
 	// bla.init_normal(0.0, 4.0);
