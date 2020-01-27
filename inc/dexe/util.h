@@ -153,7 +153,7 @@ inline void handle_error(curandStatus_t status) {
 
 inline void handle_error(cudaError_t err) {
 	if (err != cudaSuccess) {
-		std::cerr << cudaGetErrorString(err) << std::endl;
+		std::cerr << "Cuda error: " << cudaGetErrorName(err) << " - " << cudaGetErrorString(err) << std::endl;
 		throw DexeException(cudaGetErrorString(err));
 	}
 }
