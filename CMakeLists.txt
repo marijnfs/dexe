@@ -18,6 +18,8 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(CUDA QUIET REQUIRED)
 find_package(CUDNN REQUIRED)
 
+CUDA_SELECT_NVCC_ARCH_FLAGS(CUDA_NVCC_FLAGS ${CUDA_ARCH_BIN})
+
 if (USE_NIFTI)
    find_library(ZNZ znz HINTS /usr/local/lib /usr/local/lib64 REQUIRED)
    find_library(niftiio niftiio HINTS /usr/local/lib /usr/local/lib64 REQUIRED)
@@ -27,11 +29,6 @@ endif()
 
 set(CXX_STANDARD 17)
 set(CUDA_PROPAGATE_HOST_FLAGS ON)
-if(WIN32)
-	set(CUDA_NVCC_FLAGS "-arch=sm_30")
-else()
-	set(CUDA_NVCC_FLAGS "-arch=sm_30 -std=c++14 --compiler-options -fPIC")
-endif()
 
 file(GLOB CPP_SOURCE src/*.cc)
 file(GLOB CU_SOURCE src/*.cu)
