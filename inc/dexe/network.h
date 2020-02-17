@@ -31,7 +31,7 @@ struct DEXE_API Node {
 	TensorSet<F> &tensor_set();
 
 	void operator()(std::initializer_list<std::reference_wrapper<Tensor<F>>> inputs); //call to evaluation
-	void backward() { network->new_backward(); }
+	void backward() { network->backward(); }
 
 	bool valid() { return index != -1; }
 
@@ -74,21 +74,14 @@ struct DEXE_API Network {
 
 	std::vector<int> find_sequence(std::vector<int> inputs, std::vector<int> outputs);
 
-	void new_forward(std::vector<int> inputs, std::vector<int> outputs);
-	void new_backward();
+	void forward(std::vector<int> inputs, std::vector<int> outputs);
+	void backward();
 
 	void zero_x();
 	void zero_grad();
 
 	void finish();
 	void assert_finished();
-
-	//void forward();
-	//void forward(F const *cpu_data);
-
-	//void backward(F const *cpu_data);
-	//void backward();
-	//void backward_data();
 
 	void update(F lr);
 	void l2(F l);

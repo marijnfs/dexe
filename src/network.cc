@@ -45,7 +45,7 @@ void Node<F>::operator()(std::initializer_list<std::reference_wrapper<Tensor<F>>
 		++input_it;
 	}
 
-	network->new_forward(network->inputs, {index});
+	network->forward(network->inputs, {index});
 }
 
 template <typename F>
@@ -109,22 +109,6 @@ void Network<F>::zero_grad() {
 		param->zero_grad();
 }
 
-/*
-template <typename F>
-void Network<F>::backward() {
-	assert_finished();
-	for (int i(operations.size() - 1); i >= 0; --i) {
-		operations[i]->backward(*tensors[i]->x, *tensors[i+1]->x, *tensors[i+1]->grad, *tensors[i]->grad);
-		operations[i]->backward_weights(*tensors[i]->x, *tensors[i+1]->grad);
-	}
-}
-
-template <typename F>
-void Network<F>::backward_data() {
-	for (int i(operations.size() - 1); i >= 0; --i)
-		operations[i]->backward(*tensors[i]->x, *tensors[i+1]->x, *tensors[i+1]->grad, *tensors[i]->grad);
-}
-*/
 
 template <typename F>
 void Network<F>::update(F lr) {
@@ -278,13 +262,13 @@ vector<F> Network<F>::fd_gradient(F e) {
 			delta_vec[n] = vec[n] + e;
 			parameters[i]->from_vector(delta_vec);
 
-			new_forward(inputs, outputs);
+			forward(inputs, outputs);
 			F plus_loss = tensors.back().x->to_vector()[0];
 
 			delta_vec[n] = vec[n] - e;
 			parameters[i]->from_vector(delta_vec);
 			//throw "";
-			new_forward(inputs, outputs);
+			forward(inputs, outputs);
 
 			F min_loss = tensors.back().x->to_vector()[0];
 
@@ -583,7 +567,7 @@ std::function<Node<F>(Node<F>, Node<F>)> Network<F>::addition(string name) {
 }
 
 template <typename F>
-void Network<F>::new_backward() {
+void Network<F>::backward() {
 	if (sequence.empty()) {
 		cerr << "No sequence available, did you run forward?" << endl;
 		return;
@@ -687,7 +671,7 @@ vector<int> Network<F>::find_sequence(std::vector<int> inputs, std::vector<int> 
 }
 
 template <typename F>
-void Network<F>::new_forward(std::vector<int> inputs, std::vector<int> outputs) {
+void Network<F>::forward(std::vector<int> inputs, std::vector<int> outputs) {
 	sequence = find_sequence(inputs, outputs);
 
 	set<int> input_set(inputs.begin(), inputs.end());
