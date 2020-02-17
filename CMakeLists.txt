@@ -39,7 +39,7 @@ set(EXT_HEADERS inc/dexe/dexe.h inc/dexe/network.h inc/dexe/optimizer.h inc/dexe
 #set_property(SOURCE ${CU_SOURCE} PROPERTY COMPILE_FLAGS -O3)
 #set_property(SOURCE ${CPP_HEADERS} PROPERTY COMPILE_FLAGS -O3)
 
-set(CUDA_LINK_LIBRARIES_KEYWORD "PRIVATE")
+set(CUDA_LINK_LIBRARIES_KEYWORD "PUBLIC")
 cuda_add_library(dexe ${CPP_HEADERS} ${CPP_SOURCE} ${CU_SOURCE})
 if(UNIX)
     target_compile_options(dexe PRIVATE "-fPIC")
