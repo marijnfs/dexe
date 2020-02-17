@@ -149,6 +149,10 @@ void Tensor<F>::allocate() {
 	}
 }
 
+template <typename F>
+bool Tensor<F>::allocated() {
+	return data != nullptr;
+}
 
 template <typename F>
 void Tensor<F>::reshape(TensorShape new_shape) {

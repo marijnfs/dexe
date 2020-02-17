@@ -123,6 +123,9 @@ bool ConvolutionOperation<F>::backward_dry_run(vector<Tensor<F>*> &in, vector<Te
 
 template <typename F>
 void ConvolutionOperation<F>::backward(vector<Tensor<F>*> &in, vector<Tensor<F>*> &out, vector<Tensor<F>*> &in_grad, vector<Tensor<F>*> &out_grad) {
+	if (!out_grad[0]->allocated()) {
+		throw DexeException("Error in ConvolutionOperation backward, output gradient not allocated");
+	}
 	if (in_grad.size()) //allows us to prevent backward pass to inputs if unneeded
 		backward(*in[0], *out[0], *in_grad[0], *out_grad[0]);
     backward_weights(*in[0], *out_grad[0]);
@@ -381,15 +384,15 @@ void ConvolutionOperation<F>::register_params(vector<CudaPtr<F> > &params, vecto
 
 template <typename F>
 void ConvolutionOperation<F>::share(ConvolutionOperation<F> &other){
-	cudaFree(other.filter_bank.weights);
-	cudaFree(other.filter_bank_grad.weights);
+	handle_error( cudaFree(other.filter_bank.weights) );
+	handle_error( cudaFree(other.filter_bank_grad.weights) );
 	
 	other.filter_bank.weights = filter_bank.weights;
 	other.filter_bank_grad.weights = filter_bank_grad.weights;
 	
 	if (has_bias) {
-		cudaFree(other.bias.data);
-		cudaFree(other.bias_grad.data);
+		handle_error( cudaFree(other.bias.data) );
+		handle_error( cudaFree(other.bias_grad.data) );
 
 		other.bias.data = bias.data;
 		other.bias_grad.data = bias_grad.data;
@@ -399,10 +402,10 @@ void ConvolutionOperation<F>::share(ConvolutionOperation<F> &other){
 
 template <typename F>
 ConvolutionOperation<F>::~ConvolutionOperation() {
-	cudnnDestroyConvolutionDescriptor(conv);
+	handle_error( cudnnDestroyConvolutionDescriptor(conv) );
 
-    if (workspace)
-		cudaFree(workspace);
+    //if (workspace)
+	//	cudaFree(workspace);
 }
 
 
