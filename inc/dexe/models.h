@@ -4,7 +4,6 @@
 #include <functional>
 
 namespace dexe {
-
     template <typename F>
         std::function<Node<F>(Node<F>)> basic_layer(int c, int c_out, int k);
     
