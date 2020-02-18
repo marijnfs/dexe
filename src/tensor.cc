@@ -169,7 +169,7 @@ void Tensor<F>::reshape(TensorShape new_shape) {
 	if (new_shape.n_elements() != shape.n_elements())
 	{
 		if (data) {
-			cudaFree(data);
+			handle_error( cudaFree(data) );
 			data = nullptr;
 		}
 		shape = new_shape;
@@ -183,8 +183,8 @@ void Tensor<F>::reshape(TensorShape new_shape) {
 template <typename F>
 Tensor<F>::~Tensor() {
 	handle_error( cudnnDestroyTensorDescriptor(td));
-	if (owning)
-	  cudaFree(data);
+	if (owning && data)
+	  handle_error( cudaFree(data) );
 }
 
 
@@ -438,7 +438,7 @@ FilterBank<F>::FilterBank(std::vector<int> dimensions_)
 template <typename F>
 FilterBank<F>::~FilterBank() {
 	cudnnDestroyFilterDescriptor(fd);
-	cudaFree(weights);
+	handle_error( cudaFree(weights) );
 }
 
 template <typename F>

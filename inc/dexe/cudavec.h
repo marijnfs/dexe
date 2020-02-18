@@ -17,7 +17,7 @@ template <typename F> struct CudaVec {
 
     ~CudaVec() {
 	if (own && N) {
-	    cudaFree(data);
+	    handle_error( cudaFree(data) );
 	}
     }
 
@@ -35,8 +35,8 @@ template <typename F> struct CudaVec {
 
 	if (N != n2) {
 	    if (N) {
-		cudaFree(data);
-		data = 0;
+            handle_error( cudaFree(data) );
+            data = 0;
 	    }
 	    if (n2)
 		handle_error(cudaMalloc((void **)&data, sizeof(F) * n2));
