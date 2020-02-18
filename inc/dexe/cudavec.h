@@ -16,75 +16,100 @@ template <typename F> struct CudaVec {
     CudaVec(F *data, int n_) : data(data), N(n_), own(false) {}
 
     ~CudaVec() {
-	if (own && N) {
-	    handle_error( cudaFree(data) );
-	}
+        if (own && N) {
+            handle_error(cudaFree(data));
+        }
     }
 
     CudaVec &operator=(CudaVec &other) {
-	if (N != other.N) {
-	    resize(other.N);
-	}
-	copy_gpu_to_gpu(other.data, data, N);
-	return *this;
+        if (N != other.N) {
+            resize(other.N);
+        }
+        copy_gpu_to_gpu(other.data, data, N);
+        return *this;
     }
 
-    void resize(int n2) {
-	if (!own)
-	    throw std::runtime_error("Can resize non-owning cudavec");
+    void allocate(int n) {
+        resize(n);
+    }
 
-	if (N != n2) {
-	    if (N) {
-            handle_error( cudaFree(data) );
-            data = 0;
-	    }
-	    if (n2)
-		handle_error(cudaMalloc((void **)&data, sizeof(F) * n2));
-	    N = n2;
-	}
-	zero();
+    bool allocated() {
+        return data != NULL;
+    }
+
+    void free() {
+        allocate(0);
+    }
+
+    void resize(int newN) {
+        if (!own)
+            throw std::runtime_error("Can resize non-owning cudavec");
+
+        if (N != newN) {
+            if (N) {
+                handle_error(cudaFree(data));
+                data = 0;
+            }
+            if (newN)
+                handle_error(cudaMalloc((void **)&data, sizeof(F) * newN));
+            N = newN;
+        }
+        zero();
     }
 
     CudaVec(CudaVec &other) {
-	resize(other.N);
-	copy_gpu_to_gpu(other.data, data, N);
+        resize(other.N);
+        copy_gpu_to_gpu(other.data, data, N);
     }
 
     // void rand_zero(F p);
 
     void zero(int offset = 0) {
-	if (N)
-	    handle_error(
-		cudaMemset(data + offset, 0, sizeof(F) * (N - offset)));
+        if (N)
+            handle_error(cudaMemset(data + offset, 0, sizeof(F) * (N - offset)));
     }
 
-    void init_normal(F mean, F std) {
-	dexe::init_normal<F>(data, N, mean, std);
-    }
+    void init_normal(F mean, F std) { dexe::init_normal<F>(data, N, mean, std); }
 
     void add_normal(F mean, F std) { dexe::add_normal<F>(data, N, mean, std); }
 
-    std::vector<F> to_vector() {
-	std::vector<F> vec(N);
-	handle_error(
-	    cudaMemcpy(&vec[0], data, N * sizeof(F), cudaMemcpyDeviceToHost));
-	return vec;
+    void share(CudaVec<F> &other) {
+        if (N != other.N) {
+            throw DexeException("can't share with CudaVec of different size");
+        }
+        if (own)
+            cudaFree(data);
+        own = false;
+        data = other.data;
     }
 
-    void from_vector(std::vector<F> &vec) {
-	if (vec.size() != N)
-	    resize(vec.size());
-	handle_error(
-	    cudaMemcpy(data, &vec[0], N * sizeof(F), cudaMemcpyHostToDevice));
+    std::vector<F> to_vector() {
+        std::vector<F> vec(N);
+        handle_error(cudaMemcpy(&vec[0], data, N * sizeof(F), cudaMemcpyDeviceToHost));
+        return vec;
+    }
+
+    void to_ptr(F *target) {
+        handle_error(cudaMemcpy(target, data, N * sizeof(F), cudaMemcpyDeviceToHost));
+    }
+
+    void from_ptr(F const *source) {
+        handle_error(cudaMemcpy(data, source, N * sizeof(F), cudaMemcpyHostToDevice));
+    }
+
+    void from_vector(std::vector<F> const &vec) {
+        if (vec.size() != N)
+            resize(vec.size());
+        handle_error(cudaMemcpy(data, &vec[0], N * sizeof(F), cudaMemcpyHostToDevice));
     }
 
     F sum() {
-	F result(0);
-	if (sizeof(F) == sizeof(float))
-	    handle_error(cublasSasum(Handler::cublas(), N, data, 1, &result));
-	else
-	    handle_error(cublasDasum(Handler::cublas(), N, data, 1, &result));
-	return result;
+        F result(0);
+        if (sizeof(F) == sizeof(float))
+            handle_error(cublasSasum(Handler::cublas(), N, data, 1, &result));
+        else
+            handle_error(cublasDasum(Handler::cublas(), N, data, 1, &result));
+        return result;
     }
 
     CudaVec<F> &sqrt();

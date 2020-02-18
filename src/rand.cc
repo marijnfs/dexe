@@ -12,14 +12,14 @@ Rand::Rand() : engine(rd()) {
 }
 
 Rand &Rand::inst() {
-	if (!Rand::s_rand)
-		Rand::s_rand = new Rand();
-	return *Rand::s_rand;
+    if (!Rand::s_rand)
+        Rand::s_rand = new Rand();
+    return *Rand::s_rand;
 }
 
 int Rand::randn(int n) {
-	uniform_int_distribution<int> uni(0, n - 1);
+    uniform_int_distribution<int> uni(0, n - 1);
     return uni(Rand::inst().engine);
 }
 
-}
+} // namespace dexe

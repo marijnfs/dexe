@@ -71,6 +71,7 @@ void test3() {
 	Handler::cudnn();
 	cout << "Test 3" << endl;
 
+	for (int n(0); n < 2; ++n)
 	{
 		Network<double> net;
 
@@ -107,8 +108,8 @@ void test3() {
 		// in1.tensor_set().alloc_x(TensorShape{1, 1, 64, 64, 64});
 		// target.tensor_set().alloc_x(TensorShape{1, 1, 64, 64, 64});
 
-		Tensor<double> sample(TensorShape{1, 1, 4, 4, 4});
-		Tensor<double> y(TensorShape{1, 1, 4, 4, 4});
+		Tensor<double> sample(TensorShape{1, 1, 64, 64, 64});
+		Tensor<double> y(TensorShape{1, 1, 64, 64, 64});
 		
 		net.init_normal(0.0, 0.1);
 		sample.init_normal(0.0, 0.1);

@@ -40,7 +40,7 @@ void split(Tensor<float> &a, Tensor<float> &out) {
 	size_t dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
 
     auto shape = a.shape;
-    split_kernelf<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.data, out.data);
+    split_kernelf<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.ptr(), out.ptr());
 }
 
 void split(Tensor<double> &a, Tensor<double> &out) {
@@ -51,7 +51,7 @@ void split(Tensor<double> &a, Tensor<double> &out) {
 	size_t dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
 
     auto shape = a.shape;
-    split_kerneld<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.data, out.data);
+    split_kerneld<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.ptr(), out.ptr());
 }
 
 __global__ void merge_kernelf(size_t const N, size_t const C, size_t const X, size_t const Y, float const *input, float *out) {
@@ -90,7 +90,7 @@ void merge(Tensor<float> &a, Tensor<float> &out) {
 	size_t dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
 
     auto shape = a.shape;
-    merge_kernelf<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.data, out.data);
+    merge_kernelf<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.ptr(), out.ptr());
 }
 
 
@@ -102,7 +102,7 @@ void merge(Tensor<double> &a, Tensor<double> &out) {
 	size_t dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
 
     auto shape = a.shape;
-    merge_kerneld<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.data, out.data);
+    merge_kerneld<<<dimGrid, dimBlock>>>(s, shape.c(), shape.w(), shape.h(), a.ptr(), out.ptr());
 }
 
 __global__ void gate_kerneld(size_t N, double const *a, double const *b, double *out) {
@@ -128,7 +128,7 @@ void gate<double>(Tensor<double> &a, Tensor<double> &b, Tensor<double> &out) {
 	size_t dimBlock( BLOCKSIZE );
 	size_t dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
 
-	gate_kerneld<<<dimGrid, dimBlock>>>(s, a.data, b.data, out.data);
+	gate_kerneld<<<dimGrid, dimBlock>>>(s, a.ptr(), b.ptr(), out.ptr());
 }
 
 template <>
@@ -139,7 +139,7 @@ void gate<float>(Tensor<float> &a, Tensor<float> &b, Tensor<float> &out) {
 	size_t dimBlock( BLOCKSIZE );
 	size_t dimGrid( (s  + BLOCKSIZE - 1) / BLOCKSIZE);
 
-	gate_kernelf<<<dimGrid, dimBlock>>>(s, a.data, b.data, out.data);
+	gate_kernelf<<<dimGrid, dimBlock>>>(s, a.ptr(), b.ptr(), out.ptr());
 }
 
 
@@ -166,7 +166,7 @@ void gateinv<double>(Tensor<double> &a, Tensor<double> &b, Tensor<double> &out) 
 	size_t dimBlock( BLOCKSIZE );
 	size_t dimGrid( (s + BLOCKSIZE - 1) / BLOCKSIZE );
 
-	gate_kerneld<<<dimGrid, dimBlock>>>(s, a.data, b.data, out.data);
+	gate_kerneld<<<dimGrid, dimBlock>>>(s, a.ptr(), b.ptr(), out.ptr());
 }
 
 template <>
@@ -177,7 +177,7 @@ void gateinv<float>(Tensor<float> &a, Tensor<float> &b, Tensor<float> &out) {
 	size_t dimBlock( BLOCKSIZE );
 	size_t dimGrid( (s  + BLOCKSIZE - 1) / BLOCKSIZE);
 
-	gate_kernelf<<<dimGrid, dimBlock>>>(s, a.data, b.data, out.data);
+	gate_kernelf<<<dimGrid, dimBlock>>>(s, a.ptr(), b.ptr(), out.ptr());
 }
 
 

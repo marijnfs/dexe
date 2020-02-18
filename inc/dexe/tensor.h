@@ -5,6 +5,7 @@
 #include <iostream>
 #include "util.h"
 #include "config.h"
+#include "cudavec.h"
 
 const bool ZERO_ON_INIT(true);
 const cudnnTensorFormat_t DEFAULT_TENSOR_FORMAT = CUDNN_TENSOR_NCHW;
@@ -50,7 +51,7 @@ template <typename F>
 struct DEXE_API Tensor {
 	Tensor();
 	Tensor(TensorShape shape, cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT);
-	Tensor(TensorShape shape, F *data, cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT);
+	// Tensor(TensorShape shape, F *data, cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT);
 	Tensor(std::vector<F> data); //creates a single dim tensor with c = len(data)
 
 
@@ -94,8 +95,8 @@ struct DEXE_API Tensor {
 
   	int size();
 
-  	F *ptr() { return data; }
-    F *ptr(int n_, int c_ = 0, int y_ = 0, int x_ = 0) {return data + shape.offset(n_, c_, y_, x_); }
+  	F *&ptr() { return cudavec.data; }
+    F *ptr(int n_, int c_ = 0, int y_ = 0, int x_ = 0) {return cudavec.data + shape.offset(n_, c_, y_, x_); }
    
    	void add(Tensor<F> &other, F alpha);
    	void scale(F alpha);
@@ -110,19 +111,24 @@ struct DEXE_API Tensor {
    	template<class Archive>
 	void load(Archive & archive)
   	{
-  		std::vector<F> data;
-    	archive( shape, data, format ); // serialize things by passing them to the archive
+  		std::vector<F> data_vec;
+    	archive( shape, data_vec, format ); // serialize things by passing them to the archive
 		allocate();
 		set_descriptor();
 
     	//init
-    	from_vector(data);
+    	from_vector(data_vec);
+ 	}
+
+ 	void share(Tensor<F> &other) {
+ 		cudavec.share(other.cudavec);
  	}
 
     TensorShape shape;
 	bool owning = false;
 	cudnnTensorDescriptor_t td = nullptr;
-	F *data = nullptr;
+
+	CudaVec<F> cudavec;
 
 	cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT;
 };
@@ -152,19 +158,19 @@ struct FilterBank {
 	FilterBank(std::vector<int> dimensions);
 	~FilterBank();
 
-	std::vector<int> dimensions;
-
 	cudnnFilterDescriptor_t fd = 0;
 
-	F *weights = nullptr;
+	Tensor<F> weights;
 
-	void init();
+	void init_descriptor();
 
 	void reshape(std::vector<int> dimensions);
 
-	int n_weights() { return calculate_product(dimensions); }	
+	int n_weights() { return weights.size(); }	
 	void init_normal(F mean, F std);
 	void init_uniform(F var);
+
+	auto &dimensions() { return weights.shape.dimensions; }
 
 	int in_c();
 	int out_c();
@@ -180,20 +186,16 @@ struct FilterBank {
 	template<class Archive>
 	void save(Archive & archive)
   	{
-  		auto cpu_data = to_vector();
-    	archive( dimensions, cpu_data ); // serialize things by passing them to the archive
+    	archive( weights ); // serialize things by passing them to the archive
  	}
 
    	template<class Archive>
 	void load(Archive & archive)
   	{
-  		std::vector<F> cpu_data;
-  		archive(dimensions, cpu_data);
-  		init();
-  		from_vector(cpu_data);
+  		archive(weights);
  	}
 
-	F *ptr() { return weights; }
+	F *&ptr() { return weights.ptr(); }
 };
 
 }

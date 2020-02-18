@@ -135,7 +135,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	virtual int size() override;
 
 	TensorShape output_shape(TensorShape input) override;
-	void describe(std::ostream &out) override { out << filter_bank.dimensions; }
+	void describe(std::ostream &out) override { out << filter_bank.dimensions(); }
 
     std::vector<int> dimensions, strides, paddings, dilations;
 
