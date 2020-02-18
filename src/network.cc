@@ -72,7 +72,7 @@ void Network<F>::reset() {
 
 	fast_param_ptrs.clear();
 	fast_grad_ptrs.clear();
-
+ 
 	names_set.clear();
 
 	n_params = 0;
@@ -311,7 +311,6 @@ void Network<F>::align_params() {
 	register_params();
 	param_vec.resize(n_params);
 	grad_vec.resize(n_params);
-
 
 	F *ptr = param_vec.data;
 	for (auto &p : param_ptrs) {

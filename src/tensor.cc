@@ -438,7 +438,7 @@ FilterBank<F>::FilterBank(std::vector<int> dimensions_)
 template <typename F>
 FilterBank<F>::~FilterBank() {
 	cudnnDestroyFilterDescriptor(fd);
-	handle_error( cudaFree(weights) );
+	//handle_error( cudaFree(weights) );
 }
 
 template <typename F>
@@ -462,8 +462,8 @@ void FilterBank<F>::init() {
 	handle_error( cudnnCreateFilterDescriptor(&fd));
 	handle_error( cudnnSetFilterNdDescriptor(fd, (sizeof(F) == sizeof(float)) ? CUDNN_DATA_FLOAT : CUDNN_DATA_DOUBLE, DEFAULT_TENSOR_FORMAT, dimensions_copy.size(), dimensions_copy.data()) );
 
-	if (weights)
-		handle_error( cudaFree(weights) );
+	//if (weights)
+	//	handle_error( cudaFree(weights) );
 
 	handle_error( cudaMalloc( (void**)&weights, sizeof(F) * n_weights()) );
 	if (ZERO_ON_INIT)

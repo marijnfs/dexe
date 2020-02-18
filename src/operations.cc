@@ -83,12 +83,14 @@ void ConvolutionOperation<F>::init() {
 		bias.reshape(TensorShape(bias_dims));
 		bias_grad.reshape(TensorShape(bias_dims));
 		cout << "done reshaping bias" << endl;
+		bias.owning = false;
+		bias_grad.owning = false;
 	}
 	
 	vector<int> kernel_dims(dimensions.begin() + 2, dimensions.end());
 	paddings = vector<int>(kernel_dims.size());
     dilations = vector<int>(kernel_dims.size(), 1);
-
+	
 	if (keep) {
 		cout << "pad: " << paddings << endl;
 		for (int n(0); n < kernel_dims.size(); ++n)
@@ -102,7 +104,9 @@ void ConvolutionOperation<F>::init() {
 	if (sizeof(F) == sizeof(float))
 		handle_error( cudnnSetConvolutionNdDescriptor(conv, kernel_dims.size(), paddings.data(), strides.data(), dilations.data(), CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
 	else
-		handle_error( cudnnSetConvolutionNdDescriptor(conv, kernel_dims.size(), paddings.data(), strides.data(), dilations.data(), CUDNN_CROSS_CORRELATION, CUDNN_DATA_DOUBLE));	
+		handle_error( cudnnSetConvolutionNdDescriptor(conv, kernel_dims.size(), paddings.data(), strides.data(), dilations.data(), CUDNN_CROSS_CORRELATION, CUDNN_DATA_DOUBLE));
+
+	
 }
 
 
