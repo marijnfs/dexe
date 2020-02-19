@@ -12,7 +12,7 @@ template <typename F> struct CudaVec {
     bool own = true;
 
     CudaVec() : data(0), N(0) {}
-    CudaVec(int n_) : data(0), N(0) { resize(n_); }
+    CudaVec(int n_) : data(0), N(0) { allocate(n_); }
     CudaVec(F *data, int n_) : data(data), N(n_), own(false) {}
 
     ~CudaVec() {
@@ -23,7 +23,7 @@ template <typename F> struct CudaVec {
 
     CudaVec &operator=(CudaVec &other) {
         if (N != other.N) {
-            resize(other.N);
+            allocate(other.N);
         }
         copy_gpu_to_gpu(other.data, data, N);
         return *this;

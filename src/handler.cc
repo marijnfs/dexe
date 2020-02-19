@@ -73,25 +73,25 @@ void Handler::s_init() {
 
 cudnnHandle_t &Handler::cudnn() {
     if (!s_handler)
-        s_handler->s_init();
+        s_init();
     return s_handler->h_cudnn;
 }
 
 curandGenerator_t &Handler::curand() {
     if (!s_handler)
-        s_handler->s_init();
+        s_init();
     return s_handler->h_curand;
 }
 
 cublasHandle_t &Handler::cublas() {
     if (!s_handler)
-        s_handler->s_init();
+        s_init();
     return s_handler->h_cublas;
 }
 
 char *Handler::workspace() {
     if (!s_handler)
-        s_handler->s_init();
+        s_init();
     return s_handler->s_workspace;
 }
 

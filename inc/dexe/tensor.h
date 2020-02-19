@@ -112,7 +112,7 @@ struct DEXE_API Tensor {
 	void load(Archive & archive)
   	{
   		std::vector<F> data_vec;
-    	archive( shape, data_vec, format ); // serialize things by passing them to the archive
+    	archive( shape, format, data_vec ); // serialize things by passing them to the archive
 		allocate();
 		set_descriptor();
 
