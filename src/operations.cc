@@ -394,17 +394,17 @@ template <typename F> void ConvolutionOperation<F>::scale_grad(F val) {
 }
 
 template <typename F>
-void ConvolutionOperation<F>::register_params(vector<CudaPtr<F>> &params,
-                                              vector<CudaPtr<F>> &fast_params,
-                                              vector<CudaPtr<F>> &grads,
-                                              vector<CudaPtr<F>> &fast_grads) {
+void ConvolutionOperation<F>::register_params(vector<CudaVec<F>*> &params,
+                                              vector<CudaVec<F>*> &fast_params,
+                                              vector<CudaVec<F>*> &grads,
+                                              vector<CudaVec<F>*> &fast_grads) {
     // cout << "registering " << (rollout?"rollout":"no rollout") << endl;
-    params.push_back(CudaPtr<F>{&filter_bank.ptr(), filter_bank.n_weights()});
-    grads.push_back(CudaPtr<F>{&filter_bank_grad.ptr(), filter_bank_grad.n_weights()});
+    params.push_back(&filter_bank.weights.cudavec);
+    grads.push_back(&filter_bank_grad.weights.cudavec);
 
     if (has_bias)
-        params.push_back(CudaPtr<F>{&bias.ptr(), bias.size()});
-    grads.push_back(CudaPtr<F>{&bias_grad.ptr(), bias_grad.size()});
+        params.push_back(&bias.cudavec);
+    grads.push_back(&bias_grad.cudavec);
 }
 
 template <typename F> void ConvolutionOperation<F>::share(ConvolutionOperation<F> &other) {

@@ -9,7 +9,6 @@
 
 #include "tensor.h"
 #include "util.h"
-#include "cudaptr.h"
 
 // int const CONV_MAX_MEM = 0;
 int const CONV_MAX_MEM = 1024 * 1024 * 1024;
@@ -65,7 +64,7 @@ struct Parametrised {
 	virtual void l2(F l) {}
 	virtual void zero_grad() {}
 	virtual void scale_grad(F val) {}
-	virtual void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F>> &grads, std::vector<CudaPtr<F> > &fast_grads) {}
+	virtual void register_params(std::vector<CudaVec<F>*> &params, std::vector<CudaVec<F>*> &fast_params, std::vector<CudaVec<F>*> &grads, std::vector<CudaVec<F>*> &fast_grads) {}
 
 	virtual std::vector<F> to_vector() { return std::vector<F>(); }
 	virtual void from_vector(std::vector<F> &v) { }
@@ -124,7 +123,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 	void l2(F l) override;
 	void zero_grad() override;
 	void scale_grad(F val) override;
-	void register_params(std::vector<CudaPtr<F>> &params, std::vector<CudaPtr<F>> &fast_params, std::vector<CudaPtr<F>> &grads, std::vector<CudaPtr<F> > &fast_grads) override;
+	void register_params(std::vector<CudaVec<F>*> &params, std::vector<CudaVec<F>*> &fast_params, std::vector<CudaVec<F>*> &grads, std::vector<CudaVec<F>*> &fast_grads) override;
 	void share(ConvolutionOperation<F> &other);
 
 

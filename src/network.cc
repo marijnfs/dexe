@@ -289,20 +289,22 @@ template <typename F> void Network<F>::align_params() {
 
     F *ptr = param_vec.data;
     for (auto &p : param_ptrs) {
-        handle_error(cudaMemcpy(ptr, *(p.ptr), p.n * sizeof(F),
+        handle_error(cudaMemcpy(ptr, p->data, p->N * sizeof(F),
                                 cudaMemcpyDeviceToDevice));
-        cudaFree(*(p.ptr));
-        *(p.ptr) = ptr;
-        ptr += p.n;
+        cudaFree(p->data);
+        p->data = ptr;
+        ptr += p->N;
+        p->own = false;
     }
 
     ptr = grad_vec.data;
     for (auto &g : grad_ptrs) {
-        handle_error(cudaMemcpy(ptr, *(g.ptr), g.n * sizeof(F),
+        handle_error(cudaMemcpy(ptr, g->data, g->N * sizeof(F),
                                 cudaMemcpyDeviceToDevice));
-        cudaFree(*(g.ptr));
-        *(g.ptr) = ptr;
-        ptr += g.n;
+        cudaFree(g->data);
+        g->data = ptr;
+        ptr += g->N;
+        g->own = false;
     }
 
     cout << "n params: " << n_params << endl;
@@ -322,7 +324,7 @@ template <typename F> void Network<F>::register_params() {
 
     n_params = 0;
     for (auto &p : param_ptrs)
-        n_params += p.n;
+        n_params += p->N;
 }
 
 template <typename F> Network<F>::~Network() { cout << "DESTRUCTOR" << endl; }

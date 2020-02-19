@@ -10,7 +10,6 @@
 #include "dexe/util.h"
 #include "dexe/tensor.h"
 #include "dexe/cudavec.h"
-#include "dexe/cudaptr.h"
 
 namespace dexe {
 
@@ -125,8 +124,8 @@ struct DEXE_API Network {
 	std::vector<Parametrised<F>*> parameters;
 
 	CudaVec<F> param_vec, grad_vec;
-	std::vector<CudaPtr<F>> param_ptrs, grad_ptrs;
-	std::vector<CudaPtr<F>> fast_param_ptrs, fast_grad_ptrs;
+	std::vector<CudaVec<F>*> param_ptrs, grad_ptrs;
+	std::vector<CudaVec<F>*> fast_param_ptrs, fast_grad_ptrs;
 
 	std::set<std::string> names_set;
 
