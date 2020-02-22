@@ -170,7 +170,7 @@ struct FilterBank {
 	void init_normal(F mean, F std);
 	void init_uniform(F var);
 
-	auto &dimensions() { return weights.shape.dimensions; }
+	std::vector<int> &dimensions() { return weights.shape.dimensions; }
 
 	int in_c();
 	int out_c();

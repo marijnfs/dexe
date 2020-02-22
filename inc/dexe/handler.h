@@ -13,7 +13,7 @@ namespace dexe {
 struct DEXE_API Handler {
   Handler();
   ~Handler();
-  void init_handler();
+  void init();
 
   static cudnnHandle_t &cudnn();
   static curandGenerator_t &curand();
@@ -22,7 +22,7 @@ struct DEXE_API Handler {
   static size_t workspace_size() { return WORKSPACE_SIZE; }
   static void set_device(int n);
 
-  static void s_init();
+  static Handler &get_handler();
   static void deinit();
 
   cudnnHandle_t h_cudnn;

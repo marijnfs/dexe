@@ -14,7 +14,7 @@ Handler::~Handler() {
     cudaDeviceSynchronize();
 }
 
-void Handler::init_handler() {
+void Handler::init() {
     handle_error(cudnnCreate(&h_cudnn));
 
     // handle_error( curandCreateGenerator(&h_curand,
@@ -65,34 +65,30 @@ void Handler::set_device(int n) {
     cout << "CuDNN Device Number: " << n << endl;
     cout << "Device name: " << prop.name;
 }
-
-void Handler::s_init() {
-    s_handler = new Handler();
-    s_handler->init_handler();
+    
+Handler &Handler::get_handler() {
+    if (!s_handler) {
+        s_handler = new Handler();
+        s_handler->init();    
+    }
+    return *s_handler;
 }
 
+
 cudnnHandle_t &Handler::cudnn() {
-    if (!s_handler)
-        s_init();
-    return s_handler->h_cudnn;
+    return get_handler().h_cudnn;
 }
 
 curandGenerator_t &Handler::curand() {
-    if (!s_handler)
-        s_init();
-    return s_handler->h_curand;
+    return get_handler().h_curand;
 }
 
 cublasHandle_t &Handler::cublas() {
-    if (!s_handler)
-        s_init();
-    return s_handler->h_cublas;
+    return get_handler().h_cublas;
 }
 
 char *Handler::workspace() {
-    if (!s_handler)
-        s_init();
-    return s_handler->s_workspace;
+    return get_handler().s_workspace;
 }
 
 } // namespace dexe
