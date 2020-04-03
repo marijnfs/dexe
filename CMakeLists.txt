@@ -33,7 +33,7 @@ set(CUDA_PROPAGATE_HOST_FLAGS ON)
 file(GLOB CPP_SOURCE src/*.cc)
 file(GLOB CU_SOURCE src/*.cu)
 file(GLOB CPP_HEADERS inc/dexe/*.h)
-set(EXT_HEADERS inc/dexe/dexe.h inc/dexe/network.h inc/dexe/optimizer.h inc/dexe/tensor.h inc/dexe/util.h inc/dexe/cudavec.h inc/dexe/handler.h inc/dexe/config.h)
+set(EXT_HEADERS inc/dexe/dexe.h inc/dexe/network.h inc/dexe/optimizer.h inc/dexe/tensor.h inc/dexe/util.h inc/dexe/cudavec.h inc/dexe/handler.h inc/dexe/config.h inc/dexe/print.h)
 
 #set_property(SOURCE ${CPP_SOURCE} PROPERTY COMPILE_FLAGS -O3)
 #set_property(SOURCE ${CU_SOURCE} PROPERTY COMPILE_FLAGS -O3)
