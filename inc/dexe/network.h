@@ -24,7 +24,7 @@ struct Network;
 
 template <typename F>
 struct DEXE_API Node {
-	Node(int index_, Network<F> *network_) : index(index_), network(network_) {}
+	Node(int index_ = -1, Network<F> *network_ = nullptr) : index(index_), network(network_) {}
 
 	TensorShape shape();
 	TensorSet<F> &tensor_set();
