@@ -24,15 +24,16 @@ function<Node<F>(Node<F>)> basic_layer(int c, int c_out, int k) {
 }
 
 template <typename F>
-Node<F> make_unet(Network<F> *network, int in_channels, int out_channels) {
+Node<F> make_unet(Network<F> *network, int in_channels, int out_channels, bool local_normalization) {
     int c = 2;
     int k = 3;
     int norm_k = 5;
 
     auto in = network->input_3D(in_channels);
-    auto in_normalised = network->local_normalisation_3D(norm_k)(in);
+    if (local_normalization)
+        in = network->local_normalisation_3D(norm_k)(in);
 
-    auto l0 = basic_layer<F>(c, c, k)(in_normalised);
+    auto l0 = basic_layer<F>(c, c, k)(in);
 
     int c1 = c << 1;
     auto l1 = network->convolution_downscale_3D(c1, 2)(l0);
@@ -63,8 +64,8 @@ Node<F> make_unet(Network<F> *network, int in_channels, int out_channels) {
 }
 
 template Node<float> make_unet(Network<float> *network, int in_channels,
-                               int out_channels);
+                               int out_channels, bool local_normalization);
 template Node<double> make_unet(Network<double> *network, int in_channels,
-                                int out_channels);
+                                int out_channels, bool local_normalization);
 
 } // namespace dexe

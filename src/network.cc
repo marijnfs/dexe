@@ -46,6 +46,12 @@ void Node<F>::operator()(
     network->forward(network->inputs, {index});
 }
 
+template <typename F> void Node<F>::set_x(Tensor<F> &x) {
+    network->tensors[index].x->reshape(x.shape);
+    network->tensors[index].x->from_tensor(x);
+}
+
+
 template <typename F> Network<F>::Network() {}
 
 template <typename F> void Network<F>::reset() {

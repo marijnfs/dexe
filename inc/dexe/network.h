@@ -34,6 +34,8 @@ struct DEXE_API Node {
 
 	bool valid() { return index != -1; }
 
+	void set_x(Tensor<F> &x);
+
 	int index = -1; //-1 means undefined
 	Network<F> *network = nullptr;
     std::string name() { return network->names[index]; }
