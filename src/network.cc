@@ -706,7 +706,7 @@ void Network<F>::forward(std::vector<int> inputs, std::vector<int> outputs) {
         bool success = operations[s]->forward_dry_run(tmp_inputs, tmp_outputs);
         if (!success) {
             ostringstream oss;
-            oss << "Failure when preparing step: " << names[s] << endl;
+            oss << "Failure when preparing step [" << s << "]: " << names[s] << endl;
             throw std::runtime_error(oss.str());
         }
 
