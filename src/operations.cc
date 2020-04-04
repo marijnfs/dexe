@@ -561,7 +561,7 @@ bool SquaredLossOperation<F>::forward_dry_run(std::vector<Tensor<F> *> &in,
         return false;
     }
 
-    out[0]->reshape(TensorShape({1, 1, 1}));
+    out[0]->reshape({1, 1, 1});
     tmp.reshape(in[0]->shape);
     return true;
 }
@@ -615,7 +615,7 @@ bool SupportLossOperation<F>::forward_dry_run(std::vector<Tensor<F> *> &in,
         return false;
     }
 
-    out[0]->reshape(TensorShape({1, 1, 1}));
+    out[0]->reshape({1, 1, 1});
     tmp.reshape(in[0]->shape);
     return true;
 }

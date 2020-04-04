@@ -48,8 +48,9 @@ struct DEXE_API Network {
 	
  	int add_operation(Operation<F> *op, std::vector<int> inputs, TensorShape shape, std::string name);
 
-	std::function<Node<F>(Node<F>)> convolution(int out_c, int k, std::string name = "conv");
-	std::function<Node<F>(Node<F>)> convolution_3D(int out_c, int k, std::string name = "conv");
+	std::function<Node<F>(Node<F>)> convolution_1D(int out_c, int k, std::string name = "conv_1d");
+	std::function<Node<F>(Node<F>)> convolution_2D(int out_c, int k, std::string name = "conv_2d");
+	std::function<Node<F>(Node<F>)> convolution_3D(int out_c, int k, std::string name = "conv_3d");
 	std::function<Node<F>(Node<F>)> convolution_downscale(int out_c, int k, std::string name = "downscale");
 	std::function<Node<F>(Node<F>)> convolution_downscale_3D(int out_c, int k, std::string name = "downscale");
 	std::function<Node<F>(Node<F>)> convolution_upscale(int out_c, int k, std::string name = "upscale");
@@ -66,7 +67,8 @@ struct DEXE_API Network {
 	std::function<Node<F>(Node<F>, Node<F>)> addition(std::string name = "addition");
 	// std::function<Node<F>(Node<F>)> pool(std::string name = "pool");
 
-	Node<F> input(int n_channels, std::string name = "input");
+	Node<F> input_1D(int n_channels, std::string name = "input");
+	Node<F> input_2D(int n_channels, std::string name = "input");
 	Node<F> input_3D(int n_channels, std::string name = "input");
 
 	Node<F> get_node(std::string name);

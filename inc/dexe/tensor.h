@@ -13,14 +13,15 @@ const cudnnTensorFormat_t DEFAULT_TENSOR_FORMAT = CUDNN_TENSOR_NCHW;
 
 namespace dexe {
 	
-	struct DEXE_API TensorShape {
+ struct DEXE_API TensorShape {
   std::vector<int> dimensions;
 
-
   TensorShape(){}
+  TensorShape(int n, int c, int h);;
   TensorShape(int n, int c, int h, int w);
   TensorShape(int n, int c, int d, int h, int w);
-  explicit TensorShape(std::vector<int> dimensions);
+  TensorShape(std::vector<int> dimensions);
+  
 
   bool operator==(TensorShape const &other) const;
   bool operator!=(TensorShape const &other) const;

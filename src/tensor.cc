@@ -13,6 +13,7 @@
 using namespace std;
 
 namespace dexe {
+TensorShape::TensorShape(int n, int c, int h) : dimensions{n, c, h} {}
 
 TensorShape::TensorShape(int n, int c, int h, int w) : dimensions{n, c, h, w} {}
 
@@ -95,7 +96,7 @@ Tensor<F>::Tensor(TensorShape s, cudnnTensorFormat_t format_)
 
 template <typename F>
 Tensor<F>::Tensor(std::vector<F> data)
-    : shape(TensorShape({1, 1, (int)data.size()})), owning(true) {
+    : shape(TensorShape(1, 1, (int)data.size())), owning(true) {
     handle_error(cudnnCreateTensorDescriptor(&td));
     allocate();
     from_vector(data);

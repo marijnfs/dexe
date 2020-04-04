@@ -366,9 +366,18 @@ int Network<F>::add_operation(Operation<F> *op, vector<int> inputs,
 }
 
 template <typename F>
-Node<F> Network<F>::input(int n_channels, std::string name) {
+Node<F> Network<F>::input_1D(int n_channels, std::string name) {
     auto index = add_operation(new InputOperation<F>(n_channels), vector<int>{},
-                               TensorShape{0, n_channels, 0, 0}, name);
+                               TensorShape(0, n_channels, 0), name);
+    inputs.emplace_back(index);
+    return Node<F>(index, this);
+}
+
+
+template <typename F>
+Node<F> Network<F>::input_2D(int n_channels, std::string name) {
+    auto index = add_operation(new InputOperation<F>(n_channels), vector<int>{},
+                               TensorShape(0, n_channels, 0, 0), name);
     inputs.emplace_back(index);
     return Node<F>(index, this);
 }
@@ -376,7 +385,7 @@ Node<F> Network<F>::input(int n_channels, std::string name) {
 template <typename F>
 Node<F> Network<F>::input_3D(int n_channels, std::string name) {
     auto index = add_operation(new InputOperation<F>(n_channels), vector<int>{},
-                               TensorShape{0, n_channels, 0, 0, 0}, name);
+                               {0, n_channels, 0, 0, 0}, name);
     inputs.emplace_back(index);
     return Node<F>(index, this);
 }
@@ -389,7 +398,21 @@ template <typename F> Node<F> Network<F>::get_node(std::string name) {
 }
 
 template <typename F>
-std::function<Node<F>(Node<F>)> Network<F>::convolution(int out_c, int k,
+std::function<Node<F>(Node<F>)> Network<F>::convolution_1D(int out_c, int k,
+                                                        string name) {
+    return [this, out_c, k, name](Node<F> n) {
+        auto in_c = n.shape().c();
+        cout << "in_c : " << in_c << endl;
+
+        auto index = add_operation(
+            new ConvolutionOperation<F>({out_c, in_c, k}, {1,}, true),
+            vector<int>{n.index}, {0, out_c, 0}, name);
+        return Node<F>(index, this);
+    };
+}
+
+template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::convolution_2D(int out_c, int k,
                                                         string name) {
     return [this, out_c, k, name](Node<F> n) {
         auto in_c = n.shape().c();
