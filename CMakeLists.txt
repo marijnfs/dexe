@@ -55,13 +55,12 @@ target_include_directories(dexe
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/external>
         $<BUILD_INTERFACE:${CUDNN_INCLUDE_DIR}>
 		$<INSTALL_INTERFACE:include>
-
 )
 
 if (USE_NIFTI)
-    target_compile_definitions(dexe PRIVATE USE_NIFTI)
-    target_include_directories(dexe PRIVATE ${NIFTI_INCLUDE_DIR})
-    target_link_libraries(dexe PRIVATE nifticdf niftiio znz z)
+    target_compile_definitions(dexe PUBLIC USE_NIFTI)
+    target_include_directories(dexe PUBLIC ${NIFTI_INCLUDE_DIR})
+    target_link_libraries(dexe PUBLIC nifticdf niftiio znz z)
 endif()
 
 target_link_libraries( dexe
