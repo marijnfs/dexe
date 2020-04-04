@@ -53,8 +53,9 @@ struct DEXE_API Tensor {
 	Tensor();
 	Tensor(TensorShape shape, cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT);
 	// Tensor(TensorShape shape, F *data, cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT);
-	Tensor(std::vector<F> data); //creates a single dim tensor with c = len(data)
+	// Tensor(std::vector<F> data); //creates a single dim tensor with c = len(data)
 
+	static Tensor &from_vector_data(std::vector<F> &datasor);
 
 	~Tensor();
 

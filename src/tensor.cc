@@ -94,13 +94,22 @@ Tensor<F>::Tensor(TensorShape s, cudnnTensorFormat_t format_)
 //     allocate();
 // }
 
+//template <typename F>
+//Tensor<F>::Tensor(std::vector<F> data)
+//    : shape(TensorShape(1, 1, (int)data.size())), owning(true) {
+//    handle_error(cudnnCreateTensorDescriptor(&td));
+//    allocate();
+//    from_vector(data);
+//}
+
+
 template <typename F>
-Tensor<F>::Tensor(std::vector<F> data)
-    : shape(TensorShape(1, 1, (int)data.size())), owning(true) {
-    handle_error(cudnnCreateTensorDescriptor(&td));
-    allocate();
-    from_vector(data);
+static Tensor<F> &from_vector_data(std::vector<F> &data) {
+    Tensor<F> t(TensorShape(1, 1, (int)data.size()));
+    t.from_vector(data);
+    return t;
 }
+
 
 template <typename F> void Tensor<F>::set_descriptor() {
     set_descriptor_typed();
@@ -275,7 +284,7 @@ template <> double Tensor<double>::asum() {
 }
 
 template <> float Tensor<float>::sum() {
-    static Tensor<float> one({1});
+    static Tensor<float> one(TensorShape({1}));
     float result(0);
     handle_error(
         cublasSdot(Handler::cublas(), size(), ptr(), 1, one.ptr(), 0, &result));
@@ -285,7 +294,7 @@ template <> float Tensor<float>::sum() {
 template <typename F> F Tensor<F>::mean() { return sum() / shape.n_elements(); }
 
 template <> double Tensor<double>::sum() {
-    Tensor<double> one({1});
+    Tensor<double> one(TensorShape({1}));
     double result(0);
     handle_error(
         cublasDdot(Handler::cublas(), size(), ptr(), 1, one.ptr(), 0, &result));
