@@ -51,6 +51,10 @@ template <typename F> void Node<F>::set_x(Tensor<F> &x) {
     network->tensors[index].x->from_tensor(x);
 }
 
+template <typename F>
+Tensor<F> &Node<F>::x() {
+    return *network->tensors[index].x;
+}
 
 template <typename F> Network<F>::Network() {}
 
