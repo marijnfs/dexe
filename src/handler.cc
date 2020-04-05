@@ -23,17 +23,14 @@ void Handler::init() {
     handle_error(curandSetPseudoRandomGeneratorSeed(h_curand, 13131ULL));
     // handle_error( curandSetQuasiRandomGeneratorDimensions(h_curand, 1) );
     handle_error(cublasCreate(&h_cublas));
-
-    handle_error(cudaMalloc((void **)&s_workspace, WORKSPACE_SIZE));
 }
 
 void Handler::deinit() {
     if (!s_handler)
         return;
-    if (s_handler->s_workspace) {
-        handle_error(cudaFree(s_handler->s_workspace));
-        s_handler->s_workspace = 0;
-    }
+    
+    clear_workspace();
+    
     if (s_handler->h_cudnn) {
         cerr << "destroying cudnn" << endl;
         handle_error(cudnnDestroy(s_handler->h_cudnn));
@@ -88,7 +85,30 @@ cublasHandle_t &Handler::cublas() {
 }
 
 char *Handler::workspace() {
-    return get_handler().s_workspace;
+    auto &h = get_handler();
+    if (!h.s_workspace) {
+        handle_error(cudaMalloc((void **)&h.s_workspace, h.workspace_size_));
+    }
+
+    return h.s_workspace;
 }
+
+size_t Handler::workspace_size() {
+    return get_handler().workspace_size_;
+}
+
+void Handler::set_workspace_size(size_t workspace_size) {
+    clear_workspace();
+    get_handler().workspace_size_ = workspace_size;
+}
+
+void Handler::clear_workspace() {
+    auto &h = get_handler();
+    if (h.workspace) {
+        handle_error(cudaFree(h.s_workspace));
+        h.s_workspace = nullptr;
+    }
+}
+  
 
 } // namespace dexe
