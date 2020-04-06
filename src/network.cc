@@ -337,7 +337,7 @@ template <typename F> void Network<F>::register_params() {
         n_params += p->N;
 }
 
-template <typename F> Network<F>::~Network() { cout << "DESTRUCTOR" << endl; }
+template <typename F> Network<F>::~Network() { }
 
 template <typename F> string Network<F>::get_unique_name(string name) {
     int n(0);
