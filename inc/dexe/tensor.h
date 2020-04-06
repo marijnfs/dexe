@@ -195,6 +195,7 @@ struct FilterBank {
 	void load(Archive & archive)
   	{
   		archive(weights);
+        init_descriptor();
  	}
 
 	F *&ptr() { return weights.ptr(); }

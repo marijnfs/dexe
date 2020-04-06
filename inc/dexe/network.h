@@ -28,6 +28,8 @@ struct DEXE_API Node {
 
 	TensorShape shape();
 	TensorSet<F> &tensor_set();
+    Tensor<F> &x();
+    Tensor<F> &grad();
 
 	void operator()(std::initializer_list<std::reference_wrapper<Tensor<F>>> inputs); //call to evaluation
 	void backward() { network->backward(); }
@@ -40,6 +42,7 @@ struct DEXE_API Node {
 	int index = -1; //-1 means undefined
 	Network<F> *network = nullptr;
     std::string name() { return network->names[index]; }
+    std::string set_name(std::string name) { return network->names[index] = name; }
 };
 
 template <typename F>
