@@ -27,14 +27,6 @@ template <typename F> TensorSet<F> &Node<F>::tensor_set() {
     return network->tensors[index];
 }
 
-template <typename F> Tensor<F> &Node<F>::x() {
-	return *network->tensors[index].x;
-}
-
-template <typename F> Tensor<F> &Node<F>::grad() {
-	return *network->tensors[index].grad;
-}
-
 template <typename F>
 void Node<F>::operator()(
     std::initializer_list<std::reference_wrapper<Tensor<F>>> input_tensors) {
@@ -59,9 +51,14 @@ template <typename F> void Node<F>::set_x(Tensor<F> &x) {
     network->tensors[index].x->from_tensor(x);
 }
 
-template <typename F>
+template <typename F> 
 Tensor<F> &Node<F>::x() {
     return *network->tensors[index].x;
+}
+
+template <typename F> 
+Tensor<F> &Node<F>::grad() {
+    return *network->tensors[index].grad;
 }
 
 template <typename F> Network<F>::Network() {}
