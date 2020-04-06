@@ -1,6 +1,6 @@
 #include "dexe/io.h"
 
-
+#ifdef USE_NIFTI
 #include <nifti/nifti1_io.h>
 
 namespace dexe {
@@ -97,3 +97,6 @@ void write_nifti(std::string path, Tensor<float> &data) {
 }
 
 } //namespace
+
+#endif
+
