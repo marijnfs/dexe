@@ -28,6 +28,10 @@ struct DEXE_API Handler {
   static Handler &get_handler();
   static void deinit();
 
+  static float *one_float();
+  static double *one_double();
+  
+
   cudnnHandle_t h_cudnn;
   curandGenerator_t h_curand;
   cublasHandle_t h_cublas;
@@ -36,6 +40,10 @@ struct DEXE_API Handler {
   size_t workspace_size_ = WORKSPACE_SIZE;
     
   static Handler *s_handler;
+
+  //pointers to cuda memory containing 1 (needed for some blas functions)
+  float *one_float_ = 0;
+  double *one_double_ = 0;
 };
 
 }

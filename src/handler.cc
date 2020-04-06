@@ -45,6 +45,15 @@ void Handler::deinit() {
         s_handler->h_cublas = 0;
     }
 
+    if (s_handler->one_float_) {
+        handle_error( cudaFree(s_handler->one_float_) );
+        s_handler->one_float_ = 0;
+    }
+
+    if (s_handler->one_double_) {
+        handle_error( cudaFree(s_handler->one_double_) );
+        s_handler->one_double_ = 0;
+    }
     delete s_handler;
     s_handler = 0;
 }
@@ -83,6 +92,28 @@ curandGenerator_t &Handler::curand() {
 cublasHandle_t &Handler::cublas() {
     return get_handler().h_cublas;
 }
+
+float *Handler::one_float() {
+    auto &h = get_handler();
+    if (!h.one_float_)
+        cudaMalloc((void **)&h.one_float_, sizeof(float));
+
+    float one(1);
+    handle_error( cudaMemcpy(h.one_float_, &one, sizeof(float), cudaMemcpyHostToDevice) );
+    return h.one_float_;
+}
+
+double *Handler::one_double() {
+    auto &h = get_handler();
+    if (!h.one_double_)
+        cudaMalloc((void **)&h.one_double_, sizeof(double));
+
+    double one(1);
+    handle_error( cudaMemcpy(h.one_double_, &one, sizeof(double), cudaMemcpyHostToDevice) );
+    return h.one_double_;
+}
+
+
 
 char *Handler::workspace() {
     auto &h = get_handler();

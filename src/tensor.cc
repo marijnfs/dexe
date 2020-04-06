@@ -104,9 +104,9 @@ Tensor<F>::Tensor(TensorShape s, cudnnTensorFormat_t format_)
 
 
 template <typename F>
-static Tensor<F> &from_vector_data(std::vector<F> &data) {
-    Tensor<F> t(TensorShape(1, 1, (int)data.size()));
-    t.from_vector(data);
+std::unique_ptr<Tensor<F>> Tensor<F>::from_vector_data(std::vector<F> &&data) {
+    auto t = std::make_unique<Tensor<F>>(TensorShape(1, 1, (int)data.size()));
+    t->from_vector(data);
     return t;
 }
 
@@ -260,15 +260,15 @@ template <> double Tensor<double>::norm() {
 template <> float Tensor<float>::norm2() {
     float result(0);
     handle_error(
-        cublasSdot(Handler::cublas(), size(), ptr(), 1, ptr(), 1, &result));
-    return result;
+        cublasSnrm2(Handler::cublas(), size(), ptr(), 1, &result));
+    return result * result;
 }
 
 template <> double Tensor<double>::norm2() {
     double result(0);
     handle_error(
-        cublasDdot(Handler::cublas(), size(), ptr(), 1, ptr(), 1, &result));
-    return result;
+        cublasDnrm2(Handler::cublas(), size(), ptr(), 1, &result));
+    return result * result;
 }
 
 template <> float Tensor<float>::asum() {
@@ -284,20 +284,22 @@ template <> double Tensor<double>::asum() {
 }
 
 template <> float Tensor<float>::sum() {
-    static Tensor<float> one(TensorShape({1}));
+    auto one = Handler::one_float();
+
     float result(0);
     handle_error(
-        cublasSdot(Handler::cublas(), size(), ptr(), 1, one.ptr(), 0, &result));
+        cublasSdot(Handler::cublas(), size(), ptr(), 1, one, 0, &result));
     return result;
 }
 
 template <typename F> F Tensor<F>::mean() { return sum() / shape.n_elements(); }
 
 template <> double Tensor<double>::sum() {
-    Tensor<double> one(TensorShape({1}));
+    auto one = Handler::one_double();
+
     double result(0);
     handle_error(
-        cublasDdot(Handler::cublas(), size(), ptr(), 1, one.ptr(), 0, &result));
+        cublasDdot(Handler::cublas(), size(), ptr(), 1, one, 0, &result));
     return result;
 }
 
