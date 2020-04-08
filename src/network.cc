@@ -74,8 +74,8 @@ template <typename F> void Network<F>::reset() {
 
     parameters.clear();
 
-    param_vec.resize(0);
-    grad_vec.resize(0);
+    param_vec.allocate(0);
+    grad_vec.allocate(0);
     param_ptrs.clear();
     grad_ptrs.clear();
 
@@ -291,30 +291,33 @@ template <typename F> void Network<F>::describe(ostream &out) {
 
 template <typename F> void Network<F>::align_params() {
     register_params();
-    param_vec.resize(n_params);
-    grad_vec.resize(n_params);
+    param_vec.allocate(n_params);
+    grad_vec.allocate(n_params);
 
     F *ptr = param_vec.data;
     for (auto &p : param_ptrs) {
         handle_error(cudaMemcpy(ptr, p->data, p->N * sizeof(F),
                                 cudaMemcpyDeviceToDevice));
+        auto N = p->N;
         p->free();
-
         p->data = ptr;
+        p->N = N;
         p->own = false;
 
-        ptr += p->N;
+        ptr += N;
     }
 
     ptr = grad_vec.data;
     for (auto &g : grad_ptrs) {
         handle_error(cudaMemcpy(ptr, g->data, g->N * sizeof(F),
                                 cudaMemcpyDeviceToDevice));
+        auto N = g->N;
         g->free();
         g->data = ptr;
+        g->N = N;
         g->own = false;
 
-        ptr += g->N;
+        ptr += N;
     }
 
     finished = true;

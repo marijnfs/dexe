@@ -315,7 +315,7 @@ CudaVec<double> &CudaVec<double>::operator+=(double v) {
 }
 
 template <typename F>
-void CudaVec<F>::resize(int newN) {
+void CudaVec<F>::allocate(int newN) {
     if (!own) {
     	N = newN;
     	zero();

@@ -35,9 +35,7 @@ template <typename F> struct CudaVec {
         return *this;
     }
 
-    void allocate(int n) {
-        resize(n);
-    }
+    void allocate(int n);
 
     bool allocated() {
         return data != NULL;
@@ -47,10 +45,8 @@ template <typename F> struct CudaVec {
         allocate(0);
     }
 
-    void resize(int newN);
-
     CudaVec(CudaVec &other) {
-        resize(other.N);
+        allocate(other.N);
         copy_gpu_to_gpu(other.data, data, N);
     }
 
@@ -89,7 +85,7 @@ template <typename F> struct CudaVec {
 
     void from_vector(std::vector<F> const &vec) {
         if (vec.size() != N)
-            resize(vec.size());
+            allocate(vec.size());
         handle_error(cudaMemcpy(data, &vec[0], N * sizeof(F), cudaMemcpyHostToDevice));
     }
 

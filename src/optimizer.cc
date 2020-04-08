@@ -21,7 +21,7 @@ void SGDOptimizer<F>::register_network(Network<F> &network_) {
     network = &network_;
     network->finish();
 
-    tmp.resize(network->param_vec.N);
+    tmp.allocate(network->param_vec.N);
 }
 
 template <typename F> void SGDOptimizer<F>::update() {
@@ -43,10 +43,10 @@ void AdaOptimizer<F>::register_network(Network<F> &network_) {
     network = &network_;
     network->finish();
 
-    std.resize(network->param_vec.N);
+    std.allocate(network->param_vec.N);
     std += 0.1;
-    tmp.resize(network->param_vec.N);
-    tmp2.resize(network->param_vec.N);
+    tmp.allocate(network->param_vec.N);
+    tmp2.allocate(network->param_vec.N);
 }
 
 template <typename F> void AdaOptimizer<F>::update() {
@@ -80,12 +80,12 @@ void AdamOptimizer<F>::register_network(Network<F> &network_) {
     network = &network_;
     network->finish();
 
-    momentum.resize(network->param_vec.N);
-    std.resize(network->param_vec.N);
+    momentum.allocate(network->param_vec.N);
+    std.allocate(network->param_vec.N);
     std += 0.1;
 
-    tmp.resize(network->param_vec.N);
-    tmp2.resize(network->param_vec.N);
+    tmp.allocate(network->param_vec.N);
+    tmp2.allocate(network->param_vec.N);
 }
 
 template <typename F> void AdamOptimizer<F>::update() {
