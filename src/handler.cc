@@ -17,11 +17,8 @@ Handler::~Handler() {
 void Handler::init() {
     handle_error(cudnnCreate(&h_cudnn));
 
-    // handle_error( curandCreateGenerator(&h_curand,
-    // CURAND_RNG_PSEUDO_XORWOW));
     handle_error(curandCreateGenerator(&h_curand, CURAND_RNG_PSEUDO_DEFAULT));
     handle_error(curandSetPseudoRandomGeneratorSeed(h_curand, 13131ULL));
-    // handle_error( curandSetQuasiRandomGeneratorDimensions(h_curand, 1) );
     handle_error(cublasCreate(&h_cublas));
 }
 
@@ -32,7 +29,7 @@ void Handler::deinit() {
     clear_workspace();
     
     if (s_handler->h_cudnn) {
-        cerr << "destroying cudnn" << endl;
+        cerr << "Destroying Cudnn" << endl;
         handle_error(cudnnDestroy(s_handler->h_cudnn));
         s_handler->h_cudnn = 0;
     }
@@ -140,6 +137,16 @@ void Handler::clear_workspace() {
         h.s_workspace = nullptr;
     }
 }
-  
+
+void Handler::print_mem_info() {
+    size_t free_mem(0), total_mem(0);
+    cudaMemGetInfo ( &free_mem, &total_mem );
+
+    cout << "GPU Memory Free: " << free_mem << " Total: " << total_mem << endl;
+}
+
+void Handler::sync() {
+    handle_error( cudaDeviceSynchronize() );
+}
 
 } // namespace dexe

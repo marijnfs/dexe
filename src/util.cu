@@ -6,7 +6,15 @@
 
 namespace dexe {
 
+template <>
+void add_cuda(float const *from, float *to, int n, float const alpha) {
+  handle_error(cublasSaxpy(Handler::cublas(), n, &alpha, from, 1, to, 1));
+}
 
+template <>
+void add_cuda(double const *from, double *to, int n, double const alpha) {
+  handle_error(cublasDaxpy(Handler::cublas(), n, &alpha, from, 1, to, 1));
+}
 __device__ __forceinline__ int get_index(int X, int Y, int Z, int C, int x, int y, int z) {
   return z * (C * X * Y) + y * X + x;
 }

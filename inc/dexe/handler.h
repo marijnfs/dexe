@@ -32,6 +32,10 @@ struct DEXE_API Handler {
   static double *one_double();
   
 
+  static void print_mem_info();
+
+  static void sync();
+
   cudnnHandle_t h_cudnn;
   curandGenerator_t h_curand;
   cublasHandle_t h_cublas;

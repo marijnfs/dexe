@@ -233,14 +233,12 @@ template <typename F> vector<F> Network<F>::to_vector() {
 }
 
 template <typename F> void Network<F>::from_vector(vector<F> &vec) {
-    cout << "in from vector" << endl;
     typename vector<F>::iterator it(vec.begin());
     for (size_t i(0); i < parameters.size(); ++i) {
         vector<F> v(it, it + parameters[i]->size());
         parameters[i]->from_vector(v);
         it += parameters[i]->size();
     }
-    cout << "done from vector" << endl;
 }
 
 template <typename F> vector<F> Network<F>::fd_gradient(F e) {
@@ -261,7 +259,7 @@ template <typename F> vector<F> Network<F>::fd_gradient(F e) {
 
             delta_vec[n] = vec[n] - e;
             parameters[i]->from_vector(delta_vec);
-            // throw "";
+
             forward(inputs, outputs);
 
             F min_loss = tensors.back().x->to_vector()[0];
@@ -283,12 +281,6 @@ template <typename F> vector<F> Network<F>::gradient() {
     return full_grad;
 }
 
-// template <typename F>
-// Tensor<F> &Network<F>::input() {
-// 	assert_finished();
-// 	return tensors[0]->x;
-// }
-
 template <typename F> void Network<F>::describe(ostream &out) {
     for (auto &o : operations) {
         o->describe(out);
@@ -306,25 +298,26 @@ template <typename F> void Network<F>::align_params() {
     for (auto &p : param_ptrs) {
         handle_error(cudaMemcpy(ptr, p->data, p->N * sizeof(F),
                                 cudaMemcpyDeviceToDevice));
-        cudaFree(p->data);
+        p->free();
+
         p->data = ptr;
-        ptr += p->N;
         p->own = false;
+
+        ptr += p->N;
     }
 
     ptr = grad_vec.data;
     for (auto &g : grad_ptrs) {
         handle_error(cudaMemcpy(ptr, g->data, g->N * sizeof(F),
                                 cudaMemcpyDeviceToDevice));
-        cudaFree(g->data);
+        g->free();
         g->data = ptr;
-        ptr += g->N;
         g->own = false;
+
+        ptr += g->N;
     }
 
-    cout << "n params: " << n_params << endl;
     finished = true;
-    // throw "";
 }
 
 template <typename F> void Network<F>::register_params() {
@@ -362,6 +355,7 @@ template <typename F> string Network<F>::get_unique_name(string name) {
 template <typename F>
 int Network<F>::add_operation(Operation<F> *op, vector<int> inputs,
                               TensorShape shape, string name) {
+    finished = false;
 
     int index = names.size();
 
@@ -371,7 +365,6 @@ int Network<F>::add_operation(Operation<F> *op, vector<int> inputs,
     names_set.insert(unique_name);
 
     operations.emplace_back(op);
-    cout << "add operation: " << name << ", shape " << shape << endl;
     tensors.emplace_back(shape);
 
     input_indices.emplace_back(inputs);
@@ -417,7 +410,6 @@ std::function<Node<F>(Node<F>)> Network<F>::convolution_1D(int out_c, int k,
                                                         string name) {
     return [this, out_c, k, name](Node<F> n) {
         auto in_c = n.shape().c();
-        cout << "in_c : " << in_c << endl;
 
         auto index = add_operation(
             new ConvolutionOperation<F>({out_c, in_c, k}, {1,}, true),
@@ -431,7 +423,6 @@ std::function<Node<F>(Node<F>)> Network<F>::convolution_2D(int out_c, int k,
                                                         string name) {
     return [this, out_c, k, name](Node<F> n) {
         auto in_c = n.shape().c();
-        cout << "in_c : " << in_c << endl;
 
         auto index = add_operation(
             new ConvolutionOperation<F>({out_c, in_c, k, k}, {1, 1}, true),
@@ -445,7 +436,6 @@ std::function<Node<F>(Node<F>)> Network<F>::convolution_3D(int out_c, int k,
                                                            string name) {
     return [this, out_c, k, name](Node<F> n) {
         auto in_c = n.shape().c();
-        cout << "in_c : " << in_c << endl;
         auto index = add_operation(new ConvolutionOperation<F>(
                                        {out_c, in_c, k, k, k}, {1, 1, 1}, true),
                                    vector<int>{n.index},
@@ -609,9 +599,6 @@ Network<F>::support_loss(F support, std::string name) {
 template <typename F>
 std::function<Node<F>(Node<F>, Node<F>)> Network<F>::addition(string name) {
     return [this, name](Node<F> n1, Node<F> n2) {
-        cout << n1.index << " " << n2.index << endl;
-        cout << n1.shape() << ", " << n2.shape() << endl;
-
         auto in_c = n1.shape().c();
         auto index = add_operation(new AdditionOperation<F>(),
                                    vector<int>{n1.index, n2.index},
@@ -645,23 +632,6 @@ template <typename F> void Network<F>::backward() {
         operations[s]->backward(tmp_inputs, tmp_outputs, tmp_input_grads,
                                 tmp_output_grads);
     }
-    /*
-    for (auto it = sequence.rbegin(); it != sequence.rend(); ++it) {
-        int s = *it;
-        // cout << "back step: " << names[s] << endl;
-        vector<Tensor<F>*> tmp_inputs, tmp_outputs, tmp_input_grads,
-    tmp_output_grads; for (auto idx : input_indices[s]) {
-            // cout << "input: " << names[idx] << " " <<
-    tensors[idx].x->shape << endl; tmp_inputs.push_back(tensors[idx].x.get());
-            tmp_input_grads.push_back(tensors[idx].grad.get());
-
-        }
-
-        tmp_outputs.push_back(tensors[s].x.get());
-        tmp_output_grads.push_back(tensors[s].grad.get());
-        operations[s]->backward(tmp_inputs, tmp_outputs, tmp_input_grads,
-    tmp_output_grads);
-    }*/
 }
 
 template <typename F>

@@ -4,7 +4,12 @@
 #include <cuda.h>
 #include <vector>
 
+#include <iostream>
+
+extern uint64_t memory_counter;
+
 namespace dexe {
+
 
 template <typename F> struct CudaVec {
     F *data = 0;
@@ -17,6 +22,7 @@ template <typename F> struct CudaVec {
 
     ~CudaVec() {
         if (own && N) {
+            memory_counter -= N;
             handle_error(cudaFree(data));
         }
     }
@@ -41,28 +47,12 @@ template <typename F> struct CudaVec {
         allocate(0);
     }
 
-    void resize(int newN) {
-        if (!own)
-            throw std::runtime_error("Can resize non-owning cudavec");
-
-        if (N != newN) {
-            if (N) {
-                handle_error(cudaFree(data));
-                data = 0;
-            }
-            if (newN)
-                handle_error(cudaMalloc((void **)&data, sizeof(F) * newN));
-            N = newN;
-        }
-        zero();
-    }
+    void resize(int newN);
 
     CudaVec(CudaVec &other) {
         resize(other.N);
         copy_gpu_to_gpu(other.data, data, N);
     }
-
-    // void rand_zero(F p);
 
     void zero(int offset = 0) {
         if (N)

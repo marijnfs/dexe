@@ -398,7 +398,6 @@ void ConvolutionOperation<F>::register_params(vector<CudaVec<F>*> &params,
                                               vector<CudaVec<F>*> &fast_params,
                                               vector<CudaVec<F>*> &grads,
                                               vector<CudaVec<F>*> &fast_grads) {
-    // cout << "registering " << (rollout?"rollout":"no rollout") << endl;
     params.push_back(&filter_bank.weights.cudavec);
     grads.push_back(&filter_bank_grad.weights.cudavec);
 
@@ -419,9 +418,6 @@ template <typename F> void ConvolutionOperation<F>::share(ConvolutionOperation<F
 
 template <typename F> ConvolutionOperation<F>::~ConvolutionOperation() {
     handle_error(cudnnDestroyConvolutionDescriptor(conv));
-
-    // if (workspace)
-    //	cudaFree(workspace);
 }
 
 template <typename F> void ConvolutionOperation<F>::save(cereal::PortableBinaryOutputArchive &ar) {
@@ -579,7 +575,6 @@ template <typename F>
 void SquaredLossOperation<F>::backward(std::vector<Tensor<F> *> &in, std::vector<Tensor<F> *> &out,
                                        std::vector<Tensor<F> *> &in_grad,
                                        std::vector<Tensor<F> *> &out_grad) {
-    // in[0] = prediction, in[1] = target
     in_grad[0]->from_tensor(*in[1]);
     in_grad[0]->add(*in[0], -1.0);
     in_grad[0]->scale(1.0 / in[0]->shape.n_elements());

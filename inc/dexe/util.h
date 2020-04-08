@@ -190,17 +190,8 @@ inline void handle_error(cudnnStatus_t status) {
 }
 
 template <typename F>
-inline void add_cuda(F const *from, F *to, int n, F const alpha);
+void add_cuda(F const *from, F *to, int n, F const alpha);
 
-template <>
-inline void add_cuda(float const *from, float *to, int n, float const alpha) {
-  handle_error(cublasSaxpy(Handler::cublas(), n, &alpha, from, 1, to, 1));
-}
-
-template <>
-inline void add_cuda(double const *from, double *to, int n, double const alpha) {
-  handle_error(cublasDaxpy(Handler::cublas(), n, &alpha, from, 1, to, 1));
-}
 
 template <typename F>
 inline void scale_cuda(F *data, int n, F const alpha);

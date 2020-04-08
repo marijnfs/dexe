@@ -87,21 +87,6 @@ Tensor<F>::Tensor(TensorShape s, cudnnTensorFormat_t format_)
     set_descriptor();
 }
 
-// template <typename F>
-// Tensor<F>::Tensor(TensorShape s, F *data_, cudnnTensorFormat_t format_)
-//     : shape(s), owning(false), data(data_), format(format_) {
-//     handle_error(cudnnCreateTensorDescriptor(&td));
-//     allocate();
-// }
-
-//template <typename F>
-//Tensor<F>::Tensor(std::vector<F> data)
-//    : shape(TensorShape(1, 1, (int)data.size())), owning(true) {
-//    handle_error(cudnnCreateTensorDescriptor(&td));
-//    allocate();
-//    from_vector(data);
-//}
-
 
 template <typename F>
 std::unique_ptr<Tensor<F>> Tensor<F>::from_vector_data(std::vector<F> &&data) {
@@ -152,8 +137,6 @@ template <typename F> void Tensor<F>::reshape(TensorShape new_shape) {
         return;
 
     // If sizes match but shapes don't, we don't want to deallocate
-    // cout << "Reshape : " << shape << " to " << new_shape << " elements: " <<
-    // shape.n_elements() << " " << new_shape.n_elements() << endl;
     if (new_shape.n_elements() != shape.n_elements()) {
         cudavec.free();
         shape = new_shape;
@@ -204,22 +187,11 @@ template <typename F> void Tensor<F>::from_ptr(F const *source) {
 }
 
 template <typename F> void Tensor<F>::init_normal(F mean, F std) {
-    // size_t even_size(((size() + 1) / 2) * 2);
     cudavec.init_normal(mean, std);
-    // dexe::init_normal(ptr(), size(), mean, std);
-    // size_t even_size(size());
-    // handle_error( curandGenerateNormal(Handler::curand(), ptr(), even_size,
-    // mean, std) );
 }
 
 template <typename F> void Tensor<F>::init_uniform(F var) {
     dexe::init_uniform(ptr(), size(), var);
-    /*
-      vector<F> vec = to_vector();
-      for (size_t i(0); i < vec.size(); ++i)
-          vec[i] = -var + static_cast<float>(rand()) /
-       (static_cast<float>(RAND_MAX)/(2.0 * var)); from_vector(vec);
-    */
 }
 
 template <typename F> void Tensor<F>::add(Tensor<F> &in, F alpha) {
@@ -453,25 +425,12 @@ template <typename F> void FilterBank<F>::fill(F val) {
     from_vector(vals);
 }
 
-// template <typename F>
-// Tensor<F> &operator-=(Tensor<F> &in, Tensor<F> &other) {
-// 	assert(in.size() == other.size());
-// 	add_cuda<F>(other.ptr(), in.ptr(), in.size(), -1);
-// 	return in;
-// }
-
 template struct Tensor<float>;
 template struct TensorSet<float>;
 template struct FilterBank<float>;
-// template Tensor<float> &operator-=<float>(Tensor<float> &in, Tensor<float>
-// &other); template Tensor<float> &operator*=<float>(Tensor<float> &in, float
-// const other);
 
 template struct Tensor<double>;
 template struct TensorSet<double>;
 template struct FilterBank<double>;
-// template Tensor<double> &operator-=<double>(Tensor<double> &in,
-// Tensor<double> &other); template Tensor<double>
-// &operator*=<double>(Tensor<double> &in, double const other);
 
 } // namespace dexe

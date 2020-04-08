@@ -1,6 +1,9 @@
 #include "dexe/util.h"
 #include "dexe/cudavec.h"
 
+
+uint64_t memory_counter = 0;
+
 namespace dexe {
 
 /// Float versions
@@ -310,6 +313,32 @@ CudaVec<double> &CudaVec<double>::operator+=(double v) {
 	handle_error( cudaDeviceSynchronize());
 	return *this;
 }
+
+template <typename F>
+void CudaVec<F>::resize(int newN) {
+    if (!own) {
+    	N = newN;
+    	zero();
+    	return;
+    }
+
+    if (N != newN) {
+        if (N) {
+            memory_counter -= N;
+
+            handle_error(cudaFree(data));
+            data = 0;
+        }
+        if (newN) {
+            memory_counter += newN;
+
+            handle_error(cudaMalloc((void **)&data, sizeof(F) * newN));
+        }
+        N = newN;
+    }
+    zero();
+}
+
 ///////////////
 
 template <>
