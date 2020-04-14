@@ -11,7 +11,7 @@ extern uint64_t memory_counter;
 namespace dexe {
 
 
-template <typename F> struct CudaVec {
+template <typename F> struct DEXE_API CudaVec {
     F *data = 0;
     int N = 0;
     bool own = true;

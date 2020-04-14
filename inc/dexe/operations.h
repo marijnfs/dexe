@@ -16,7 +16,7 @@ int const CONV_MAX_MEM = 1024 * 1024 * 1024;
 namespace dexe {
 
 template <typename F>
-struct Operation {
+struct DEXE_API Operation {
     virtual ~Operation() = default;
 
 	virtual TensorShape output_shape(TensorShape input) { return input; }
@@ -57,7 +57,7 @@ struct DefaultOperation : public Operation<F> {
 };
 
 template <typename F>
-struct Parametrised {
+struct DEXE_API Parametrised {
 	virtual void init_normal(F mean, F std) = 0;
 	virtual void init_uniform(F var) = 0;
 	virtual void update(F lr) {}

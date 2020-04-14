@@ -5,7 +5,6 @@
 
 #include "dexe/cudavec.h"
 #include "dexe/handler.h"
-#include "dexe/img.h"
 #include "dexe/kernels.h"
 #include "dexe/tensor.h"
 #include "dexe/util.h"

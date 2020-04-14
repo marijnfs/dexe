@@ -3,7 +3,6 @@
 #include "dexe/operations.h"
 #include "dexe/util.h"
 #include "dexe/network.h"
-#include "dexe/img.h"
 #include "dexe/colour.h"
 #include "dexe/optimizer.h"
 #include "dexe/io.h"
