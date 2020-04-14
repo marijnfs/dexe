@@ -19,6 +19,17 @@ template <typename F>
 struct DEXE_API Operation {
     virtual ~Operation() = default;
 
+    Operation(Operation<F> const &other) {
+    	throw std::runtime_error("Don't use copy constructor for Operation");
+    }
+
+    Operation() {
+    }
+
+    virtual Operation<F> &operator=(Operation<F> const &other) {
+    	throw std::runtime_error("Don't use assignment for Operation");
+    }
+
 	virtual TensorShape output_shape(TensorShape input) { return input; }
 
 	// Runs the forward step
