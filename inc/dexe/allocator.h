@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <stack>
 #include <cmath>
 #include <stdint.h>
 
@@ -20,6 +21,7 @@ struct Allocator {
 	virtual uint8_t *allocate(size_t n_bytes) = 0;
 	virtual void free(uint8_t *ptr) = 0;
 
+	virtual ~Allocator() = default;
 
 	uint8_t *insert_slice(Slice slice) {
 		auto match = std::lower_bound(slices.begin(), slices.end(), slice, [](Slice a, Slice b) -> bool {return a.ptr < b.ptr; });
@@ -41,6 +43,7 @@ struct Allocator {
 	std::vector<Slice> slices;
 };
 
+
 struct DirectAllocator : public Allocator {
 	uint8_t *allocate(size_t n_bytes) {
 		Slice slice;
@@ -55,6 +58,10 @@ struct DirectAllocator : public Allocator {
     }
 
 };
+
+static std::stack<Allocator*> allocator_stack;
+
+void init_allocator();
 
 // Pretends to allocate, but actually just keeps track of what is allocated
 // Used to calculate memory usage beforehand

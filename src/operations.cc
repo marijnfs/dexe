@@ -202,14 +202,6 @@ void ConvolutionOperation<F>::prepare_forward(Tensor<F> &in,
 
     workspace_size = new_workspace_size;
     workspace = Handler::workspace();
-    /*
-    if (workspace_size != new_workspace_size) {
-        workspace_size = new_workspace_size;
-        cout << "Allocating workspace of size: " << workspace_size <<
-       endl; if (workspace) { cudaFree(workspace); workspace = nullptr;
-        }
-        handle_error( cudaMalloc( (void**)&workspace, workspace_size) );
-    }*/
 }
 
 template <typename F>
@@ -228,16 +220,6 @@ void ConvolutionOperation<F>::prepare_backward_weights(Tensor<F> &in,
 
     workspace_size_bwd_filter = new_workspace_size;
     workspace_bwd_filter = Handler::workspace();
-    /*
-    if (workspace_size_bwd_filter != new_workspace_size) {
-    workspace_size_bwd_filter = new_workspace_size;
-        if (workspace_bwd_filter) {
-            cudaFree(workspace_bwd_filter);
-            workspace_bwd_filter = nullptr;
-        }
-        handle_error( cudaMalloc( (void**)&workspace_bwd_filter,
-    workspace_size_bwd_filter) );
-    }*/
 }
 
 template <typename F>
@@ -254,16 +236,6 @@ void ConvolutionOperation<F>::prepare_backward(Tensor<F> &in,
 
     workspace_size_bwd = new_workspace_size;
     workspace_bwd = Handler::workspace();
-    /*
-    if (workspace_size_bwd != new_workspace_size) {
-    workspace_size_bwd = new_workspace_size;
-        if (workspace_bwd) {
-            cudaFree(workspace_bwd);
-            workspace_bwd = nullptr;
-        }
-        handle_error( cudaMalloc( (void**)&workspace_bwd,
-    workspace_size_bwd) );
-    }*/
 }
 
 template <typename F> void ConvolutionOperation<F>::update(F lr) {
@@ -329,17 +301,10 @@ void ConvolutionOperation<F>::forward(Tensor<F> &input, Tensor<F> &output, F bet
     F alpha(1.0);
 
     F alpha_bias(1), beta_bias(1);
-    // cout << input.shape << " " << output.shape << " " << filter_bank << endl;
-    // cout << dimensions << " " << strides << " " << paddings << " " <<
-    // dilations << endl; cout << filter_bank << " " << filter_bank.weights <<
-    // endl;
-    // cout << workspace << " " << workspace_size << endl;
+
     handle_error(cudnnConvolutionForward(Handler::cudnn(), &alpha, input.td, input.ptr(),
                                          filter_bank.fd, filter_bank.weights.ptr(), conv, algo, workspace,
                                          workspace_size, &beta, output.td, output.ptr()));
-    // handle_error( cudnnAddTensor(Handler::cudnn(), CUDNN_ADD_FEATURE_MAP,
-    // &alpha_bias, bias.td, bias.data, &beta_bias, output.td, output.data));
-    // auto v = bias.to_vector();
     if (has_bias)
         handle_error(cudnnAddTensor(Handler::cudnn(), &alpha_bias, bias.td, bias.ptr(), &beta_bias,
                                     output.td, output.ptr()));
@@ -349,10 +314,6 @@ template <typename F>
 void ConvolutionOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &input_grad,
                                        Tensor<F> &output_grad, F beta) {
     F alpha(1.0);
-    // cout << ":in out filter: " << input_grad.shape << " " <<
-    // output_grad.shape << " " << filter_bank << endl; cout << strides << " "
-    // << dimensions << " " << paddings << endl; algo_bwd =
-    // CUDNN_CONVOLUTION_BWD_DATA_ALGO_0;
     handle_error( cudnnConvolutionBackwardData(Handler::cudnn(), &alpha, filter_bank.fd,
                                               filter_bank.ptr(), output_grad.td, output_grad.ptr(),
                                               conv, algo_bwd, workspace_bwd, workspace_size_bwd,

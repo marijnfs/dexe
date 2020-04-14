@@ -1,6 +1,7 @@
 #pragma once
 
 #include "util.h"
+
 #include <cuda.h>
 #include <vector>
 
@@ -16,87 +17,38 @@ template <typename F> struct DEXE_API CudaVec {
     int N = 0;
     bool own = true;
 
-    CudaVec() : data(0), N(0) {}
-    CudaVec(int n_) : data(0), N(0) { allocate(n_); }
-    CudaVec(F *data, int n_) : data(data), N(n_), own(false) {}
+    CudaVec();
+    CudaVec(int n_);
+    CudaVec(F *data, int n_);
 
-    ~CudaVec() {
-        if (own && N) {
-            memory_counter -= N;
-            handle_error(cudaFree(data));
-        }
-    }
+    ~CudaVec();
 
-    CudaVec &operator=(CudaVec &other) {
-        if (N != other.N) {
-            allocate(other.N);
-        }
-        copy_gpu_to_gpu(other.data, data, N);
-        return *this;
-    }
+    CudaVec &operator=(CudaVec &other);
 
     void allocate(int n);
 
-    bool allocated() {
-        return data != NULL;
-    }
+    bool allocated();
 
-    void free() {
-        allocate(0);
-    }
+    void free();
 
-    CudaVec(CudaVec &other) {
-        allocate(other.N);
-        copy_gpu_to_gpu(other.data, data, N);
-    }
+    CudaVec(CudaVec &other);
 
-    void zero(int offset = 0) {
-        if (N)
-            handle_error(cudaMemset(data + offset, 0, sizeof(F) * (N - offset)));
-    }
+    void zero(int offset = 0);
 
-    void init_normal(F mean, F std) { dexe::init_normal<F>(data, N, mean, std); }
+    void init_normal(F mean, F std);
+    void add_normal(F mean, F std);
 
-    void add_normal(F mean, F std) { dexe::add_normal<F>(data, N, mean, std); }
+    void share(CudaVec<F> &other);
 
-    void share(CudaVec<F> &other) {
-        if (N != other.N) {
-            throw DexeException("can't share with CudaVec of different size");
-        }
-        if (own)
-            cudaFree(data);
-        own = false;
-        data = other.data;
-    }
+    std::vector<F> to_vector();
 
-    std::vector<F> to_vector() {
-        std::vector<F> vec(N);
-        handle_error(cudaMemcpy(&vec[0], data, N * sizeof(F), cudaMemcpyDeviceToHost));
-        return vec;
-    }
+    void to_ptr(F *target);
 
-    void to_ptr(F *target) {
-        handle_error(cudaMemcpy(target, data, N * sizeof(F), cudaMemcpyDeviceToHost));
-    }
+    void from_ptr(F const *source);
 
-    void from_ptr(F const *source) {
-        handle_error(cudaMemcpy(data, source, N * sizeof(F), cudaMemcpyHostToDevice));
-    }
+    void from_vector(std::vector<F> const &vec);
 
-    void from_vector(std::vector<F> const &vec) {
-        if (vec.size() != N)
-            allocate(vec.size());
-        handle_error(cudaMemcpy(data, &vec[0], N * sizeof(F), cudaMemcpyHostToDevice));
-    }
-
-    F sum() {
-        F result(0);
-        if (sizeof(F) == sizeof(float))
-            handle_error(cublasSasum(Handler::cublas(), N, data, 1, &result));
-        else
-            handle_error(cublasDasum(Handler::cublas(), N, data, 1, &result));
-        return result;
-    }
+    F sum();
 
     CudaVec<F> &sqrt();
     CudaVec<F> &abs();

@@ -1,10 +1,116 @@
 #include "dexe/util.h"
 #include "dexe/cudavec.h"
-
+#include "dexe/allocator.h"
 
 uint64_t memory_counter = 0;
 
 namespace dexe {
+
+
+template <typename F>
+CudaVec<F>::CudaVec<F>() : data(0), N(0) 
+{}
+
+template <typename F>
+CudaVec<F>::CudaVec(int n_) : data(0), N(0) { 
+	allocate(n_); 
+}
+
+
+template <typename F>
+CudaVec<F>::CudaVec(F *data, int n_) : data(data), N(n_), own(false) 
+{}
+
+template <typename F>
+CudaVec<F>::CudaVec(CudaVec &other) {
+    allocate(other.N);
+    copy_gpu_to_gpu(other.data, data, N);
+}
+
+template <typename F>
+CudaVec<F>::~CudaVec() {
+    if (own && N) {
+        memory_counter -= N;
+        handle_error(cudaFree(data));
+    }
+}
+
+template <typename F>
+CudaVec<F> &CudaVec<F>::operator=(CudaVec &other) {
+    if (N != other.N) {
+        allocate(other.N);
+    }
+    copy_gpu_to_gpu(other.data, data, N);
+    return *this;
+}
+
+template <typename F>
+bool CudaVec<F>::allocated() {
+    return data != NULL;
+}
+
+template <typename F>
+void CudaVec<F>::free() {
+    allocate(0);
+}
+
+template <typename F>
+void CudaVec<F>::zero(int offset) {
+    if (N)
+        handle_error(cudaMemset(data + offset, 0, sizeof(F) * (N - offset)));
+}
+
+template <typename F>
+void CudaVec<F>::init_normal(F mean, F std) { dexe::init_normal<F>(data, N, mean, std); }
+
+template <typename F>
+void CudaVec<F>::add_normal(F mean, F std) { dexe::add_normal<F>(data, N, mean, std); }
+
+template <typename F>
+void CudaVec<F>::share(CudaVec<F> &other) {
+    if (N != other.N) {
+        throw DexeException("can't share with CudaVec of different size");
+    }
+    if (own)
+        cudaFree(data);
+    own = false;
+    data = other.data;
+}
+
+template <typename F>
+std::vector<F> CudaVec<F>::to_vector() {
+    std::vector<F> vec(N);
+    handle_error(cudaMemcpy(&vec[0], data, N * sizeof(F), cudaMemcpyDeviceToHost));
+    return vec;
+}
+
+template <typename F>
+void CudaVec<F>::to_ptr(F *target) {
+    handle_error(cudaMemcpy(target, data, N * sizeof(F), cudaMemcpyDeviceToHost));
+}
+
+template <typename F>
+void CudaVec<F>::from_ptr(F const *source) {
+    handle_error(cudaMemcpy(data, source, N * sizeof(F), cudaMemcpyHostToDevice));
+}
+
+template <typename F>
+void CudaVec<F>::from_vector(std::vector<F> const &vec) {
+    if (vec.size() != N)
+        allocate(vec.size());
+    handle_error(cudaMemcpy(data, &vec[0], N * sizeof(F), cudaMemcpyHostToDevice));
+}
+
+template <typename F>
+F CudaVec<F>::sum() {
+    F result(0);
+    if (sizeof(F) == sizeof(float))
+        handle_error(cublasSasum(Handler::cublas(), N, data, 1, &result));
+    else
+        handle_error(cublasDasum(Handler::cublas(), N, data, 1, &result));
+    return result;
+}
+
 
 /// Float versions
 template <>

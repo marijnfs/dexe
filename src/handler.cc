@@ -1,5 +1,6 @@
 #include "dexe/handler.h"
 #include "dexe/util.h"
+#include "dexe/allocator.h"
 
 using namespace std;
 
@@ -20,6 +21,7 @@ void Handler::init() {
     handle_error(curandCreateGenerator(&h_curand, CURAND_RNG_PSEUDO_DEFAULT));
     handle_error(curandSetPseudoRandomGeneratorSeed(h_curand, 13131ULL));
     handle_error(cublasCreate(&h_cublas));
+    init_allocator();
 }
 
 void Handler::deinit() {
