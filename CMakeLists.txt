@@ -83,8 +83,8 @@ configure_package_config_file(
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/dexeConfig.cmake" DESTINATION "lib/cmake")
 
 ### Build the executable
-add_executable(main bin/main.cc)
-target_link_libraries(main PRIVATE dexe)
+#add_executable(main bin/main.cc)
+#target_link_libraries(main PRIVATE dexe)
 
-add_executable(train bin/train.cc)
-target_link_libraries(train PRIVATE dexe)
+#add_executable(train bin/train.cc)
+#target_link_libraries(train PRIVATE dexe)
