@@ -63,7 +63,7 @@ struct DEXE_API Tensor {
 	bool allocated();
     void set_descriptor_typed();
     void set_descriptor();
-	void reshape(TensorShape shape);
+	void reshape(TensorShape shape, bool force_zero = false);
 
 	//Remove copy and assignment operator to be safe
 	Tensor<F> & operator=(const Tensor<F>&) = delete;

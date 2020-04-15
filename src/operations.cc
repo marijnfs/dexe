@@ -150,6 +150,7 @@ bool ConvolutionOperation<F>::check_fit(Tensor<F> &in_tensor, Tensor<F> &out_ten
         cerr << "ConvolutionOperation: number of input dimensions don't match "
                 "output dimensions"
              << endl;
+        throw "";
         return false;
     }
 

@@ -116,7 +116,7 @@ void test3() {
 
 		loss({sample, y});
 
-        cout << "predict " << prediction.tensor_set().x->to_vector() << endl;
+        // cout << "predict " << prediction.tensor_set().x->to_vector() << endl;
 		// int l = 1;
 		// cout << "next: " << net.names[l] << " " << net.tensors[l].x->to_vector() << endl;
 
@@ -126,8 +126,10 @@ void test3() {
 		// y.from_tensor(sample);
 
         cout << "start fd grad" << endl;
-        auto fd_grad = net.fd_gradient(0.0000001);	
-        cout << fd_grad.size() << " " << grad.size() << endl;
+        net.empty_tensors(true);
+        net.set_inputs({sample, y});
+        auto fd_grad = net.fd_gradient(0.0000001);
+        // cout << fd_grad.size() << " " << grad.size() << endl;
         for (int n(0); n < fd_grad.size(); ++n) {
 		 	cout << "[" << fd_grad[n] << " " << grad[n] << " " << (fd_grad[n] / grad[n]) << "] " << endl;
         }
@@ -151,6 +153,60 @@ void test3() {
 }
 
 
+
+void test4() {
+
+	cout << "start" << endl;
+	Handler::set_device(0);
+	Handler::cudnn();
+	cout << "Test 3" << endl;
+
+	Network<double> net;
+
+
+	// int in_c = 1;
+	// auto in1 = net.input3D(in_c);
+	// int next_c = 4;
+	// int k = 3;
+	// auto node2 = net.convolution3D(next_c, k)(in1);
+	// // auto node2f = net.relu()(node2);
+	// auto node3 = net.convolution3D(1, k)(node2);
+
+	int in_c = 1;
+	auto in1 = net.input_3D(in_c);
+	// auto in2 = net.input3D(in_c);
+	int next_c = 8;
+	int k = 3;
+
+	// auto node = net.convolution_downscale_3D(next_c, 2)(in1);
+	// auto prediction = net.convolution_upscale_3D(next_c, 2)(node);
+	
+	auto node = net.convolution_3D(next_c, k)(in1);
+	node = net.instance_normalisation()(node);
+	//auto node2 = net.convolution_3D(next_c, k)(in1);
+	//node = net.addition()(node, node2);		
+    auto prediction = net.convolution_3D(1, k)(node);
+	
+	auto target = net.input_3D(in_c);
+	//auto loss = net.squared_loss()(prediction, target);
+    auto loss = net.support_loss(0.4)(prediction, target);
+    
+	//allocate input and target
+	//remove need for this
+	// in1.tensor_set().alloc_x(TensorShape{1, 1, 64, 64, 64});
+	// target.tensor_set().alloc_x(TensorShape{1, 1, 64, 64, 64});
+
+	Tensor<double> sample(TensorShape{1, 1, 64, 64, 64});
+	Tensor<double> y(TensorShape{1, 1, 64, 64, 64});
+	
+	net.init_normal(0.0, 0.1);
+	sample.init_normal(0.0, 0.1);
+	y.init_normal(0.0, 0.1);
+
+    net.set_inputs({sample, y});
+    net.forward_nograd(net.inputs, {loss.index});
+}
+
 int main(int argc, char **argv) {
 	// Tensor<double> bla(TensorShape({1, 1, 4}));
 	// bla.init_normal(0.0, 4.0);
@@ -161,6 +217,6 @@ int main(int argc, char **argv) {
     // if (argc < 2)
     //     throw std::runtime_error("need argument");
     //unet_test(argv[1]);
-	test3();
+	test4();
 }
 

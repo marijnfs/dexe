@@ -72,7 +72,7 @@ void CudaVec<F>::share(CudaVec<F> &other) {
         throw DexeException("can't share with CudaVec of different size");
     }
     if (own)
-        cudaFree(data);
+		get_allocator()->free((uint8_t*)data);
     own = false;
     data = other.data;
 }
@@ -432,13 +432,13 @@ void CudaVec<F>::allocate(int newN) {
         if (N) {
             memory_counter -= N;
 
-            handle_error(cudaFree(data));
+            get_allocator()->free((uint8_t*)data);
             data = 0;
         }
         if (newN) {
             memory_counter += newN;
 
-            handle_error(cudaMalloc((void **)&data, sizeof(F) * newN));
+            data = (F*)get_allocator()->allocate(sizeof(F) * newN);
         }
         N = newN;
     }

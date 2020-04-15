@@ -1,6 +1,7 @@
 #include "dexe/network.h"
 #include "dexe/operations.h"
 #include "dexe/util.h"
+#include "dexe/allocator.h"
 
 #include "cereal/archives/portable_binary.hpp"
 #include "cereal/types/set.hpp"
@@ -30,19 +31,7 @@ template <typename F> TensorSet<F> &Node<F>::tensor_set() {
 template <typename F>
 void Node<F>::operator()(
     std::initializer_list<std::reference_wrapper<Tensor<F>>> input_tensors) {
-    if (input_tensors.size() != network->inputs.size()) {
-        cerr << "Warning: Number of inputs doesn't correspond";
-    }
-
-    auto input_it = network->inputs.begin();
-
-    for (auto &input_tensor : input_tensors) {
-        auto idx = *input_it;
-        network->tensors[idx].x->reshape(input_tensor.get().shape);
-        network->tensors[idx].x->from_tensor(input_tensor);
-        ++input_it;
-    }
-
+    network->set_inputs(input_tensors);
     network->forward(network->inputs, {index});
 }
 
@@ -86,6 +75,37 @@ template <typename F> void Network<F>::reset() {
 
     n_params = 0;
     finished = false;
+}
+
+template <typename F> void Network<F>::empty_tensors(bool skip_input) {
+    set<int> input_indices_set(inputs.begin(), inputs.end());
+
+    int s(0);
+    for (auto &tensor_set : tensors) {
+        if (skip_input && input_indices_set.count(s))
+            continue;
+        auto shape = tensor_set.x->shape;
+        std::fill(shape.dimensions.begin() + 2, shape.dimensions.end(), 0);
+        tensor_set.x->reshape(shape);
+        tensor_set.grad->reshape(shape);
+        ++s;
+    }
+}
+
+
+template <typename F> void Network<F>::set_inputs(std::initializer_list<std::reference_wrapper<Tensor<F>>> input_tensors) {
+    if (input_tensors.size() != inputs.size()) {
+        cerr << "Warning: Number of inputs doesn't correspond";
+    }
+
+    auto input_it = inputs.begin();
+
+    for (auto &input_tensor : input_tensors) {
+        auto idx = *input_it;
+        tensors[idx].x->reshape(input_tensor.get().shape);
+        tensors[idx].x->from_tensor(input_tensor);
+        ++input_it;
+    }
 }
 
 template <typename F> void Network<F>::finish() {
@@ -257,12 +277,14 @@ template <typename F> vector<F> Network<F>::fd_gradient(F e) {
             parameters[i]->from_vector(delta_vec);
 
             forward(inputs, outputs);
+            // forward_nograd(inputs, outputs);
             F plus_loss = tensors.back().x->to_vector()[0];
 
             delta_vec[n] = vec[n] - e;
             parameters[i]->from_vector(delta_vec);
 
             forward(inputs, outputs);
+            // forward_nograd(inputs, outputs);
 
             F min_loss = tensors.back().x->to_vector()[0];
 
@@ -743,11 +765,13 @@ void Network<F>::forward(std::vector<int> inputs, std::vector<int> outputs) {
             oss << "Failure when preparing step [" << s << "]: " << names[s] << endl;
             throw std::runtime_error(oss.str());
         }
+    }
 
-        // make sure x is zero
+    // make sure buffers are zeroed out
+    for (auto s : sequence)
         if (!input_set.count(s))
             tensors[s].x->zero();
-    }
+
 
     // Run Forward
     for (auto s : sequence) {
@@ -758,6 +782,68 @@ void Network<F>::forward(std::vector<int> inputs, std::vector<int> outputs) {
 
         operations[s]->forward(tmp_inputs, tmp_outputs);
     }
+}
+
+
+template <typename F>
+void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> outputs) {
+    sequence = find_sequence(inputs, outputs);
+
+    set<int> input_set(inputs.begin(), inputs.end());
+
+    //vector to indicate how many times an input is used, to know when we can release it
+    vector<int> usage_counts(sequence.size());
+
+    for (auto s : sequence)
+        for (auto idx : input_indices[s])
+            ++usage_counts[idx];
+
+    // Forward Dryrun to determine memory usage
+    auto virtual_allocator = std::make_unique<VirtualAllocator>();
+
+    auto dry_run = [&](bool execute) {
+        vector<int> usages_left(usage_counts);
+
+        for (auto s : sequence) {
+            vector<Tensor<F> *> tmp_inputs, tmp_outputs;
+            for (auto idx : input_indices[s]) {
+                tmp_inputs.push_back(tensors[idx].x.get());
+            }
+            tmp_outputs.push_back(tensors[s].x.get());
+
+            cout << "dry run step " << s << endl;
+            bool success = operations[s]->forward_dry_run(tmp_inputs, tmp_outputs);
+            if (!success) {
+                ostringstream oss;
+                oss << "Failure when preparing step [" << s << "]: " << names[s] << endl;
+                throw std::runtime_error(oss.str());
+            }
+
+            if (execute)
+                operations[s]->forward(tmp_inputs, tmp_outputs);
+
+            //decrease counter and free if needed
+            bool zero_out = execute;
+            for (auto idx : input_indices[s])
+                if (--usages_left[idx] == 0 && input_set.count(idx) == 0)
+                    tensors[idx].x->reshape(TensorShape(), zero_out); //reshaping to empty shape releases
+        }
+    };
+
+    // push_allocator(virtual_allocator.get());
+    dry_run(false);
+    // pop_allocator();
+
+    size_t n_bytes = virtual_allocator->max_size();
+    std::cout << "N Bytes: " << n_bytes << std::endl;
+
+    for (auto &t : tensors)
+        std::cout << "tensor shape: " << t.x->shape << std::endl;
+
+    auto page_allocator = std::make_unique<MappedAllocator>(n_bytes);
+    // push_allocator(page_allocator.get());
+    dry_run(true);
+    // pop_allocator();
 }
 
 template struct DEXE_API Node<float>;

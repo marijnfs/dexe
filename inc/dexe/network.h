@@ -53,6 +53,7 @@ struct DEXE_API Network {
 	Network operator=(Network const &other) = delete;
 
 	void reset();
+	void empty_tensors(bool skip_input);
 	
  	int add_operation(Operation<F> *op, std::vector<int> inputs, TensorShape shape, std::string name);
 
@@ -88,6 +89,11 @@ struct DEXE_API Network {
 
 	void forward(std::vector<int> inputs, std::vector<int> outputs);
 	void backward();
+
+	//memory efficient forward
+	void forward_nograd(std::vector<int> inputs, std::vector<int> outputs);
+
+	void set_inputs(std::initializer_list<std::reference_wrapper<Tensor<F>>> inputs);
 
 	void zero_x();
 	void zero_grad();

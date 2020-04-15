@@ -24,16 +24,19 @@ struct Allocator {
 	virtual ~Allocator() = default;
 
 	uint8_t *insert_slice(Slice slice) {
+		std::cout << "insert slice: " << (size_t)slice.ptr << " " << slice.size << std::endl;
 		auto match = std::lower_bound(slices.begin(), slices.end(), slice, [](Slice a, Slice b) -> bool {return a.ptr < b.ptr; });
 		slices.insert(match, slice);
 		return slice.ptr;
 	}
 
 	void erase_slice(uint8_t *ptr) {
+		std::cout << "erase slice: " << (size_t)ptr << std::endl;
+
 		Slice target{ptr, 0};
 
 		auto match = std::lower_bound(slices.begin(), slices.end(), target, [](Slice a, Slice b) -> bool {return a.ptr < b.ptr; });
-		if (match->ptr != ptr) {
+		if (match == slices.end() || match->ptr != ptr) {
 			throw std::runtime_error("Free called on non allocated pointer");
 		}
 		slices.erase(match);
@@ -62,6 +65,9 @@ struct DirectAllocator : public Allocator {
 static std::stack<Allocator*> allocator_stack;
 
 void init_allocator();
+void push_allocator(Allocator *allocator);
+void pop_allocator();
+Allocator *get_allocator();
 
 // Pretends to allocate, but actually just keeps track of what is allocated
 // Used to calculate memory usage beforehand
@@ -70,6 +76,7 @@ struct VirtualAllocator : public Allocator {
 
 	//allocates n_bytes bytes
 	uint8_t *allocate(size_t n_bytes) {
+		std::cerr << "virtual allocate: " << n_bytes << std::endl;
 		Slice suggested_slice;
 
 		uint8_t *ptr = master_slice.ptr;
@@ -105,15 +112,15 @@ struct VirtualAllocator : public Allocator {
 };
 
 // Allocates all memory before hand and maps is as needed onto that memory
-struct PagedAllocator : public Allocator {
+struct MappedAllocator : public Allocator {
 	Slice master_slice;
 
-	PagedAllocator(size_t n_bytes) {
+	MappedAllocator(size_t n_bytes) {
 		handle_error(cudaMalloc((void **)&master_slice.ptr, n_bytes));
 		master_slice.size = n_bytes;
 	}
 
-	~PagedAllocator() {
+	~MappedAllocator() {
 		handle_error(cudaFree((void*)master_slice.ptr));
 	}
 

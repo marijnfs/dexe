@@ -126,7 +126,7 @@ template <typename F> void Tensor<F>::allocate() {
 
 template <typename F> bool Tensor<F>::allocated() { return cudavec.allocated(); }
 
-template <typename F> void Tensor<F>::reshape(TensorShape new_shape) {
+template <typename F> void Tensor<F>::reshape(TensorShape new_shape, bool force_zero) {
     if (!owning) {
         cerr << "Can't reshape non-owning tensor" << endl;
     }
@@ -143,6 +143,9 @@ template <typename F> void Tensor<F>::reshape(TensorShape new_shape) {
     }
     shape = new_shape;
     set_descriptor();
+
+    if (force_zero)
+        zero();
 }
 
 template <typename F> Tensor<F>::~Tensor() {
