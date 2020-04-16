@@ -907,7 +907,6 @@ void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> output
     }
 }
 
-
 template struct DEXE_API Node<float>;
 template struct DEXE_API Node<double>;
 
