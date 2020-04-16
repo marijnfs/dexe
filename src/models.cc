@@ -63,9 +63,9 @@ Node<F> make_unet(Network<F> *network, int in_channels, int out_channels, bool l
     return prediction;
 }
 
-template Node<float> make_unet(Network<float> *network, int in_channels,
+template Node<float> DEXE_API make_unet(Network<float> *network, int in_channels,
                                int out_channels, bool local_normalization);
-template Node<double> make_unet(Network<double> *network, int in_channels,
+template Node<double> DEXE_API make_unet(Network<double> *network, int in_channels,
                                 int out_channels, bool local_normalization);
 
 } // namespace dexe

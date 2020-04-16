@@ -760,10 +760,10 @@ void Network<F>::forward(std::vector<int> inputs, std::vector<int> outputs) {
     }
 }
 
-template struct Node<float>;
-template struct Node<double>;
+template struct DEXE_API Node<float>;
+template struct DEXE_API Node<double>;
 
-template struct Network<float>;
-template struct Network<double>;
+template struct DEXE_API Network<float>;
+template struct DEXE_API Network<double>;
 
 } // namespace dexe
