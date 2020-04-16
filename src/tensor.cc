@@ -74,6 +74,12 @@ bool TensorShape::operator!=(TensorShape const &other) const {
 
 int &TensorShape::operator[](int index) { return dimensions[index]; }
 
+TensorShape TensorShape::zero_lowerdims() {
+    auto dims = dimensions;
+    std::fill(dims.begin() + 2, dims.end(), 0);
+    return TensorShape(dims);
+}
+
 template <typename F> Tensor<F>::Tensor() : owning(true) {
     handle_error(cudnnCreateTensorDescriptor(&td));
 }

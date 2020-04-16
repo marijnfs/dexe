@@ -84,8 +84,7 @@ template <typename F> void Network<F>::empty_tensors(bool skip_input) {
     for (auto &tensor_set : tensors) {
         if (skip_input && input_indices_set.count(s))
             continue;
-        auto shape = tensor_set.x->shape;
-        std::fill(shape.dimensions.begin() + 2, shape.dimensions.end(), 0);
+        auto shape = tensor_set.x->shape.zero_lowerdims();
         tensor_set.x->reshape(shape);
         tensor_set.grad->reshape(shape);
         ++s;
@@ -823,18 +822,23 @@ void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> output
                 operations[s]->forward(tmp_inputs, tmp_outputs);
 
             //decrease counter and free if needed
-            bool zero_out = execute;
             for (auto idx : input_indices[s])
                 if (--usages_left[idx] == 0 && input_set.count(idx) == 0)
-                    tensors[idx].x->reshape(TensorShape(), zero_out); //reshaping to empty shape releases
+                    tensors[idx].x->reshape(tensors[idx].x->shape.zero_lowerdims()); //reshaping to empty shape releases
         }
     };
 
-    // push_allocator(virtual_allocator.get());
+
+    std::cout << "before dry run: " << std::endl;
+    for (auto &t : tensors)
+        std::cout << "tensor shape: " << t.x->shape << std::endl;
+
+    push_allocator(virtual_allocator.get());
     dry_run(false);
-    // pop_allocator();
+    pop_allocator();
 
     size_t n_bytes = virtual_allocator->max_size();
+    std::cout << "before dry run 2: " << std::endl;
     std::cout << "N Bytes: " << n_bytes << std::endl;
 
     for (auto &t : tensors)

@@ -204,7 +204,7 @@ void test4() {
 	y.init_normal(0.0, 0.1);
 
     net.set_inputs({sample, y});
-    net.forward_nograd(net.inputs, {loss.index});
+    net.forward_nograd(net.inputs, {prediction.index});
 }
 
 int main(int argc, char **argv) {

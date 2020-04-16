@@ -424,7 +424,6 @@ template <typename F>
 void CudaVec<F>::allocate(int newN) {
     if (!own) {
     	N = newN;
-    	zero();
     	return;
     }
 
@@ -442,7 +441,6 @@ void CudaVec<F>::allocate(int newN) {
         }
         N = newN;
     }
-    zero();
 }
 
 ///////////////

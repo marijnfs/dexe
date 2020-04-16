@@ -77,16 +77,23 @@ struct VirtualAllocator : public Allocator {
 	//allocates n_bytes bytes
 	uint8_t *allocate(size_t n_bytes) {
 		std::cerr << "virtual allocate: " << n_bytes << std::endl;
+		if (slices.empty()) { //if there a no slices, simply add it
+			auto slice = Slice{master_slice.ptr, n_bytes};
+			master_slice.size = n_bytes;
+			return insert_slice(slice);			
+		}
+
 		Slice suggested_slice;
 
-		uint8_t *ptr = master_slice.ptr;
+
+		uint8_t *end_ptr = master_slice.ptr;
 		for (auto slice : slices) {
-			size_t available_size = slice.ptr - ptr;
+			size_t available_size = slice.ptr - end_ptr;
 			if (available_size > suggested_slice.size) {
-				suggested_slice.ptr = ptr;
+				suggested_slice.ptr = end_ptr;
 				suggested_slice.size = available_size;
 			}
-			ptr = slice.ptr;
+			end_ptr = slice.ptr + slice.size;
 		}
 
 		if (suggested_slice.size < n_bytes) { //doesn't fit in between
@@ -103,6 +110,8 @@ struct VirtualAllocator : public Allocator {
 
 	//frees previously allocated pointer ptr
 	void free(uint8_t *ptr) {
+
+		std::cerr << "virtual free: " << (size_t)ptr << std::endl;
 		erase_slice(ptr);
 	}
 
