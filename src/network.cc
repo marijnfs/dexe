@@ -783,7 +783,6 @@ void Network<F>::forward(std::vector<int> inputs, std::vector<int> outputs) {
     }
 }
 
-
 template <typename F>
 void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> outputs) {
     sequence = find_sequence(inputs, outputs);
@@ -849,6 +848,7 @@ void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> output
     dry_run(true);
     // pop_allocator();
 }
+
 
 template struct DEXE_API Node<float>;
 template struct DEXE_API Node<double>;
