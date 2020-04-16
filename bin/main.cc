@@ -93,9 +93,9 @@ void test3() {
 		// auto prediction = net.convolution_upscale_3D(next_c, 2)(node);
 		
 		auto node = net.convolution_3D(next_c, k)(in1);
+		auto node2 = net.convolution_3D(next_c, k)(in1);
 		node = net.instance_normalisation()(node);
-		//auto node2 = net.convolution_3D(next_c, k)(in1);
-		//node = net.addition()(node, node2);		
+		node = net.addition()(node, node2);
         auto prediction = net.convolution_3D(1, k)(node);
 		
 		auto target = net.input_3D(in_c);
@@ -182,14 +182,14 @@ void test4() {
 	// auto prediction = net.convolution_upscale_3D(next_c, 2)(node);
 	
 	auto node = net.convolution_3D(next_c, k)(in1);
-	node = net.instance_normalisation()(node);
+	// node = net.instance_normalisation()(node);
 	//auto node2 = net.convolution_3D(next_c, k)(in1);
 	//node = net.addition()(node, node2);		
     auto prediction = net.convolution_3D(1, k)(node);
 	
-	auto target = net.input_3D(in_c);
+	// auto target = net.input_3D(in_c);
 	//auto loss = net.squared_loss()(prediction, target);
-    auto loss = net.support_loss(0.4)(prediction, target);
+    // auto loss = net.support_loss(0.4)(prediction, target);
     
 	//allocate input and target
 	//remove need for this
@@ -203,7 +203,7 @@ void test4() {
 	sample.init_normal(0.0, 0.1);
 	y.init_normal(0.0, 0.1);
 
-    net.set_inputs({sample, y});
+    net.set_inputs({sample});
     net.forward_nograd(net.inputs, {prediction.index});
 }
 
@@ -217,6 +217,6 @@ int main(int argc, char **argv) {
     // if (argc < 2)
     //     throw std::runtime_error("need argument");
     //unet_test(argv[1]);
-	test4();
+	test3();
 }
 

@@ -21,7 +21,10 @@ struct Allocator {
 	virtual uint8_t *allocate(size_t n_bytes) = 0;
 	virtual void free(uint8_t *ptr) = 0;
 
-	virtual ~Allocator() = default;
+	virtual ~Allocator() {
+		std::cout << "= Destructor allocator" << std::endl;
+		assert_slices_empty();
+	};
 
 	uint8_t *insert_slice(Slice slice) {
 		std::cout << "insert slice: " << (size_t)slice.ptr << " " << slice.size << std::endl;
@@ -42,12 +45,23 @@ struct Allocator {
 		slices.erase(match);
 	}
 
+	void assert_slices_empty() {
+		if (slices.size() > 0) {
+			std::ostringstream oss;
+			oss << "ERROR: " << slices.size() << " slices left when calling allocator destructor" << std::endl;
+			throw std::runtime_error(oss.str());
+		}
+	}
 
 	std::vector<Slice> slices;
 };
 
 
 struct DirectAllocator : public Allocator {
+	~DirectAllocator() {
+		assert_slices_empty();
+	}
+
 	uint8_t *allocate(size_t n_bytes) {
 		Slice slice;
         handle_error(cudaMalloc((void **)&slice.ptr, n_bytes));
@@ -58,6 +72,16 @@ struct DirectAllocator : public Allocator {
 	void free(uint8_t *ptr) {
 		erase_slice(ptr);
         handle_error(cudaFree(ptr));
+    }
+
+};
+
+struct DummyAllocator : public Allocator {
+	uint8_t *allocate(size_t n_bytes) {
+		return nullptr;
+	}
+
+	void free(uint8_t *ptr) {
     }
 
 };
@@ -74,25 +98,30 @@ Allocator *get_allocator();
 struct VirtualAllocator : public Allocator {
 	Slice master_slice;
 
+	~VirtualAllocator() {
+		assert_slices_empty();
+	}
+
 	//allocates n_bytes bytes
 	uint8_t *allocate(size_t n_bytes) {
 		std::cerr << "virtual allocate: " << n_bytes << std::endl;
+		Slice suggested_slice{master_slice.ptr, n_bytes};
+
 		if (slices.empty()) { //if there a no slices, simply add it
-			auto slice = Slice{master_slice.ptr, n_bytes};
 			master_slice.size = n_bytes;
-			return insert_slice(slice);			
+			return insert_slice(suggested_slice);			
 		}
 
-		Slice suggested_slice;
 
 
 		uint8_t *end_ptr = master_slice.ptr;
 		for (auto slice : slices) {
 			size_t available_size = slice.ptr - end_ptr;
-			if (available_size > suggested_slice.size) {
-				suggested_slice.ptr = end_ptr;
-				suggested_slice.size = available_size;
-			}
+			suggested_slice.ptr = end_ptr;
+			suggested_slice.size = available_size;
+
+			if (suggested_slice.size > n_bytes)
+				break;
 			end_ptr = slice.ptr + slice.size;
 		}
 
@@ -104,7 +133,7 @@ struct VirtualAllocator : public Allocator {
 			suggested_slice.size = n_bytes;
 		}
 
-
+		std::cout << "searched, n slices before: " << slices.size() << std::endl;
 		return insert_slice(suggested_slice);
 	}
 
@@ -131,28 +160,35 @@ struct MappedAllocator : public Allocator {
 
 	~MappedAllocator() {
 		handle_error(cudaFree((void*)master_slice.ptr));
+		assert_slices_empty();
 	}
 
 	//allocates n_bytes bytes
 	uint8_t *allocate(size_t n_bytes) {
-		Slice suggested_slice;
+		std::cerr << "virtual allocate: " << n_bytes << std::endl;
+		Slice suggested_slice{master_slice.ptr, n_bytes};
 
-		uint8_t *ptr = master_slice.ptr;
+		if (slices.empty()) { //if there a no slices, simply add it
+			return insert_slice(suggested_slice);			
+		}
+
+
+		uint8_t *end_ptr = master_slice.ptr;
 		for (auto slice : slices) {
-			size_t available_size = slice.ptr - ptr;
-			if (available_size > suggested_slice.size) {
-				suggested_slice.ptr = ptr;
-				suggested_slice.size = available_size;
-			}
-			ptr = slice.ptr;
+			size_t available_size = slice.ptr - end_ptr;
+			suggested_slice.ptr = end_ptr;
+			suggested_slice.size = available_size;
+
+			if (suggested_slice.size > n_bytes)
+				break;
+			end_ptr = slice.ptr + slice.size;
 		}
 
 		if (suggested_slice.size < n_bytes) { //doesn't fit in between
 			suggested_slice.ptr = slices.back().ptr + slices.back().size;
 			suggested_slice.size = n_bytes;
-			if (master_slice.size < suggested_slice.ptr + suggested_slice.size - master_slice.ptr) {
-				throw std::runtime_error("Requested more memory than allocated in Page");
-			}
+			if (master_slice.size < suggested_slice.ptr + suggested_slice.size - master_slice.ptr)
+		 		throw std::runtime_error("Requested more memory than allocated in Page");
 		} else {
 			suggested_slice.size = n_bytes;
 		}

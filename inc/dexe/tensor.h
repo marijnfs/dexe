@@ -129,12 +129,12 @@ struct DEXE_API Tensor {
 
   void share(Tensor<F> &other) { cudavec.share(other.cudavec); }
 
-  TensorShape shape;
   bool owning = false;
-  cudnnTensorDescriptor_t td = nullptr;
 
+  TensorShape shape;
   CudaVec<F> cudavec;
 
+  cudnnTensorDescriptor_t td = nullptr;
   cudnnTensorFormat_t format = DEFAULT_TENSOR_FORMAT;
 };
 

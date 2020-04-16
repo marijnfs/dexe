@@ -146,13 +146,6 @@ bool ConvolutionOperation<F>::check_fit(Tensor<F> &in_tensor, Tensor<F> &out_ten
         cerr << "ConvolutionOperation: input channels don't match filters" << endl;
         return false;
     }
-    if (in_tensor.shape.n_dimensions() != out_tensor.shape.n_dimensions()) {
-        cerr << "ConvolutionOperation: number of input dimensions don't match "
-                "output dimensions"
-             << endl;
-        throw "";
-        return false;
-    }
 
     // check if strides divide
     for (int n(0); n < paddings.size(); ++n) {
@@ -188,6 +181,10 @@ void ConvolutionOperation<F>::prepare_forward(Tensor<F> &in,
         target_shape[n + 2] =
             (in.shape[n + 2] + 2 * paddings[n] - dimensions[n + 2]) / strides[n] + 1;
     }
+
+    if (out.shape == target_shape) //if output is already shaped, it's already in use
+        return;
+
     out.reshape(target_shape);
     // algo = CUDNN_CONVOLUTION_FWD_ALGO_GEMM;
     // algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM;
@@ -195,6 +192,7 @@ void ConvolutionOperation<F>::prepare_forward(Tensor<F> &in,
     size_t new_workspace_size = Handler::workspace_size();
     // size_t new_workspace_size = workspace_size;
 
+    // TODO, this result can be cached in principle
     handle_error(cudnnGetConvolutionForwardAlgorithm(
         Handler::cudnn(), in.td, filter_bank.fd, conv, out.td,
         CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT, new_workspace_size, &algo));
@@ -514,11 +512,6 @@ void SquaredLossOperation<F>::forward(std::vector<Tensor<F> *> &in, std::vector<
 template <typename F>
 bool SquaredLossOperation<F>::forward_dry_run(std::vector<Tensor<F> *> &in,
                                               std::vector<Tensor<F> *> &out) {
-    if (in[0]->shape != in[1]->shape) {
-        cerr << "input shapes don't match, " << in[0]->shape << " != " << in[1]->shape << endl;
-        return false;
-    }
-
     out[0]->reshape({1, 1, 1});
     tmp.reshape(in[0]->shape);
     return true;
