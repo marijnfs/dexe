@@ -127,6 +127,7 @@ template <typename F> void Tensor<F>::allocate() {
 
     if (shape.n_elements() != 0) {
         cudavec.allocate(shape.n_elements());
+        cudavec.zero();
     }
 }
 

@@ -8,10 +8,12 @@ void init_allocator() {
 }
 
 void push_allocator(Allocator *allocator) {
+	// std::cout << "Dexe: Push Allocator" << std::endl;
 	allocator_stack.push(allocator);
 }
 
 void pop_allocator() {
+	// std::cout << "Dexe: Pop Allocator" << std::endl;
 	allocator_stack.pop();
 }
 

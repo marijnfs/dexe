@@ -180,8 +180,8 @@ template <typename F> void Network<F>::save(std::string path) {
 }
 
 template <typename F>
-
 void Network<F>::load(std::string path) {
+    Handler::get_handler(); //make sure allocators are initialized
     ifstream in(path, ios::binary);
     cereal::PortableBinaryInputArchive ar(in);
 
@@ -274,15 +274,15 @@ template <typename F> vector<F> Network<F>::fd_gradient(F e) {
             delta_vec[n] = vec[n] + e;
             parameters[i]->from_vector(delta_vec);
 
-            // forward(inputs, outputs);
-            forward_nograd(inputs, outputs);
+            forward(inputs, outputs);
+            // forward_nograd(inputs, outputs);
             F plus_loss = tensors.back().x->to_vector()[0];
 
             delta_vec[n] = vec[n] - e;
             parameters[i]->from_vector(delta_vec);
 
-            // forward(inputs, outputs);
-            forward_nograd(inputs, outputs);
+            forward(inputs, outputs);
+            // forward_nograd(inputs, outputs);
 
             F min_loss = tensors.back().x->to_vector()[0];
 
@@ -785,20 +785,24 @@ void Network<F>::forward(std::vector<int> inputs, std::vector<int> outputs) {
 
 template <typename F>
 void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> outputs) {
-    std::cout << "forward nograd" << std::endl;
+    Handler::get_handler(); //make sure allocators are initialized
+
     sequence = find_sequence(inputs, outputs);
 
     set<int> input_set(inputs.begin(), inputs.end());
     set<int> output_set(outputs.begin(), outputs.end());
 
     //vector to indicate how many times an input is used, to know when we can release it
-    vector<int> usage_counts(sequence.size());
-
+    vector<int> usage_counts(operations.size());
     for (auto s : sequence)
         for (auto idx : input_indices[s])
             ++usage_counts[idx];
     for (auto i : inputs)
         ++usage_counts[i]; //add one for inputs so they dont get destroyed
+
+    //Empty all tensors except for the inputs
+    //Makes sure allocation happens accordingly
+    empty_tensors(true);
 
     auto run = [&](bool execute) {
         vector<int> usages_left(usage_counts);
@@ -832,6 +836,8 @@ void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> output
             if (execute)
                 operations[s]->forward(tmp_inputs, tmp_outputs);
 
+            //Make sure auxiliary resources are freed again
+            operations[s]->free_resources();
 
             //decrease counter and free if needed
             for (auto idx : input_indices[s])
@@ -842,47 +848,46 @@ void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> output
 
 
     // Forward Dryrun to determine memory usage and output shapes
-    size_t n_bytes(0);
-    std::vector<TensorShape> output_shapes;
-    {
-        auto virtual_allocator = std::make_unique<VirtualAllocator>();
-        push_allocator(virtual_allocator.get());
-        bool execute = false;
-        run(execute);
+    if (!fixed_allocator) {
+        size_t n_bytes(0);
+        std::vector<TensorShape> output_shapes;
+        {
+            auto virtual_allocator = std::make_unique<VirtualAllocator>();
+            push_allocator(virtual_allocator.get());
+            bool execute = false;
+            run(execute);
 
-        // store the resulting output shapes
-        for (auto o : outputs)
-            output_shapes.emplace_back(tensors[o].x->shape);
+            // store the resulting output shapes
+            for (auto o : outputs)
+                output_shapes.emplace_back(tensors[o].x->shape);
 
-        n_bytes = virtual_allocator->max_size();
-        pop_allocator();
-    }
-
-    { //Clear the output tensors so they will be allocated in the next step
-        auto dummy_allocator = std::make_unique<DummyAllocator>();
-        push_allocator(dummy_allocator.get());
-
-        for (auto o : outputs)
-            tensors[o].x->reshape(TensorShape{});
-        pop_allocator();
-    }
-
-    { //allocate outputs
-        int i = 0;
-        std::cout << "Allocating outputs " << std::endl;
-        for (auto o : outputs) {
-            std::cout << "output " << o << " " << output_shapes[i] << std::endl;
-
-            tensors[o].x->reshape(output_shapes[i++]);
+            n_bytes = virtual_allocator->max_size();
+            pop_allocator();
         }
+
+        { //Clear the output tensors so they will be allocated in the next step
+            auto dummy_allocator = std::make_unique<DummyAllocator>();
+            push_allocator(dummy_allocator.get());
+
+            for (auto o : outputs)
+                tensors[o].x->reshape(TensorShape{});
+            pop_allocator();
+        }
+
+        { //allocate outputs
+            int i = 0;
+            for (auto o : outputs)
+                tensors[o].x->reshape(output_shapes[i++]);
+        }
+
+        fixed_allocator = std::make_unique<MappedAllocator>(n_bytes);
     }
 
-    std::cout << "N Bytes: " << n_bytes << std::endl;
+    // std::cout << "N Bytes: " << n_bytes << std::endl;
 
     {
         //Run full network for real
-        auto page_allocator = std::make_unique<MappedAllocator>(n_bytes);
-        push_allocator(page_allocator.get());
+        push_allocator(fixed_allocator.get());
         run(true);
         pop_allocator();
     }

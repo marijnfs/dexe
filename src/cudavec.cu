@@ -31,7 +31,8 @@ template <typename F>
 CudaVec<F>::~CudaVec() {
     if (own && N) {
         memory_counter -= N;
-        handle_error(cudaFree(data));
+
+        get_allocator()->free((uint8_t*)data);
     }
 }
 
@@ -57,7 +58,7 @@ void CudaVec<F>::free() {
 template <typename F>
 void CudaVec<F>::zero(int offset) {
     if (N)
-        handle_error(cudaMemset(data + offset, 0, sizeof(F) * (N - offset)));
+    	get_allocator()->zero(reinterpret_cast<uint8_t*>(data + offset), sizeof(F) * (N - offset));
 }
 
 template <typename F>

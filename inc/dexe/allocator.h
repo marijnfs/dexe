@@ -20,21 +20,21 @@ struct Slice {
 struct Allocator {
 	virtual uint8_t *allocate(size_t n_bytes) = 0;
 	virtual void free(uint8_t *ptr) = 0;
+	virtual void zero(uint8_t *ptr, size_t n_bytes) = 0; //function to zero out memory
 
 	virtual ~Allocator() {
-		std::cout << "= Destructor allocator" << std::endl;
 		assert_slices_empty();
 	};
 
 	uint8_t *insert_slice(Slice slice) {
-		std::cout << "insert slice: " << (size_t)slice.ptr << " " << slice.size << std::endl;
+		// std::cout << "insert slice: " << (size_t)slice.ptr << " " << slice.size << std::endl;
 		auto match = std::lower_bound(slices.begin(), slices.end(), slice, [](Slice a, Slice b) -> bool {return a.ptr < b.ptr; });
 		slices.insert(match, slice);
 		return slice.ptr;
 	}
 
 	void erase_slice(uint8_t *ptr) {
-		std::cout << "erase slice: " << (size_t)ptr << std::endl;
+		// std::cout << "erase slice: " << (size_t)ptr << std::endl;
 
 		Slice target{ptr, 0};
 
@@ -49,6 +49,10 @@ struct Allocator {
 		if (slices.size() > 0) {
 			std::ostringstream oss;
 			oss << "ERROR: " << slices.size() << " slices left when calling allocator destructor" << std::endl;
+
+			for (auto s : slices) {
+				std::cerr << (size_t)s.ptr << " " << s.size << std::endl;
+			}
 			throw std::runtime_error(oss.str());
 		}
 	}
@@ -74,6 +78,10 @@ struct DirectAllocator : public Allocator {
         handle_error(cudaFree(ptr));
     }
 
+    void zero(uint8_t *ptr, size_t n_bytes) {
+    	handle_error( cudaMemset(ptr, 0, n_bytes) );
+    }
+
 };
 
 struct DummyAllocator : public Allocator {
@@ -84,6 +92,8 @@ struct DummyAllocator : public Allocator {
 	void free(uint8_t *ptr) {
     }
 
+    void zero(uint8_t *ptr, size_t n_bytes) {
+    }
 };
 
 static std::stack<Allocator*> allocator_stack;
@@ -104,7 +114,6 @@ struct VirtualAllocator : public Allocator {
 
 	//allocates n_bytes bytes
 	uint8_t *allocate(size_t n_bytes) {
-		std::cerr << "virtual allocate: " << n_bytes << std::endl;
 		Slice suggested_slice{master_slice.ptr, n_bytes};
 
 		if (slices.empty()) { //if there a no slices, simply add it
@@ -112,15 +121,13 @@ struct VirtualAllocator : public Allocator {
 			return insert_slice(suggested_slice);			
 		}
 
-
-
 		uint8_t *end_ptr = master_slice.ptr;
 		for (auto slice : slices) {
 			size_t available_size = slice.ptr - end_ptr;
 			suggested_slice.ptr = end_ptr;
 			suggested_slice.size = available_size;
 
-			if (suggested_slice.size > n_bytes)
+			if (n_bytes <= suggested_slice.size)
 				break;
 			end_ptr = slice.ptr + slice.size;
 		}
@@ -128,21 +135,22 @@ struct VirtualAllocator : public Allocator {
 		if (suggested_slice.size < n_bytes) { //doesn't fit in between
 			suggested_slice.ptr = slices.back().ptr + slices.back().size;
 			suggested_slice.size = n_bytes;
-			master_slice.size = suggested_slice.ptr + suggested_slice.size - master_slice.ptr;
+			master_slice.size = std::max<size_t>(master_slice.size, suggested_slice.ptr + suggested_slice.size - master_slice.ptr);
 		} else {
 			suggested_slice.size = n_bytes;
 		}
 
-		std::cout << "searched, n slices before: " << slices.size() << std::endl;
 		return insert_slice(suggested_slice);
 	}
 
 	//frees previously allocated pointer ptr
 	void free(uint8_t *ptr) {
-
-		std::cerr << "virtual free: " << (size_t)ptr << std::endl;
+		// std::cerr << "virtual free: " << (size_t)ptr << std::endl;
 		erase_slice(ptr);
 	}
+
+    void zero(uint8_t *ptr, size_t n_bytes) {
+    }
 
 	size_t max_size() {
 		return master_slice.size;
@@ -165,13 +173,11 @@ struct MappedAllocator : public Allocator {
 
 	//allocates n_bytes bytes
 	uint8_t *allocate(size_t n_bytes) {
-		std::cerr << "virtual allocate: " << n_bytes << std::endl;
 		Slice suggested_slice{master_slice.ptr, n_bytes};
 
 		if (slices.empty()) { //if there a no slices, simply add it
 			return insert_slice(suggested_slice);			
 		}
-
 
 		uint8_t *end_ptr = master_slice.ptr;
 		for (auto slice : slices) {
@@ -179,7 +185,7 @@ struct MappedAllocator : public Allocator {
 			suggested_slice.ptr = end_ptr;
 			suggested_slice.size = available_size;
 
-			if (suggested_slice.size > n_bytes)
+			if (n_bytes <= suggested_slice.size)
 				break;
 			end_ptr = slice.ptr + slice.size;
 		}
@@ -187,8 +193,10 @@ struct MappedAllocator : public Allocator {
 		if (suggested_slice.size < n_bytes) { //doesn't fit in between
 			suggested_slice.ptr = slices.back().ptr + slices.back().size;
 			suggested_slice.size = n_bytes;
-			if (master_slice.size < suggested_slice.ptr + suggested_slice.size - master_slice.ptr)
+
+			if (master_slice.ptr + master_slice.size < suggested_slice.ptr + suggested_slice.size) {
 		 		throw std::runtime_error("Requested more memory than allocated in Page");
+			}
 		} else {
 			suggested_slice.size = n_bytes;
 		}
@@ -200,6 +208,10 @@ struct MappedAllocator : public Allocator {
 	void free(uint8_t *ptr) {
 		erase_slice(ptr);
 	}
+
+	void zero(uint8_t *ptr, size_t n_bytes) {
+    	handle_error( cudaMemset(ptr, 0, n_bytes) );
+    }
 };
 
 }

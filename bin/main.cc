@@ -207,6 +207,27 @@ void test4() {
     net.forward_nograd(net.inputs, {prediction.index});
 }
 
+int load_and_run(int argc, char **argv) {
+	if (argc < 2) {
+		throw std::runtime_error("need argument");
+	}
+
+	string filename(argv[1]);
+
+	Network<float> net;
+	net.load(filename);
+
+	auto out_node = net.get_node("output");
+	if (!out_node.valid())
+	{
+		throw std::runtime_error("No output node available");
+	}
+
+	Tensor<float> sample(TensorShape{1, 1, 64, 64, 64});
+	net.set_inputs({sample});
+	net.forward_nograd(net.inputs, {out_node.index});
+}
+
 int main(int argc, char **argv) {
 	// Tensor<double> bla(TensorShape({1, 1, 4}));
 	// bla.init_normal(0.0, 4.0);
@@ -217,6 +238,7 @@ int main(int argc, char **argv) {
     // if (argc < 2)
     //     throw std::runtime_error("need argument");
     //unet_test(argv[1]);
-	test3();
+	//test3();
+	return load_and_run(argc, argv);
 }
 

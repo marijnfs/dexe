@@ -49,6 +49,9 @@ struct DEXE_API Operation {
 	virtual OperationCode opcode() { throw std::runtime_error("Not Implemented"); }
 
 	virtual void save(cereal::PortableBinaryOutputArchive &ar) {throw std::runtime_error("Not Implemented"); }
+
+	// Optional function to release local resources if they are used
+	virtual void free_resources() {}
 	
 	// Virtual void forward_timed(Tensor<F> &in, Tensor<F> &out, int t, F beta = 0.0){ forward(in, out, beta); }
 	// virtual void backward_weights_timed(Tensor<F> &in, Tensor<F> &out_grad, int t, F beta = 0.0){}
@@ -414,6 +417,9 @@ struct InstanceNormalisationOperation : public Operation<F> {
 	void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
     bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
 	
+    // release the used auxiliary resources
+	void free_resources();
+
     // Write a readable string to the ostream
 	void describe(std::ostream &out) override;
 

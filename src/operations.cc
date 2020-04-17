@@ -72,10 +72,10 @@ template <typename F> void ConvolutionOperation<F>::init() {
         vector<int> bias_dims(dimensions.size(),
                               1); // number of filter dimensions is one more than output dim
         bias_dims[1] = filter_bank.out_c(); // dimensions[1] corresponds to output channels
-        cout << "reshaping bias to " << bias_dims << endl;
+
         bias.reshape(TensorShape(bias_dims));
         bias_grad.reshape(TensorShape(bias_dims));
-        cout << "done reshaping bias" << endl;
+
         bias.owning = false;
         bias_grad.owning = false;
     }
@@ -85,15 +85,11 @@ template <typename F> void ConvolutionOperation<F>::init() {
     dilations = vector<int>(kernel_dims.size(), 1);
 
     if (keep) {
-        cout << "pad: " << paddings << endl;
         for (int n(0); n < kernel_dims.size(); ++n)
             paddings[n] = kernel_dims[n] / 2;
-        cout << "pad: " << paddings << endl;
     }
 
     handle_error(cudnnCreateConvolutionDescriptor(&conv));
-    cout << "conv: " << kernel_dims << " " << paddings << " " << strides << " " << dilations
-         << endl;
 
     if (sizeof(F) == sizeof(float))
         handle_error(cudnnSetConvolutionNdDescriptor(conv, kernel_dims.size(), paddings.data(),
@@ -238,10 +234,6 @@ void ConvolutionOperation<F>::prepare_backward(Tensor<F> &in,
 }
 
 template <typename F> void ConvolutionOperation<F>::update(F lr) {
-    // cout << filter_bank_grad.to_vector() << endl;
-
-    // cout << filter_bank_grad.to_vector() << " " << bias_grad.to_vector() <<
-    // endl; cout << filter_bank.to_vector() << " " << bias.to_vector() << endl;
     add_cuda<F>(filter_bank_grad.ptr(), filter_bank.ptr(), filter_bank.n_weights(), lr);
     if (has_bias)
         add_cuda<F>(bias_grad.ptr(), bias.ptr(), bias.size(), lr * .1);
@@ -787,16 +779,12 @@ template <typename F>
 void PoolingOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad,
                                    Tensor<F> &out_grad, F beta) {
     F alpha(1.0);
-    // cout << in.shape() << " " << out.shape() << " " << in_grad.shape() << " "
-    // << out_grad.shape() << endl; cout << in.data << " " << out.data << " " <<
-    // out_grad.data << " " << in_grad.data << endl;
     handle_error(cudnnPoolingBackward(Handler::cudnn(), pool, &alpha, out.td, out.ptr(), out_grad.td,
                                       out_grad.ptr(), in.td, in.ptr(), &beta, in_grad.td,
                                       in_grad.ptr()));
 }
 
 template <typename F> TensorShape PoolingOperation<F>::output_shape(TensorShape in) {
-    // cout << in.c << endl;
     return TensorShape{in.n(), in.c(), in.w() / kw, in.h() / kh};
 }
 
@@ -977,6 +965,11 @@ bool InstanceNormalisationOperation<F>::forward_dry_run(std::vector<Tensor<F> *>
     out[0]->reshape(in[0]->shape);
     tmp.reshape(in[0]->shape);
     return true;
+}
+
+template <typename F>
+void InstanceNormalisationOperation<F>::free_resources() {
+    tmp.reshape(TensorShape());
 }
 
 // Runs the backward step

@@ -13,6 +13,8 @@
 
 namespace dexe {
 
+struct Allocator; //predec
+
 template <typename F>
 struct Operation;
 
@@ -150,6 +152,8 @@ struct DEXE_API Network {
 
 	int n_params = 0;
 	bool finished = false; //for now we keep it at true
+
+	std::unique_ptr<Allocator> fixed_allocator;
 };
 
 }
