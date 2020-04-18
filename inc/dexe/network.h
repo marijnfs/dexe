@@ -153,6 +153,8 @@ struct DEXE_API Network {
 	int n_params = 0;
 	bool finished = false; //for now we keep it at true
 
+
+	std::vector<TensorShape> output_shapes_cache; //cache variable to store output shapes after preparation
 	std::unique_ptr<Allocator> fixed_allocator;
 };
 

@@ -850,7 +850,7 @@ void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> output
     // Forward Dryrun to determine memory usage and output shapes
     if (!fixed_allocator) {
         size_t n_bytes(0);
-        std::vector<TensorShape> output_shapes;
+        output_shapes_cache.clear();
         {
             auto virtual_allocator = std::make_unique<VirtualAllocator>();
             push_allocator(virtual_allocator.get());
@@ -859,13 +859,13 @@ void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> output
 
             // store the resulting output shapes
             for (auto o : outputs)
-                output_shapes.emplace_back(tensors[o].x->shape);
+                output_shapes_cache.emplace_back(tensors[o].x->shape);
 
             n_bytes = virtual_allocator->max_size();
             pop_allocator();
         }
 
-        { //Clear the output tensors so they will be allocated in the next step
+        { //Clear the output tensors that were dummy allocated
             auto dummy_allocator = std::make_unique<DummyAllocator>();
             push_allocator(dummy_allocator.get());
 
@@ -874,18 +874,21 @@ void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> output
             pop_allocator();
         }
 
-        { //allocate outputs
-            int i = 0;
-            for (auto o : outputs)
-                tensors[o].x->reshape(output_shapes[i++]);
-        }
-
         fixed_allocator = std::make_unique<MappedAllocator>(n_bytes);
+    } else {
+        std::cout << "Skipping Allocation" << std::endl;
     }
 
     // std::cout << "N Bytes: " << n_bytes << std::endl;
 
     {
+        { //allocate outputs
+            int i = 0;
+            for (auto o : outputs)
+                tensors[o].x->reshape(output_shapes_cache[i++]);
+        }
+
+
         //Run full network for real
         push_allocator(fixed_allocator.get());
         run(true);
