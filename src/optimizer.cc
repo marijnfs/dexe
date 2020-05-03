@@ -113,6 +113,8 @@ template <typename F> void AdamOptimizer<F>::update() {
 }
 
 template <typename F> void AdamOptimizer<F>::set_lr(F lr_) { lr = lr_; }
+template <typename F> void AdamOptimizer<F>::set_momentum(F momentum_factor_) { momentum_factor = momentum_factor_; }
+
 template struct Optimizer<float>;
 template struct Optimizer<double>;
 template struct SGDOptimizer<float>;

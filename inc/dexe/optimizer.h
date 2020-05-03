@@ -58,6 +58,7 @@ struct DEXE_API AdamOptimizer : public Optimizer<F> {
     virtual void update();
 
     void set_lr(F lr);
+    void set_momentum(F momentum);
     
     Network<F> *network = nullptr;
     CudaVec<F> momentum, std;
