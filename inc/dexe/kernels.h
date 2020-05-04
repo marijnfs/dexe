@@ -72,6 +72,12 @@ template <typename F>
 void support_loss(F *input, F *target, F *loss, size_t N, F support);
 
 template <typename F>
+__global__ void dice_kernel(F *prediction, F *target, F *loss, F *conjunction_sum, F *disjunction_sum, size_t N);
+
+template <typename F>
+void dice_loss(F *input, F *target, F *loss, F *cpu_conjunction, F *cpu_disjunction, size_t N);
+
+template <typename F>
 __global__ void threshold_kernel(F *input, size_t N, F threshold);
 
 template <typename F>

@@ -219,6 +219,26 @@ struct SupportLossOperation : public Operation<F> {
   Tensor<F> tmp; // temporary tensor for computation
 };
 
+
+template <typename F>
+struct DiceLossOperation : public Operation<F> {
+  DiceLossOperation(F smoothing);
+	DiceLossOperation(cereal::PortableBinaryInputArchive &ar);
+
+  virtual void forward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+  virtual bool forward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out) override;
+  virtual bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+  virtual void backward(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
+  virtual OperationCode opcode() override { return DICE_LOSS; }
+  void save(cereal::PortableBinaryOutputArchive &ar) override;
+
+  void describe(std::ostream &out) override { out << "dice_loss"; }
+
+  F smoothing = 0;
+  Tensor<F> tmp; // temporary tensor for computation
+  F disjunction_sum = 0;
+};
+
 template <typename F>
 struct SquashOperation : public ConvolutionOperation<F> {
 	SquashOperation(TensorShape s, int c);

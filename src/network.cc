@@ -195,6 +195,8 @@ void Network<F>::load(std::string path) {
             op = new SquaredLossOperation<F>();
         } else if (opcode == SUPPORT_LOSS) {
             op = new SupportLossOperation<F>(ar);
+        } else if (opcode == DICE_LOSS) {
+            op = new DiceLossOperation<F>(ar);
         } else if (opcode == LOCAL_NORMALISATION) {
             op = new LocalNormalisationOperation<F>(ar);
         } else if (opcode == INSTANCE_NORMALISATION) {
@@ -592,6 +594,19 @@ Network<F>::support_loss(F support, std::string name) {
     return [this, name, support](Node<F> n1, Node<F> n2) {
         auto in_c = n1.shape().c();
         auto index = add_operation(new SupportLossOperation<F>(support),
+                                   vector<int>{n1.index, n2.index},
+                                   TensorShape{0, in_c, 0, 0, 0}, name);
+
+        return Node<F>(index, this);
+    };
+}
+
+template <typename F>
+std::function<Node<F>(Node<F>, Node<F>)>
+Network<F>::dice_loss(F smoothing, std::string name) {
+    return [this, name, smoothing](Node<F> n1, Node<F> n2) {
+        auto in_c = n1.shape().c();
+        auto index = add_operation(new DiceLossOperation<F>(smoothing),
                                    vector<int>{n1.index, n2.index},
                                    TensorShape{0, in_c, 0, 0, 0}, name);
 

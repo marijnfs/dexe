@@ -596,6 +596,66 @@ template <typename F> void SupportLossOperation<F>::save(cereal::PortableBinaryO
     ar(support);
 }
 
+
+//////////////////////////////////////
+template <typename F>
+DiceLossOperation<F>::DiceLossOperation(F smoothing_) : smoothing(smoothing_) {}
+
+template <typename F>
+DiceLossOperation<F>::DiceLossOperation(cereal::PortableBinaryInputArchive &ar) {
+    ar(smoothing);
+}
+
+template <typename F>
+void DiceLossOperation<F>::forward(std::vector<Tensor<F> *> &in, std::vector<Tensor<F> *> &out) {
+    F conjunction_sum = 0;
+    disjunction_sum = 0;
+
+    dice_loss(in[0]->ptr(), in[1]->ptr(), tmp.ptr(), &conjunction_sum, &disjunction_sum, in[0]->shape.n_elements());
+    F dice_score = (conjunction_sum + smoothing) / (disjunction_sum + smoothing);
+    F dice_loss = 1.0 - dice_score;
+    vector<F> data = {dice_loss};
+    out[0]->from_vector(data);
+}
+
+template <typename F>
+bool DiceLossOperation<F>::forward_dry_run(std::vector<Tensor<F> *> &in,
+                                              std::vector<Tensor<F> *> &out) {
+    if (in.size() != 2) {
+        cerr << "DiceLossOperation needs two inputs" << endl;
+        return false;
+    }
+
+    if (in[0]->shape != in[1]->shape) {
+        cerr << "DiceLossOperation: input shapes don't match" << endl;
+        return false;
+    }
+
+    out[0]->reshape({1, 1, 1});
+    tmp.reshape(in[0]->shape);
+    return true;
+}
+
+template <typename F>
+bool DiceLossOperation<F>::backward_dry_run(std::vector<Tensor<F> *> &in,
+                                               std::vector<Tensor<F> *> &out,
+                                               std::vector<Tensor<F> *> &in_grad,
+                                               std::vector<Tensor<F> *> &out_grad) {
+    in_grad[0]->reshape(in[0]->shape);
+    return true;
+}
+
+template <typename F>
+void DiceLossOperation<F>::backward(std::vector<Tensor<F> *> &in, std::vector<Tensor<F> *> &out,
+                                       std::vector<Tensor<F> *> &in_grad,
+                                       std::vector<Tensor<F> *> &out_grad) {
+    in_grad[0]->from_tensor(tmp, 1.0 / (disjunction_sum + smoothing));
+}
+
+template <typename F> void DiceLossOperation<F>::save(cereal::PortableBinaryOutputArchive &ar) {
+    ar(smoothing);
+}
+
 //////////////////////////////////////
 
 template <typename F>
@@ -981,6 +1041,7 @@ template struct ReluOperation<float>;
 template struct SoftmaxOperation<float>;
 template struct SquaredLossOperation<float>;
 template struct SupportLossOperation<float>;
+template struct DiceLossOperation<float>;
 template struct InstanceNormalisationOperation<float>;
 
 template struct InputOperation<double>;
@@ -999,6 +1060,7 @@ template struct ReluOperation<double>;
 template struct SoftmaxOperation<double>;
 template struct SquaredLossOperation<double>;
 template struct SupportLossOperation<double>;
+template struct DiceLossOperation<double>;
 template struct InstanceNormalisationOperation<double>;
 
 } // namespace dexe

@@ -407,6 +407,46 @@ void support_loss(F *input, F *target, F *loss, size_t N, F support) {
 	support_kernel<<<dimGrid, dimBlock>>>(input, target, loss, N, support);
 }
 
+
+/// Dice kernel
+template <typename F>
+__global__ void dice_kernel(F *prediction, F *target, F *loss, F *conjunction_sum, F *disjunction_sum, size_t N) {
+	size_t i = blockIdx.x * blockDim.x + threadIdx.x;
+	if (i >= N)
+		return;
+
+	bool prediction_bool = prediction[i] > 0.5;
+	if (target[i] && prediction_bool) {
+		atomicAdd(conjunction_sum + blockIdx.x, 1.0);
+	}
+	if (target[i] || prediction_bool) {
+		atomicAdd(disjunction_sum + blockIdx.x, 1.0);
+	}
+
+	loss[i] = target[i] - (prediction_bool ? 1.0 : 0.0);	
+}
+
+template <typename F>
+void dice_loss(F *input, F *target, F *loss, F *cpu_conjunction, F *cpu_disjunction, size_t N) {
+	size_t const BLOCKSIZE(1024);
+
+	size_t dimBlock( BLOCKSIZE );
+	size_t n_blocks = (N + BLOCKSIZE - 1) / BLOCKSIZE;
+	size_t dimGrid( n_blocks );
+
+	CudaVec<F> tmp_conjunction_sum(n_blocks);
+	CudaVec<F> tmp_disjuntion_sum(n_blocks);
+
+	tmp_conjunction_sum.zero();
+	tmp_disjuntion_sum.zero();
+
+	dice_kernel<<<dimGrid, dimBlock>>>(input, target, loss, tmp_conjunction_sum.data, tmp_disjuntion_sum.data, N);
+
+	*cpu_conjunction = tmp_conjunction_sum.sum();
+	*cpu_disjunction = tmp_disjuntion_sum.sum();
+}
+
+
 /// In-place threshold kernel
 /// sets values above threshold to 1, 0 otherwise
 template <typename F>
@@ -436,6 +476,9 @@ void threshold_cuda(F *input, size_t N, F threshold) {
 
 template void support_loss<float>(float *input, float *target, float *loss, size_t N, float support);
 template void support_loss<double>(double *input, double *target, double *loss, size_t N, double support);
+
+template void dice_loss<float>(float *input, float *target, float *loss, float *cpu_conjunction, float *cpu_disjunction, size_t N);
+template void dice_loss<double>(double *input, double *target, double *loss, double *cpu_conjunction, double *cpu_disjunction, size_t N);
 
 
 template void threshold_cuda<float>(float *input, size_t N, float threshold);

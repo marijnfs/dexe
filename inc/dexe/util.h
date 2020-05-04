@@ -35,7 +35,8 @@ enum OperationCode {
   LOCAL_NORMALISATION,
   SQUARED_LOSS,
   SUPPORT_LOSS,
-  INSTANCE_NORMALISATION
+  INSTANCE_NORMALISATION,
+  DICE_LOSS,
 };
 
 struct DexeException : public std::exception {

@@ -6,38 +6,38 @@
 
 namespace dexe {
 
-template <typename F>
-struct Loss {
-	Loss(int n, int c);
+// template <typename F>
+// struct Loss {
+// 	Loss(int n, int c);
 	
-  virtual void calculate_loss(Tensor<F> &in, std::vector<int> answers, Tensor<F> &err){};
-	virtual void calculate_loss(Tensor<F> &in, int answer, Tensor<F> &err);
-	virtual void calculate_loss(Tensor<F> &in, Tensor<F> &target, Tensor<F> &err) = 0;
-	virtual void calculate_average_loss(Tensor<F> &in, Tensor<F> &err) { throw DexeException("not implemented"); }
+//   virtual void calculate_loss(Tensor<F> &in, std::vector<int> answers, Tensor<F> &err){};
+// 	virtual void calculate_loss(Tensor<F> &in, int answer, Tensor<F> &err);
+// 	virtual void calculate_loss(Tensor<F> &in, Tensor<F> &target, Tensor<F> &err) = 0;
+// 	virtual void calculate_average_loss(Tensor<F> &in, Tensor<F> &err) { throw DexeException("not implemented"); }
 
-	virtual F loss();
-	virtual int n_correct();
+// 	virtual F loss();
+// 	virtual int n_correct();
 
-	int n, c;
+// 	int n, c;
 
-	F last_loss;
-	int last_correct;
-};
+// 	F last_loss;
+// 	int last_correct;
+// };
 
-template <typename F>
-struct SoftmaxLoss : public Loss<F> {
-	SoftmaxLoss(int n, int c);
+// template <typename F>
+// struct SoftmaxLoss : public Loss<F> {
+// 	SoftmaxLoss(int n, int c);
 
-	void calculate_loss(Tensor<F> &in, std::vector<int> answers, Tensor<F> &err);
-    void calculate_average_loss(Tensor<F> &in, Tensor<F> &err);
-	void calculate_loss(Tensor<F> &in, Tensor<F> &target, Tensor<F> &err);
-};
+// 	void calculate_loss(Tensor<F> &in, std::vector<int> answers, Tensor<F> &err);
+//     void calculate_average_loss(Tensor<F> &in, Tensor<F> &err);
+// 	void calculate_loss(Tensor<F> &in, Tensor<F> &target, Tensor<F> &err);
+// };
 
-template <typename F>
-struct SquaredLoss : public Loss<F> {
-	SquaredLoss(int n, int c);
+// template <typename F>
+// struct SquaredLoss : public Loss<F> {
+// 	SquaredLoss(int n, int c);
 	
-	void calculate_loss(Tensor<F> &in, std::vector<int> answers, Tensor<F> &err);
-};
+// 	void calculate_loss(Tensor<F> &in, std::vector<int> answers, Tensor<F> &err);
+// };
 
 }
