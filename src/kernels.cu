@@ -415,15 +415,12 @@ __global__ void dice_kernel(F *prediction, F *target, F *loss, F *conjunction_su
 	if (i >= N)
 		return;
 
-	bool prediction_bool = prediction[i] > 0.5;
-	if (target[i] && prediction_bool) {
-		atomicAdd(conjunction_sum + blockIdx.x, 1.0);
-	}
-	if (target[i] || prediction_bool) {
-		atomicAdd(disjunction_sum + blockIdx.x, 1.0);
-	}
-
-	loss[i] = target[i] - (prediction_bool ? 1.0 : 0.0);	
+	if (target[i])
+		atomicAdd(conjunction_sum + blockIdx.x, target[i] * prediction[i]);
+	
+	atomicAdd(disjunction_sum + blockIdx.x, target[i] + prediction[i]);
+	
+	loss[i] = target[i] - prediction[i];	
 }
 
 template <typename F>

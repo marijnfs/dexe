@@ -612,7 +612,7 @@ void DiceLossOperation<F>::forward(std::vector<Tensor<F> *> &in, std::vector<Ten
     disjunction_sum = 0;
 
     dice_loss(in[0]->ptr(), in[1]->ptr(), tmp.ptr(), &conjunction_sum, &disjunction_sum, in[0]->shape.n_elements());
-    F dice_score = (conjunction_sum + smoothing) / (disjunction_sum + smoothing);
+    F dice_score = 2.0 * (conjunction_sum + smoothing) / (disjunction_sum + smoothing);
     F dice_loss = 1.0 - dice_score;
     vector<F> data = {dice_loss};
     out[0]->from_vector(data);
