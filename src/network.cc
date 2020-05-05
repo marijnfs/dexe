@@ -410,6 +410,14 @@ template <typename F> Node<F> Network<F>::get_node(std::string name) {
     return Node<F>(-1, this);
 }
 
+template <typename F> Node<F> Network<F>::get_node(int index) {
+    return Node<F>(index, this);
+}
+
+template <typename F> Node<F> Network<F>::get_last_node() {
+    return Node<F>((int)operations.size() - 1, this);
+}
+
 template <typename F>
 std::function<Node<F>(Node<F>)> Network<F>::convolution_1D(int out_c, int k,
                                                         string name) {

@@ -81,6 +81,8 @@ struct DEXE_API Network {
 	Node<F> input_3D(int n_channels, std::string name = "input");
 
 	Node<F> get_node(std::string name);
+	Node<F> get_node(int index);
+	Node<F> get_last_node();
 
 	std::vector<int> find_sequence(std::vector<int> inputs, std::vector<int> outputs);
 
