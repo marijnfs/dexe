@@ -425,9 +425,6 @@ __global__ void dice_kernel(F *prediction, F *target, F *loss, F *conjunction_su
 
 template <typename F>
 void dice_loss(F *input, F *target, F *loss, F *cpu_conjunction, F *cpu_disjunction, size_t N) {
-	#if __CUDA_ARCH__ <= 500
-		std::cerr << "Warning Dice loss can't be used on this cuda architecture" << std::endl;
-	#endif
 	size_t const BLOCKSIZE(1024);
 
 	size_t dimBlock( BLOCKSIZE );
