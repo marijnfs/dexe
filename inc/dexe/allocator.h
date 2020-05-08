@@ -96,13 +96,6 @@ struct DummyAllocator : public Allocator {
     }
 };
 
-static std::stack<Allocator*> allocator_stack;
-
-void init_allocator();
-void push_allocator(Allocator *allocator);
-void pop_allocator();
-Allocator *get_allocator();
-
 // Pretends to allocate, but actually just keeps track of what is allocated
 // Used to calculate memory usage beforehand
 struct VirtualAllocator : public Allocator {

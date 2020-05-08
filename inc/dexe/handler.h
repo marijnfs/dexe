@@ -3,12 +3,14 @@
 #include <cudnn.h>
 #include <curand.h>
 #include <cublas_v2.h>
+#include <stack>
 
 #include "config.h"
 
 size_t const WORKSPACE_SIZE = size_t(128) * 1024 * 1024;
 
 namespace dexe {
+struct Allocator;
 
 struct DEXE_API Handler {
   Handler();
@@ -31,6 +33,11 @@ struct DEXE_API Handler {
   static float *one_float();
   static double *one_double();
   
+  static void init_allocator();
+  static void push_allocator(Allocator *allocator);
+  static void pop_allocator();
+  static Allocator *get_allocator();
+
 
   static void print_mem_info();
 
@@ -42,7 +49,9 @@ struct DEXE_API Handler {
      
   char *s_workspace = nullptr;
   size_t workspace_size_ = WORKSPACE_SIZE;
-    
+      
+  std::stack<Allocator*> allocator_stack;
+
   static Handler *s_handler;
 
   //pointers to cuda memory containing 1 (needed for some blas functions)

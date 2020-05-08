@@ -140,6 +140,31 @@ void Handler::clear_workspace() {
     }
 }
 
+void Handler::init_allocator() {
+    auto &h = get_handler();
+
+    if (h.allocator_stack.empty())
+        h.allocator_stack.push(new DirectAllocator());
+}
+
+void Handler::push_allocator(Allocator *allocator) {
+    auto &h = get_handler();
+    h.allocator_stack.push(allocator);
+    // std::cout << "Dexe: Push Allocator" << std::endl;
+}
+
+void Handler::pop_allocator() {
+    auto &h = get_handler();
+    h.allocator_stack.pop();
+    // std::cout << "Dexe: Pop Allocator" << std::endl;
+}
+
+Allocator *Handler::get_allocator() {
+    auto &h = get_handler();
+    return h.allocator_stack.top();
+}
+
+
 void Handler::print_mem_info() {
     size_t free_mem(0), total_mem(0);
     cudaMemGetInfo ( &free_mem, &total_mem );

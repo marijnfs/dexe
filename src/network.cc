@@ -823,14 +823,14 @@ void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> output
                 }
             } else {
                 auto dummy_allocator = std::make_unique<DummyAllocator>();
-                push_allocator(dummy_allocator.get());
+                Handler::push_allocator(dummy_allocator.get());
                 bool success = operations[s]->forward_dry_run(tmp_inputs, tmp_outputs);
                 if (!success) {
                     ostringstream oss;
                     oss << "Failure when preparing step [" << s << "]: " << names[s] << endl;
                     throw std::runtime_error(oss.str());
                 }
-                pop_allocator();
+                Handler::pop_allocator();
             }
 
             if (execute)
@@ -853,7 +853,7 @@ void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> output
         output_shapes_cache.clear();
         {
             auto virtual_allocator = std::make_unique<VirtualAllocator>();
-            push_allocator(virtual_allocator.get());
+            Handler::push_allocator(virtual_allocator.get());
             bool execute = false;
             run(execute);
 
@@ -862,16 +862,16 @@ void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> output
                 output_shapes_cache.emplace_back(tensors[o].x->shape);
 
             n_bytes = virtual_allocator->max_size();
-            pop_allocator();
+            Handler::pop_allocator();
         }
 
         { //Clear the output tensors that were dummy allocated
             auto dummy_allocator = std::make_unique<DummyAllocator>();
-            push_allocator(dummy_allocator.get());
+            Handler::push_allocator(dummy_allocator.get());
 
             for (auto o : outputs)
                 tensors[o].x->reshape(TensorShape{});
-            pop_allocator();
+            Handler::pop_allocator();
         }
 
         fixed_allocator = std::make_unique<MappedAllocator>(n_bytes);
@@ -890,9 +890,9 @@ void Network<F>::forward_nograd(std::vector<int> inputs, std::vector<int> output
 
 
         //Run full network for real
-        push_allocator(fixed_allocator.get());
+        Handler::push_allocator(fixed_allocator.get());
         run(true);
-        pop_allocator();
+        Handler::pop_allocator();
     }
 }
 

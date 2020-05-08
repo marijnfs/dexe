@@ -32,7 +32,7 @@ CudaVec<F>::~CudaVec() {
     if (own && N) {
         memory_counter -= N;
 
-        get_allocator()->free((uint8_t*)data);
+        Handler::get_allocator()->free((uint8_t*)data);
     }
 }
 
@@ -58,7 +58,7 @@ void CudaVec<F>::free() {
 template <typename F>
 void CudaVec<F>::zero(int offset) {
     if (N)
-    	get_allocator()->zero(reinterpret_cast<uint8_t*>(data + offset), sizeof(F) * (N - offset));
+    	Handler::get_allocator()->zero(reinterpret_cast<uint8_t*>(data + offset), sizeof(F) * (N - offset));
 }
 
 template <typename F>
@@ -73,7 +73,7 @@ void CudaVec<F>::share(CudaVec<F> &other) {
         throw DexeException("can't share with CudaVec of different size");
     }
     if (own)
-		get_allocator()->free((uint8_t*)data);
+		Handler::get_allocator()->free((uint8_t*)data);
     own = false;
     data = other.data;
 }
@@ -432,13 +432,13 @@ void CudaVec<F>::allocate(int newN) {
         if (N) {
             memory_counter -= N;
 
-            get_allocator()->free((uint8_t*)data);
+            Handler::get_allocator()->free((uint8_t*)data);
             data = 0;
         }
         if (newN) {
             memory_counter += newN;
 
-            data = (F*)get_allocator()->allocate(sizeof(F) * newN);
+            data = (F*)Handler::get_allocator()->allocate(sizeof(F) * newN);
         }
         N = newN;
     }
