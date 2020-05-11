@@ -414,17 +414,23 @@ __global__ void dice_kernel(F *prediction, F *target, F *loss, F *conjunction_su
 	size_t i = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i >= N)
 		return;
-#if __CUDA_ARCH__ > 500
+#ifdef __CUDA_ARCH__
+    #if (__CUDA_ARCH__ >= 600)
 	if (target[i])
-		atomicAdd(conjunction_sum + blockIdx.x, target[i] * prediction[i]);
-	
+		atomicAdd(conjunction_sum + blockIdx.x, target[i] * prediction[i]);	
 	atomicAdd(disjunction_sum + blockIdx.x, target[i] + prediction[i]);
+    #endif
 #endif
 	loss[i] = target[i] - prediction[i];	
 }
 
 template <typename F>
 void dice_loss(F *input, F *target, F *loss, F *cpu_conjunction, F *cpu_disjunction, size_t N) {
+#ifdef __CUDA_ARCH__
+    #if (__CUDA_ARCH__ < 600)
+		std::cerr << "Warning Dice loss can't be used on this cuda architecture" << std::endl;
+	#endif
+#endif
 	size_t const BLOCKSIZE(1024);
 
 	size_t dimBlock( BLOCKSIZE );
