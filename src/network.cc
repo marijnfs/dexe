@@ -155,8 +155,20 @@ template <typename F> void Network<F>::init_uniform(F var) {
         parameters[i]->init_uniform(var);
 }
 
-template <typename F> void Network<F>::save(std::string path) {
+template <typename F> 
+void Network<F>::save(std::string path) {
     ofstream of(path, ios::binary);
+    save(of);
+}
+
+template <typename F>
+void Network<F>::load(std::string path) {
+    ifstream in(path, ios::binary);
+    load(in);
+}
+
+template <typename F>
+void Network<F>::save(std::ostream &of) {
     cereal::PortableBinaryOutputArchive ar(of);
 
     ar(sequence);
@@ -180,9 +192,8 @@ template <typename F> void Network<F>::save(std::string path) {
 }
 
 template <typename F>
-void Network<F>::load(std::string path) {
+void Network<F>::load(std::istream &in) {
     Handler::get_handler(); //make sure allocators are initialized
-    ifstream in(path, ios::binary);
     cereal::PortableBinaryInputArchive ar(in);
 
     // reset current state

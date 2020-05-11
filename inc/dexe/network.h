@@ -5,6 +5,8 @@
 #include <set>
 #include <functional>
 #include <initializer_list>
+#include <ostream>
+#include <istream>
 
 #include "dexe/config.h"
 #include "dexe/util.h"
@@ -110,6 +112,9 @@ struct DEXE_API Network {
 
 	void save(std::string path);
 	void load(std::string path);
+
+	void save(std::ostream &ostream);
+	void load(std::istream &istream);
 
 	void describe(std::ostream &out);
 
