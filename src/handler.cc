@@ -134,7 +134,7 @@ void Handler::set_workspace_size(size_t workspace_size) {
 
 void Handler::clear_workspace() {
     auto &h = get_handler();
-    if (h.workspace) {
+    if (h.s_workspace) {
         handle_error(cudaFree(h.s_workspace));
         h.s_workspace = nullptr;
     }

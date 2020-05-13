@@ -856,15 +856,12 @@ bool AdditionOperation<F>::backward_dry_run(std::vector<Tensor<F> *> &in,
 
 template <typename F>
 void AdditionOperation<F>::forward(Tensor<F> &in1, Tensor<F> &in2, Tensor<F> &out) {
-    F alpha(1);
-
     add_cuda<F>(in1.ptr(), out.ptr(), in1.size(), 1.0);
     add_cuda<F>(in2.ptr(), out.ptr(), in2.size(), 1.0);
 }
 
 template <typename F>
 void AdditionOperation<F>::backward(Tensor<F> &out_grad, Tensor<F> &in_grad1, Tensor<F> &in_grad2) {
-    F alpha(1);
     add_cuda<F>(out_grad.ptr(), in_grad1.ptr(), out_grad.size(), 1.0);
     add_cuda<F>(out_grad.ptr(), in_grad2.ptr(), out_grad.size(), 1.0);
 }

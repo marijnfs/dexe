@@ -418,7 +418,7 @@ struct InstanceNormalisationOperation : public Operation<F> {
     bool backward_dry_run(std::vector<Tensor<F>*> &in, std::vector<Tensor<F>*> &out, std::vector<Tensor<F>*> &in_grad, std::vector<Tensor<F>*> &out_grad) override;
 	
     // release the used auxiliary resources
-	void free_resources();
+	void free_resources() override;
 
     // Write a readable string to the ostream
 	void describe(std::ostream &out) override;
