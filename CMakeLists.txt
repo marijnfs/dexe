@@ -40,6 +40,7 @@ file(GLOB CU_SOURCE src/*.cu)
 file(GLOB CPP_HEADERS inc/dexe/*.h)
 set(EXT_HEADERS 
 	inc/dexe/dexe.h 
+	inc/dexe/models.h 
 	inc/dexe/network.h 
 	inc/dexe/optimizer.h 
 	inc/dexe/tensor.h 
