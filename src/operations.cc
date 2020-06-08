@@ -594,13 +594,25 @@ DiceLossOperation<F>::DiceLossOperation(cereal::PortableBinaryInputArchive &ar) 
 
 template <typename F>
 void DiceLossOperation<F>::forward(std::vector<Tensor<F> *> &in, std::vector<Tensor<F> *> &out) {
-    F conjunction_sum = 0;
-    disjunction_sum = 0;
+	disjunction_sums.clear();
 
-    dice_loss(in[0]->ptr(), in[1]->ptr(), tmp.ptr(), &conjunction_sum, &disjunction_sum, in[0]->shape.n_elements());
-    F dice_score = 2.0 * (conjunction_sum + smoothing) / (disjunction_sum + smoothing);
-    F dice_loss = 1.0 - dice_score;
-    vector<F> data = {dice_loss};
+    F conjunction_sum = 0;
+    F disjunction_sum = 0;
+
+    auto in_shape = in[0]->shape;
+    size_t n_per_channel = in_shape.n_elements() / in_shape.n() / in_shape.c();
+
+    F total_dice_loss = 0.0;
+
+    for (size_t i = 0; i < in_shape.n_elements(); i += n_per_channel) {
+        dice_loss(in[0]->ptr() + i, in[1]->ptr() + i, tmp.ptr() + i, &conjunction_sum, &disjunction_sum, n_per_channel);
+        F dice_score = 2.0 * (conjunction_sum + smoothing) / (disjunction_sum + smoothing);
+        total_dice_loss += 1.0 - dice_score;
+
+		disjunction_sums.emplace_back(disjunction_sum);
+    }
+
+    vector<F> data = {total_dice_loss};
     out[0]->from_vector(data);
 }
 
@@ -635,7 +647,17 @@ template <typename F>
 void DiceLossOperation<F>::backward(std::vector<Tensor<F> *> &in, std::vector<Tensor<F> *> &out,
                                        std::vector<Tensor<F> *> &in_grad,
                                        std::vector<Tensor<F> *> &out_grad) {
-    in_grad[0]->from_tensor(tmp, 1.0 / (disjunction_sum + smoothing));
+    auto in_shape = in[0]->shape;
+    size_t n_per_channel = in_shape.n_elements() / in_shape.n() / in_shape.c();
+
+    in_grad[0]->from_tensor(tmp);
+
+	auto ptr = in_grad[0]->ptr();
+	for (auto d : disjunction_sums) {
+		CudaVec<F> v(ptr, n_per_channel);
+		v *= 1.0 / (d + smoothing);
+		ptr += n_per_channel;
+	}
 }
 
 template <typename F> void DiceLossOperation<F>::save(cereal::PortableBinaryOutputArchive &ar) {

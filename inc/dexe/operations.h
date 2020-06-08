@@ -239,7 +239,7 @@ struct DiceLossOperation : public Operation<F> {
 
   F smoothing = 0;
   Tensor<F> tmp; // temporary tensor for computation
-  F disjunction_sum = 0;
+  std::vector<F> disjunction_sums;
 };
 
 template <typename F>

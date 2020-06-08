@@ -9,6 +9,7 @@ if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
 	message(FATAL_ERROR "In-source builds are not permitted. Make a separate folder for building:\nmkdir build; cd build; cmake ..\nBefore that, remove the files already created:\nrm -rf CMakeCache.txt CMakeFiles")
 endif()
 
+option(CUDA_AUTO_DETECT "Auto-detect cuda arch, else use most common" false)
 option(USE_NIFTI "Enable Nifti loading" false)
 option(BUILD_SHARED_LIBS "Build a shared library" true)
 
@@ -18,7 +19,11 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(CUDA QUIET REQUIRED)
 find_package(CUDNN REQUIRED)
 
-CUDA_SELECT_NVCC_ARCH_FLAGS(CUDA_NVCC_FLAGS ${CUDA_ARCH_BIN})
+if(CUDA_AUTO_DETECT)
+	CUDA_SELECT_NVCC_ARCH_FLAGS(CUDA_NVCC_FLAGS ${CUDA_ARCH_BIN})
+else()
+	CUDA_SELECT_NVCC_ARCH_FLAGS(CUDA_NVCC_FLAGS Common)
+endif()
 
 if (USE_NIFTI)
    find_library(ZNZ znz HINTS /usr/local/lib /usr/local/lib64 REQUIRED)
@@ -33,7 +38,19 @@ set(CUDA_PROPAGATE_HOST_FLAGS ON)
 file(GLOB CPP_SOURCE src/*.cc)
 file(GLOB CU_SOURCE src/*.cu)
 file(GLOB CPP_HEADERS inc/dexe/*.h)
-set(EXT_HEADERS inc/dexe/dexe.h inc/dexe/models.h inc/dexe/network.h inc/dexe/optimizer.h inc/dexe/tensor.h inc/dexe/util.h inc/dexe/cudavec.h inc/dexe/handler.h inc/dexe/config.h inc/dexe/print.h inc/dexe/io.h)
+set(EXT_HEADERS 
+	inc/dexe/dexe.h 
+	inc/dexe/models.h 
+	inc/dexe/network.h 
+	inc/dexe/optimizer.h 
+	inc/dexe/tensor.h 
+	inc/dexe/util.h 
+	inc/dexe/cudavec.h 
+	inc/dexe/handler.h 
+	inc/dexe/config.h 
+	inc/dexe/print.h 
+	inc/dexe/io.h
+)
 
 #set_property(SOURCE ${CPP_SOURCE} PROPERTY COMPILE_FLAGS -O3)
 #set_property(SOURCE ${CU_SOURCE} PROPERTY COMPILE_FLAGS -O3)
