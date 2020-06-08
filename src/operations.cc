@@ -602,17 +602,18 @@ void DiceLossOperation<F>::forward(std::vector<Tensor<F> *> &in, std::vector<Ten
     auto in_shape = in[0]->shape;
     size_t n_per_channel = in_shape.n_elements() / in_shape.n() / in_shape.c();
 
-    F total_dice_loss = 0.0;
+    F total_dice_score = 0.0;
 
     for (size_t i = 0; i < in_shape.n_elements(); i += n_per_channel) {
         dice_loss(in[0]->ptr() + i, in[1]->ptr() + i, tmp.ptr() + i, &conjunction_sum, &disjunction_sum, n_per_channel);
         F dice_score = 2.0 * (conjunction_sum + smoothing) / (disjunction_sum + smoothing);
-        total_dice_loss += 1.0 - dice_score;
+        total_dice_score += dice_score;
 
 		disjunction_sums.emplace_back(disjunction_sum);
     }
 
-    vector<F> data = {total_dice_loss};
+    F dice_loss = 1.0 - total_dice_score / in_shape.n() / in_shape.c();
+    vector<F> data = {dice_loss};
     out[0]->from_vector(data);
 }
 
