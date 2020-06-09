@@ -93,7 +93,7 @@ template <typename F> void Network<F>::empty_tensors(bool skip_input) {
 
 template <typename F> void Network<F>::set_inputs(std::initializer_list<std::reference_wrapper<Tensor<F>>> input_tensors) {
     if (input_tensors.size() != inputs.size()) {
-        cerr << "Warning: Number of inputs doesn't correspond";
+        //cerr << "Warning: Number of inputs doesn't correspond";
     }
 
     auto input_it = inputs.begin();
