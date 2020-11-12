@@ -105,7 +105,7 @@ struct InputOperation : public Operation<F> {
 
 template <typename F>
 struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
-	ConvolutionOperation(std::vector<int> dimensions, std::vector<int> strides, bool keep_, bool has_bias = true, size_t workspace_limit_ = CONV_MAX_MEM);
+	ConvolutionOperation(std::vector<int> dimensions, std::vector<int> strides, std::vector<int> dilation, bool keep_, bool has_bias = true, size_t workspace_limit_ = CONV_MAX_MEM);
 	explicit ConvolutionOperation(cereal::PortableBinaryInputArchive &ar);
 
 	~ConvolutionOperation();
@@ -174,7 +174,7 @@ struct ConvolutionOperation : public Operation<F>, public Parametrised<F> {
 
 template <typename F>
 struct ConvolutionTransposeOperation : public ConvolutionOperation<F> {
-	ConvolutionTransposeOperation(std::vector<int> dimensions, std::vector<int> strides, bool keep_, size_t workspace_limit_ = CONV_MAX_MEM);
+	ConvolutionTransposeOperation(std::vector<int> dimensions, std::vector<int> strides, std::vector<int> dilations, bool keep_, size_t workspace_limit_ = CONV_MAX_MEM);
 	ConvolutionTransposeOperation(cereal::PortableBinaryInputArchive &ar);
 
     // API

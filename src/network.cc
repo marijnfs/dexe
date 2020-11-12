@@ -450,27 +450,52 @@ template <typename F> Node<F> Network<F>::get_last_node() {
 }
 
 template <typename F>
-std::function<Node<F>(Node<F>)> Network<F>::convolution_1D(int out_c, int k,
+std::function<Node<F>(Node<F>)> Network<F>::convolution_1D(int out_c, int k, int dilation,
                                                         string name) {
-    return [this, out_c, k, name](Node<F> n) {
+    return [this, out_c, k, name, dilation](Node<F> n) {
         auto in_c = n.shape().c();
 
         auto index = add_operation(
-            new ConvolutionOperation<F>({out_c, in_c, k}, {1,}, true),
+            new ConvolutionOperation<F>({out_c, in_c, k}, {1,}, {dilation,}, true),
             vector<int>{n.index}, {0, out_c, 0}, name);
         return Node<F>(index, this);
     };
 }
 
 template <typename F>
-std::function<Node<F>(Node<F>)> Network<F>::convolution_2D(int out_c, int k,
+std::function<Node<F>(Node<F>)> Network<F>::convolution_1D(int out_c, int k, string name)
+{
+    return convolution_1D(out_c, k, 1, name);
+}
+
+template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::convolution_2D(int out_c, int k, int dilation,
                                                         string name) {
-    return [this, out_c, k, name](Node<F> n) {
+    return [this, out_c, k, name, dilation](Node<F> n) {
         auto in_c = n.shape().c();
 
         auto index = add_operation(
-            new ConvolutionOperation<F>({out_c, in_c, k, k}, {1, 1}, true),
+            new ConvolutionOperation<F>({out_c, in_c, k, k}, {1, 1}, {dilation, dilation}, true),
             vector<int>{n.index}, TensorShape{0, out_c, 0, 0}, name);
+        return Node<F>(index, this);
+    };
+}
+
+template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::convolution_2D(int out_c, int k, string name)
+{
+    return convolution_1D(out_c, k, 1, name);
+}
+
+template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::convolution_3D(int out_c, int k, int dilation,
+                                                           string name) {
+    return [this, out_c, k, name, dilation](Node<F> n) {
+        auto in_c = n.shape().c();
+        auto index = add_operation(new ConvolutionOperation<F>(
+                                       {out_c, in_c, k, k, k}, {1, 1, 1}, {dilation, dilation, dilation}, true),
+                                   vector<int>{n.index},
+                                   TensorShape{0, out_c, 0, 0, 0}, name);
         return Node<F>(index, this);
     };
 }
@@ -478,14 +503,7 @@ std::function<Node<F>(Node<F>)> Network<F>::convolution_2D(int out_c, int k,
 template <typename F>
 std::function<Node<F>(Node<F>)> Network<F>::convolution_3D(int out_c, int k,
                                                            string name) {
-    return [this, out_c, k, name](Node<F> n) {
-        auto in_c = n.shape().c();
-        auto index = add_operation(new ConvolutionOperation<F>(
-                                       {out_c, in_c, k, k, k}, {1, 1, 1}, true),
-                                   vector<int>{n.index},
-                                   TensorShape{0, out_c, 0, 0, 0}, name);
-        return Node<F>(index, this);
-    };
+    return convolution_3D(out_c, k, 1, name);
 }
 
 template <typename F>
@@ -494,7 +512,7 @@ Network<F>::convolution_downscale(int out_c, int k, string name) {
     return [this, out_c, k, name](Node<F> n) {
         auto in_c = n.shape().c();
         auto index = add_operation(
-            new ConvolutionOperation<F>({out_c, in_c, k, k}, {k, k}, false),
+            new ConvolutionOperation<F>({out_c, in_c, k, k}, {k, k}, {1, 1}, false),
             vector<int>{n.index}, TensorShape{0, out_c, 0, 0}, name);
         return Node<F>(index, this);
     };
@@ -506,7 +524,7 @@ Network<F>::convolution_downscale_3D(int out_c, int k, string name) {
     return [this, out_c, k, name](Node<F> n) {
         auto in_c = n.shape().c();
         auto index = add_operation(
-            new ConvolutionOperation<F>({out_c, in_c, k, k, k}, {k, k, k},
+            new ConvolutionOperation<F>({out_c, in_c, k, k, k}, {k, k, k}, {1, 1, 1},
                                         false),
             vector<int>{n.index}, TensorShape{0, out_c, 0, 0, 0}, name);
         return Node<F>(index, this);
@@ -520,7 +538,7 @@ Network<F>::convolution_upscale(int out_c, int k, string name) {
         auto in_c = n.shape().c();
         // in Conv Transpose, the in_c and out_c ordering logic is reversed
         auto index = add_operation(new ConvolutionTransposeOperation<F>(
-                                       {in_c, out_c, k, k}, {k, k}, false),
+                                       {in_c, out_c, k, k}, {k, k}, {1, 1}, false),
                                    vector<int>{n.index},
                                    TensorShape{0, out_c, 0, 0}, name);
         return Node<F>(index, this);
@@ -535,7 +553,7 @@ Network<F>::convolution_upscale_3D(int out_c, int k, string name) {
         // in Conv Transpose, the in_c and out_c ordering logic is reversed
         auto index = add_operation(
             new ConvolutionTransposeOperation<F>({in_c, out_c, k, k, k},
-                                                 {k, k, k}, false),
+                                                 {k, k, k}, {1, 1, 1}, false),
             vector<int>{n.index}, TensorShape{0, out_c, 0, 0, 0}, name);
         return Node<F>(index, this);
     };

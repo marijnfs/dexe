@@ -55,14 +55,16 @@ template <typename F> void InputOperation<F>::save(cereal::PortableBinaryOutputA
 
 template <typename F>
 ConvolutionOperation<F>::ConvolutionOperation(vector<int> dimensions_, vector<int> strides_,
+                                            vector<int> dilations_,
                                               bool keep_, bool has_bias_,
                                               size_t workspace_limit_)
     : algo(CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_GEMM), // default algorithm
       workspace(0), workspace_size(workspace_limit_), workspace_size_bwd(workspace_limit_),
       workspace_size_bwd_filter(workspace_limit_), keep(keep_), dimensions(dimensions_),
-      strides(strides_), has_bias(has_bias_) {
+      strides(strides_), dilations(dilations_), has_bias(has_bias_) {
     init();
 }
+
 
 template <typename F> void ConvolutionOperation<F>::init() {
     filter_bank.reshape(dimensions);
@@ -82,11 +84,12 @@ template <typename F> void ConvolutionOperation<F>::init() {
 
     vector<int> kernel_dims(dimensions.begin() + 2, dimensions.end());
     paddings = vector<int>(kernel_dims.size());
-    dilations = vector<int>(kernel_dims.size(), 1);
+    if (dilations.empty())
+        dilations = vector<int>(kernel_dims.size(), 1);
 
     if (keep) {
         for (int n(0); n < kernel_dims.size(); ++n)
-            paddings[n] = kernel_dims[n] / 2;
+            paddings[n] = kernel_dims[n] / 2 * dilations[n];
     }
 
     handle_error(cudnnCreateConvolutionDescriptor(&conv));
@@ -411,8 +414,9 @@ ConvolutionOperation<F>::ConvolutionOperation(cereal::PortableBinaryInputArchive
 template <typename F>
 ConvolutionTransposeOperation<F>::ConvolutionTransposeOperation(std::vector<int> dimensions_,
                                                                 std::vector<int> strides_,
+                                                                std::vector<int> dilations_,
                                                                 bool keep_, size_t workspace_limit_)
-    : ConvolutionOperation<F>(dimensions_, strides_, keep_, false, workspace_limit_) {}
+    : ConvolutionOperation<F>(dimensions_, strides_, dilations_, keep_, false, workspace_limit_) {}
 
 template <typename F>
 void ConvolutionTransposeOperation<F>::forward(std::vector<Tensor<F> *> &in,
@@ -669,7 +673,7 @@ template <typename F> void DiceLossOperation<F>::save(cereal::PortableBinaryOutp
 
 template <typename F>
 SquashOperation<F>::SquashOperation(TensorShape s, int c_)
-    : c(c_), ConvolutionOperation<F>({s.c(), c_, s.d(), s.w(), s.h()}, {1, 1, 1, 1, 1}, false) {}
+    : c(c_), ConvolutionOperation<F>({s.c(), c_, s.d(), s.w(), s.h()}, {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}, false) {}
 
 template <typename F> TensorShape SquashOperation<F>::output_shape(TensorShape in) {
     vector<int> out_dimensions(in.n_dimensions(), 1);
