@@ -600,23 +600,24 @@ template <typename F>
 void DiceLossOperation<F>::forward(std::vector<Tensor<F> *> &in, std::vector<Tensor<F> *> &out) {
 	disjunction_sums.clear();
 
-    F conjunction_sum = 0;
-    F disjunction_sum = 0;
-
     auto in_shape = in[0]->shape;
-    size_t n_per_channel = in_shape.n_elements() / in_shape.n() / in_shape.c();
+    size_t n_seperate_sums = in_shape.n() / in_shape.c();
+    size_t n_per_channel = in_shape.n_elements() / n_seperate_sums;
 
     F total_dice_score = 0.0;
 
     for (size_t i = 0; i < in_shape.n_elements(); i += n_per_channel) {
+        F conjunction_sum = 0;
+        F disjunction_sum = 0;
+
         dice_loss(in[0]->ptr() + i, in[1]->ptr() + i, tmp.ptr() + i, &conjunction_sum, &disjunction_sum, n_per_channel);
-        F dice_score = 2.0 * (conjunction_sum + smoothing) / (disjunction_sum + smoothing);
+        F dice_score = (2.0 * conjunction_sum + smoothing) / (disjunction_sum + smoothing);
         total_dice_score += dice_score;
 
 		disjunction_sums.emplace_back(disjunction_sum);
     }
 
-    F dice_loss = 1.0 - total_dice_score / in_shape.n() / in_shape.c();
+    F dice_loss = 1.0 - total_dice_score / n_seperate_sums;
     vector<F> data = {dice_loss};
     out[0]->from_vector(data);
 }
