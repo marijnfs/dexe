@@ -240,6 +240,8 @@ void Network<F>::load(std::istream &in) {
             op = new AdditionOperation<F>();
         } else if (opcode == RELU) {
             op = new ReluOperation<F>();
+        } else if (opcode == ELU) {
+            op = new EluOperation<F>();
         } else if (opcode == SOFTMAX) {
             op = new SoftmaxOperation<F>();
         } else {
@@ -564,6 +566,17 @@ std::function<Node<F>(Node<F>)> Network<F>::relu(string name) {
     return [this, name](Node<F> n) {
         auto in_c = n.shape().c();
         auto index = add_operation(new ReluOperation<F>(), vector<int>{n.index},
+                                   TensorShape{0, in_c, 0, 0}, name);
+
+        return Node<F>(index, this);
+    };
+}
+
+template <typename F>
+std::function<Node<F>(Node<F>)> Network<F>::elu(string name) {
+    return [this, name](Node<F> n) {
+        auto in_c = n.shape().c();
+        auto index = add_operation(new EluOperation<F>(), vector<int>{n.index},
                                    TensorShape{0, in_c, 0, 0}, name);
 
         return Node<F>(index, this);

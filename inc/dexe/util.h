@@ -37,6 +37,7 @@ enum OperationCode {
   SUPPORT_LOSS,
   INSTANCE_NORMALISATION,
   DICE_LOSS,
+  ELU,
 };
 
 struct DexeException : public std::exception {

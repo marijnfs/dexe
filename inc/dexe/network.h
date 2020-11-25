@@ -72,6 +72,7 @@ struct DEXE_API Network {
 	std::function<Node<F>(Node<F>)> convolution_upscale(int out_c, int k, std::string name = "upscale");
 	std::function<Node<F>(Node<F>)> convolution_upscale_3D(int out_c, int k, std::string name = "upscale");
 	std::function<Node<F>(Node<F>)> relu(std::string name = "relu");
+	std::function<Node<F>(Node<F>)> elu(std::string name = "elu");
 	std::function<Node<F>(Node<F>)> tanh(std::string name = "tanh");
 	std::function<Node<F>(Node<F>)> sigmoid(std::string name = "sigmoid");
 	std::function<Node<F>(Node<F>)> local_normalisation(int k, std::string name = "lnc");

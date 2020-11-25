@@ -92,6 +92,7 @@ template <typename F> void ConvolutionOperation<F>::init() {
             paddings[n] = kernel_dims[n] / 2 * dilations[n];
     }
 
+    cout << "conv: " << dilations[0] << " " << paddings[0] << " " << kernel_dims[0] << endl;
     handle_error(cudnnCreateConvolutionDescriptor(&conv));
 
     if (sizeof(F) == sizeof(float))
@@ -914,6 +915,7 @@ void SigmoidOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_
 
 template <typename F> TensorShape SigmoidOperation<F>::output_shape(TensorShape in) { return in; }
 
+//////////////////
 template <typename F> ReluOperation<F>::ReluOperation() {
     cudnnCreateActivationDescriptor(&desc);
     cudnnSetActivationDescriptor(desc, CUDNN_ACTIVATION_RELU, CUDNN_NOT_PROPAGATE_NAN, 0.);
@@ -937,6 +939,31 @@ void ReluOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_gra
 
 template <typename F> TensorShape ReluOperation<F>::output_shape(TensorShape in) { return in; }
 
+///////////////////////
+template <typename F> EluOperation<F>::EluOperation() {
+    cudnnCreateActivationDescriptor(&desc);
+    cudnnSetActivationDescriptor(desc, CUDNN_ACTIVATION_ELU, CUDNN_NOT_PROPAGATE_NAN, 0.);
+}
+
+template <typename F> void EluOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
+    F alpha(1);
+    handle_error(cudnnActivationForward(Handler::cudnn(), desc, &alpha, in.td, in.ptr(), &beta,
+                                        out.td, out.ptr()));
+}
+
+template <typename F>
+void EluOperation<F>::backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad,
+                                Tensor<F> &out_grad, F beta) {
+    F alpha(1);
+
+    handle_error(cudnnActivationBackward(Handler::cudnn(), desc, &alpha, out.td, out.ptr(),
+                                         out_grad.td, out_grad.ptr(), in.td, in.ptr(), &beta,
+                                         in_grad.td, in_grad.ptr()));
+}
+
+template <typename F> TensorShape EluOperation<F>::output_shape(TensorShape in) { return in; }
+
+///////////////////
 template <typename F> SoftmaxOperation<F>::SoftmaxOperation(bool matched_) : matched(matched_) {}
 
 template <typename F> void SoftmaxOperation<F>::forward(Tensor<F> &in, Tensor<F> &out, F beta) {
@@ -1050,6 +1077,7 @@ template struct PoolingOperation<float>;
 template struct TanhOperation<float>;
 template struct SigmoidOperation<float>;
 template struct ReluOperation<float>;
+template struct EluOperation<float>;
 template struct SoftmaxOperation<float>;
 template struct SquaredLossOperation<float>;
 template struct SupportLossOperation<float>;
@@ -1069,6 +1097,7 @@ template struct PoolingOperation<double>;
 template struct TanhOperation<double>;
 template struct SigmoidOperation<double>;
 template struct ReluOperation<double>;
+template struct EluOperation<double>;
 template struct SoftmaxOperation<double>;
 template struct SquaredLossOperation<double>;
 template struct SupportLossOperation<double>;

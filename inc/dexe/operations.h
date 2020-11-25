@@ -389,6 +389,21 @@ struct ReluOperation : public DefaultOperation<F> {
 
 };
 
+template <typename F>
+struct EluOperation : public DefaultOperation<F> {
+    EluOperation();
+
+	void forward(Tensor<F> &in, Tensor<F> &out, F beta = 0.0) override;
+	void backward(Tensor<F> &in, Tensor<F> &out, Tensor<F> &in_grad, Tensor<F> &out_grad, F beta = 0.0) override;
+	void describe(std::ostream &out) override { out << "elu"; }
+	virtual OperationCode opcode() override { return ELU; }
+	void save(cereal::PortableBinaryOutputArchive &ar) override {}
+
+	TensorShape output_shape(TensorShape input) override;
+	cudnnActivationDescriptor_t desc;
+
+};
+
 
 template <typename F>
 struct SoftmaxOperation : public DefaultOperation<F> {
